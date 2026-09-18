@@ -19,6 +19,16 @@ import {
   FileText,
 } from 'lucide-react';
 
+function getYouTubeEmbedUrl(url?: string): string | null {
+  if (!url) return null;
+  const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
+  const match = url.match(regExp);
+  if (match && match[1]) {
+    return `https://www.youtube-nocookie.com/embed/${match[1]}?rel=0&modestbranding=1`;
+  }
+  return null;
+}
+
 export const CourseDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -30,6 +40,7 @@ export const CourseDetailPage: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [enrolling, setEnrolling] = useState<boolean>(false);
   const [showAssessment, setShowAssessment] = useState<boolean>(false);
+  const [activeQuizModule, setActiveQuizModule] = useState<{ id: string; title: string } | null>(null);
   const [showCertificate, setShowCertificate] = useState<boolean>(false);
   const [certificate, setCertificate] = useState<Certificate | null>(null);
 
@@ -110,6 +121,12 @@ export const CourseDetailPage: React.FC = () => {
     ? Math.round((completedModules.size / course.modules.length) * 100)
     : 0;
 
+  const hasModuleAssessments = Boolean(course.assessments && course.assessments.some((a) => a.moduleId));
+  const activeModuleAssessment = course.assessments?.find((a) => a.moduleId === activeModule?.id);
+  const hasActiveModuleQuiz = Boolean(activeModuleAssessment);
+  const isActiveModuleCompleted = activeModule ? completedModules.has(activeModule.id) : false;
+  const activeModuleEmbedUrl = activeModule ? getYouTubeEmbedUrl(activeModule.videoUrl) : null;
+
   return (
     <div className="min-h-screen bg-slate-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
@@ -182,12 +199,21 @@ export const CourseDetailPage: React.FC = () => {
                     {completedModules.size} of {course.modules.length} Modules Finished
                   </p>
 
-                  <button
-                    onClick={() => setShowAssessment(true)}
-                    className="mt-3 w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition shadow flex items-center justify-center gap-1.5"
-                  >
-                    <Award className="w-4 h-4" /> Take Competency Quiz
-                  </button>
+                  {hasModuleAssessments ? (
+                    <div className="mt-3 text-[11px] text-emerald-400 bg-emerald-950/40 border border-emerald-800/60 rounded-xl p-2 font-medium">
+                      Pass each module quiz (≥70%) to progress & earn certification.
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        setActiveQuizModule(null);
+                        setShowAssessment(true);
+                      }}
+                      className="mt-3 w-full py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs rounded-xl transition shadow flex items-center justify-center gap-1.5"
+                    >
+                      <Award className="w-4 h-4" /> Take Competency Quiz
+                    </button>
+                  )}
                 </div>
               ) : (
                 <div>
@@ -222,6 +248,7 @@ export const CourseDetailPage: React.FC = () => {
               {course.modules.map((module, idx) => {
                 const isSelected = activeModuleIndex === idx;
                 const isCompleted = completedModules.has(module.id);
+                const hasQuiz = course.assessments?.some((a) => a.moduleId === module.id);
 
                 return (
                   <div
@@ -249,14 +276,28 @@ export const CourseDetailPage: React.FC = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          handleToggleModuleComplete(module.id);
+                          setActiveModuleIndex(idx);
+                          if (hasQuiz && !isCompleted) {
+                            setActiveQuizModule({ id: module.id, title: module.title });
+                            setShowAssessment(true);
+                          } else if (!hasQuiz) {
+                            handleToggleModuleComplete(module.id);
+                          }
                         }}
                         className={`p-1 rounded-md transition ${
                           isCompleted
                             ? 'text-emerald-600 hover:text-emerald-700'
+                            : hasQuiz
+                            ? 'text-amber-500 hover:text-amber-600'
                             : 'text-slate-300 hover:text-slate-500'
                         }`}
-                        title={isCompleted ? 'Mark uncompleted' : 'Mark completed'}
+                        title={
+                          isCompleted
+                            ? 'Completed'
+                            : hasQuiz
+                            ? 'Quiz required to complete'
+                            : 'Mark completed'
+                        }
                       >
                         <CheckCircle className={`w-5 h-5 ${isCompleted ? 'fill-emerald-100' : ''}`} />
                       </button>
@@ -280,19 +321,69 @@ export const CourseDetailPage: React.FC = () => {
                   </div>
 
                   {isEnrolled && (
-                    <button
-                      onClick={() => handleToggleModuleComplete(activeModule.id)}
-                      className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
-                        completedModules.has(activeModule.id)
-                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
-                          : 'bg-slate-900 text-white hover:bg-slate-800 shadow'
-                      }`}
-                    >
-                      <CheckCircle className="w-4 h-4" />
-                      {completedModules.has(activeModule.id) ? 'Completed' : 'Mark as Complete'}
-                    </button>
+                    hasActiveModuleQuiz ? (
+                      isActiveModuleCompleted ? (
+                        <div className="flex items-center gap-2">
+                          <span className="px-3.5 py-2 rounded-xl text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300 flex items-center gap-1.5">
+                            <CheckCircle className="w-4 h-4" /> Quiz Passed (Complete)
+                          </span>
+                          <button
+                            onClick={() => {
+                              setActiveQuizModule({ id: activeModule.id, title: activeModule.title });
+                              setShowAssessment(true);
+                            }}
+                            className="px-3 py-2 text-xs text-slate-600 hover:text-slate-900 border border-slate-200 rounded-xl hover:bg-slate-50 transition font-semibold"
+                          >
+                            Retake Quiz
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => {
+                            setActiveQuizModule({ id: activeModule.id, title: activeModule.title });
+                            setShowAssessment(true);
+                          }}
+                          className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow"
+                        >
+                          <Award className="w-4 h-4" /> Take Module Quiz (5 Questions)
+                        </button>
+                      )
+                    ) : (
+                      <button
+                        onClick={() => handleToggleModuleComplete(activeModule.id)}
+                        className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                          isActiveModuleCompleted
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            : 'bg-slate-900 text-white hover:bg-slate-800 shadow'
+                        }`}
+                      >
+                        <CheckCircle className="w-4 h-4" />
+                        {isActiveModuleCompleted ? 'Completed' : 'Mark as Complete'}
+                      </button>
+                    )
                   )}
                 </div>
+
+                {/* Module Video Player if videoUrl exists */}
+                {activeModuleEmbedUrl && (
+                  <div className="space-y-2">
+                    <div className="w-full aspect-video rounded-2xl overflow-hidden bg-slate-950 shadow-md border border-slate-200">
+                      <iframe
+                        src={activeModuleEmbedUrl}
+                        title={activeModule.title}
+                        className="w-full h-full border-0"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                        allowFullScreen
+                      />
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-slate-500 px-1 font-medium">
+                      <span className="flex items-center gap-1">
+                        <PlayCircle className="w-3.5 h-3.5 text-rose-600" /> Interactive Video Lecture
+                      </span>
+                      <span>Duration: ~{activeModule.durationMinutes} mins</span>
+                    </div>
+                  </div>
+                )}
 
                 {/* Lesson Notes & Technical Specs */}
                 <div className="prose prose-slate max-w-none text-xs sm:text-sm leading-relaxed text-slate-700 bg-slate-50/50 p-6 rounded-2xl border border-slate-200/60 whitespace-pre-wrap">
@@ -300,9 +391,9 @@ export const CourseDetailPage: React.FC = () => {
                     <div>
                       <p className="font-semibold text-slate-900">Module Overview:</p>
                       <p>
-                        This module covers key principles, equations, operational workflows, and data formats
-                        utilized across Ministry of Earth Sciences observational systems. Please review all
-                        technical guidelines before attempting the competency evaluation quiz.
+                        This module covers key principles, syntax, operational workflows, and data structures
+                        utilized across scientific workflows. Please review the video lecture and technical
+                        notes before attempting the evaluation quiz.
                       </p>
                     </div>
                   )}
@@ -325,9 +416,34 @@ export const CourseDetailPage: React.FC = () => {
                     >
                       Next Module <ChevronRight className="w-3.5 h-3.5" />
                     </button>
+                  ) : hasModuleAssessments ? (
+                    certificate ? (
+                      <button
+                        onClick={() => setShowCertificate(true)}
+                        className="px-4 py-2 bg-amber-500 text-slate-950 rounded-xl text-xs font-bold hover:bg-amber-400 flex items-center gap-1.5 shadow"
+                      >
+                        <Award className="w-4 h-4" /> View Course Certificate
+                      </button>
+                    ) : (
+                      <button
+                        disabled={!isActiveModuleCompleted}
+                        onClick={() => {
+                          if (activeModule) {
+                            setActiveQuizModule({ id: activeModule.id, title: activeModule.title });
+                            setShowAssessment(true);
+                          }
+                        }}
+                        className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-500 flex items-center gap-1.5 shadow disabled:opacity-50"
+                      >
+                        <Award className="w-4 h-4" /> Final Module Quiz
+                      </button>
+                    )
                   ) : (
                     <button
-                      onClick={() => setShowAssessment(true)}
+                      onClick={() => {
+                        setActiveQuizModule(null);
+                        setShowAssessment(true);
+                      }}
                       className="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold hover:bg-emerald-500 flex items-center gap-1.5 shadow"
                     >
                       <Award className="w-4 h-4" /> Take Final Assessment
@@ -349,9 +465,20 @@ export const CourseDetailPage: React.FC = () => {
         <AssessmentModal
           courseId={course.id}
           courseTitle={course.title}
-          onClose={() => setShowAssessment(false)}
+          moduleId={activeQuizModule?.id}
+          moduleTitle={activeQuizModule?.title}
+          onClose={() => {
+            setShowAssessment(false);
+            setActiveQuizModule(null);
+          }}
           onAssessmentPassed={(newCert) => {
-            setCertificate(newCert);
+            if (activeQuizModule) {
+              setCompletedModules((prev) => new Set([...prev, activeQuizModule.id]));
+            }
+            if (newCert) {
+              setCertificate(newCert);
+              setShowCertificate(true);
+            }
             loadCourseDetails();
           }}
         />

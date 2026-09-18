@@ -7,13 +7,17 @@ export class AssessmentController {
   static async getCourseAssessment(req: AuthenticatedRequest, res: Response) {
     try {
       const courseId = String(req.params.courseId);
+      const moduleId = req.query.moduleId ? String(req.query.moduleId) : null;
 
-      const assessment = await prisma.assessment.findUnique({
-        where: { courseId },
+      const assessment = await prisma.assessment.findFirst({
+        where: {
+          courseId,
+          ...(moduleId ? { moduleId } : {}),
+        },
       });
 
       if (!assessment) {
-        return res.status(404).json({ error: 'No assessment found for this course' });
+        return res.status(404).json({ error: 'No assessment found for this course or module' });
       }
 
       const questions: AssessmentQuestion[] = JSON.parse(assessment.questions || '[]');
@@ -42,6 +46,7 @@ export class AssessmentController {
       return res.json({
         id: assessment.id,
         courseId: assessment.courseId,
+        moduleId: assessment.moduleId,
         passThreshold: assessment.passThreshold,
         totalQuestions: questions.length,
         questions: sanitizedQuestions,
@@ -60,24 +65,40 @@ export class AssessmentController {
       }
 
       const courseId = String(req.params.courseId);
-      const { passThreshold = 70, questions } = req.body;
+      const { passThreshold = 70, questions, moduleId } = req.body;
 
       if (!Array.isArray(questions) || questions.length === 0) {
         return res.status(400).json({ error: 'At least one assessment question is required' });
       }
 
-      const assessment = await prisma.assessment.upsert({
-        where: { courseId },
-        create: {
+      const targetModuleId = moduleId ? String(moduleId) : null;
+
+      const existing = await prisma.assessment.findFirst({
+        where: {
           courseId,
-          passThreshold,
-          questions: JSON.stringify(questions),
-        },
-        update: {
-          passThreshold,
-          questions: JSON.stringify(questions),
+          moduleId: targetModuleId,
         },
       });
+
+      let assessment;
+      if (existing) {
+        assessment = await prisma.assessment.update({
+          where: { id: existing.id },
+          data: {
+            passThreshold,
+            questions: JSON.stringify(questions),
+          },
+        });
+      } else {
+        assessment = await prisma.assessment.create({
+          data: {
+            courseId,
+            moduleId: targetModuleId,
+            passThreshold,
+            questions: JSON.stringify(questions),
+          },
+        });
+      }
 
       return res.json({
         message: 'Assessment configured successfully',
@@ -159,114 +180,189 @@ export class AssessmentController {
 
       let certificate = null;
       let profileUpdated = false;
+      let isAllCompleted = false;
+      let updatedProgressPercent = 100;
+      let completedModulesList: string[] = [];
 
-      // On Pass: complete enrollment, update competency profile, issue certificate
+      // On Pass: complete module or entire course
       if (passed) {
-        // 1. Complete Enrollment
-        await prisma.enrollment.upsert({
-          where: {
-            userId_courseId: {
-              userId: req.user.userId,
-              courseId: assessment.courseId,
+        if (assessment.moduleId) {
+          // 1. Module-level Assessment Passed
+          let enrollment = await prisma.enrollment.findUnique({
+            where: {
+              userId_courseId: {
+                userId: req.user.userId,
+                courseId: assessment.courseId,
+              },
             },
-          },
-          create: {
-            userId: req.user.userId,
-            courseId: assessment.courseId,
-            status: 'completed',
-            progressPercent: 100,
-            completedAt: new Date(),
-          },
-          update: {
-            status: 'completed',
-            progressPercent: 100,
-            completedAt: new Date(),
-          },
-        });
+          });
 
-        // 2. Elevate Learner's Competency Profile
-        const userProfile = await prisma.competencyProfile.findUnique({
-          where: { userId: req.user.userId },
-        });
+          if (enrollment && enrollment.completedModules) {
+            try {
+              completedModulesList = JSON.parse(enrollment.completedModules);
+            } catch (e) {
+              completedModulesList = [];
+            }
+          }
 
-        let currentSkills: SkillRating[] = [];
-        if (userProfile && userProfile.skills) {
+          if (!completedModulesList.includes(assessment.moduleId)) {
+            completedModulesList.push(assessment.moduleId);
+          }
+
+          let totalModules: any[] = [];
           try {
-            currentSkills = JSON.parse(userProfile.skills);
+            totalModules = JSON.parse(assessment.course.modules || '[]');
           } catch (e) {
-            currentSkills = [];
+            totalModules = [];
           }
-        }
 
-        const skillMap = new Map<string, SkillRating>();
-        currentSkills.forEach((s) => skillMap.set(s.competencyId, s));
+          const totalCount = totalModules.length || 1;
+          updatedProgressPercent = Math.min(100, Math.round((completedModulesList.length / totalCount) * 100));
+          isAllCompleted = updatedProgressPercent === 100 || completedModulesList.length >= totalCount;
 
-        for (const tag of assessment.course.competencyTags) {
-          const existing = skillMap.get(tag.competencyId);
-          const targetLevel = tag.targetLevel || 3;
-          if (existing) {
-            // Elevate level up to target level, minimum +1
-            existing.currentLevel = Math.min(5, Math.max(existing.currentLevel + 1, targetLevel));
-          } else {
-            skillMap.set(tag.competencyId, {
-              competencyId: tag.competencyId,
-              competencyName: tag.competency.name,
-              currentLevel: targetLevel,
-            });
-          }
-        }
-
-        const newSkills = Array.from(skillMap.values());
-        await prisma.competencyProfile.upsert({
-          where: { userId: req.user.userId },
-          create: {
-            userId: req.user.userId,
-            skills: JSON.stringify(newSkills),
-          },
-          update: {
-            skills: JSON.stringify(newSkills),
-          },
-        });
-        profileUpdated = true;
-
-        // 3. Issue Certificate
-        const certNumber = `MOES-CC-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
-        const verificationHash = crypto
-          .createHash('sha256')
-          .update(`${req.user.userId}:${assessment.courseId}:${certNumber}:${Date.now()}`)
-          .digest('hex');
-
-        certificate = await prisma.certificate.upsert({
-          where: {
-            userId_courseId: {
+          await prisma.enrollment.upsert({
+            where: {
+              userId_courseId: {
+                userId: req.user.userId,
+                courseId: assessment.courseId,
+              },
+            },
+            create: {
               userId: req.user.userId,
               courseId: assessment.courseId,
+              status: isAllCompleted ? 'completed' : 'in_progress',
+              progressPercent: updatedProgressPercent,
+              completedModules: JSON.stringify(completedModulesList),
+              completedAt: isAllCompleted ? new Date() : null,
             },
-          },
-          create: {
-            userId: req.user.userId,
-            courseId: assessment.courseId,
-            certificateNumber: certNumber,
-            verificationHash,
-            certificateUrl: `/certificates/${certNumber}.pdf`,
-          },
-          update: {
-            // keep existing cert if already issued
-          },
-          include: {
-            course: true,
-            user: { select: { name: true, department: true } },
-          },
-        });
+            update: {
+              status: isAllCompleted ? 'completed' : 'in_progress',
+              progressPercent: updatedProgressPercent,
+              completedModules: JSON.stringify(completedModulesList),
+              completedAt: isAllCompleted ? new Date() : null,
+            },
+          });
+        } else {
+          // Course-level Assessment Passed
+          isAllCompleted = true;
+          await prisma.enrollment.upsert({
+            where: {
+              userId_courseId: {
+                userId: req.user.userId,
+                courseId: assessment.courseId,
+              },
+            },
+            create: {
+              userId: req.user.userId,
+              courseId: assessment.courseId,
+              status: 'completed',
+              progressPercent: 100,
+              completedAt: new Date(),
+            },
+            update: {
+              status: 'completed',
+              progressPercent: 100,
+              completedAt: new Date(),
+            },
+          });
+        }
+
+        // If whole course completed (all module quizzes or final exam passed)
+        if (isAllCompleted) {
+          // Elevate Learner's Competency Profile
+          const userProfile = await prisma.competencyProfile.findUnique({
+            where: { userId: req.user.userId },
+          });
+
+          let currentSkills: SkillRating[] = [];
+          if (userProfile && userProfile.skills) {
+            try {
+              currentSkills = JSON.parse(userProfile.skills);
+            } catch (e) {
+              currentSkills = [];
+            }
+          }
+
+          const skillMap = new Map<string, SkillRating>();
+          currentSkills.forEach((s) => skillMap.set(s.competencyId, s));
+
+          for (const tag of assessment.course.competencyTags) {
+            const existing = skillMap.get(tag.competencyId);
+            const targetLevel = tag.targetLevel || 3;
+            if (existing) {
+              existing.currentLevel = Math.min(5, Math.max(existing.currentLevel + 1, targetLevel));
+            } else {
+              skillMap.set(tag.competencyId, {
+                competencyId: tag.competencyId,
+                competencyName: tag.competency.name,
+                currentLevel: targetLevel,
+              });
+            }
+          }
+
+          const newSkills = Array.from(skillMap.values());
+          await prisma.competencyProfile.upsert({
+            where: { userId: req.user.userId },
+            create: {
+              userId: req.user.userId,
+              skills: JSON.stringify(newSkills),
+            },
+            update: {
+              skills: JSON.stringify(newSkills),
+            },
+          });
+          profileUpdated = true;
+
+          // Issue Certificate
+          const certNumber = `MOES-CC-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+          const verificationHash = crypto
+            .createHash('sha256')
+            .update(`${req.user.userId}:${assessment.courseId}:${certNumber}:${Date.now()}`)
+            .digest('hex');
+
+          certificate = await prisma.certificate.upsert({
+            where: {
+              userId_courseId: {
+                userId: req.user.userId,
+                courseId: assessment.courseId,
+              },
+            },
+            create: {
+              userId: req.user.userId,
+              courseId: assessment.courseId,
+              certificateNumber: certNumber,
+              verificationHash,
+              certificateUrl: `/certificates/${certNumber}.pdf`,
+            },
+            update: {
+              // keep existing cert if already issued
+            },
+            include: {
+              course: true,
+              user: { select: { name: true, department: true } },
+            },
+          });
+        }
+      }
+
+      let outcomeMessage = 'Assessment completed. You did not meet the pass threshold. Please review the materials and try again.';
+      if (passed) {
+        if (isAllCompleted) {
+          outcomeMessage = 'Outstanding! You completed all modules, passed the assessment, and earned your official Certificate of Competency!';
+        } else {
+          outcomeMessage = 'Congratulations! You passed the module assessment and advanced your learning progress.';
+        }
       }
 
       return res.json({
-        message: passed
-          ? 'Congratulations! You passed the assessment and earned a certificate.'
-          : 'Assessment completed. You did not meet the pass threshold. Please review the course materials and try again.',
+        message: outcomeMessage,
         score,
         passThreshold: assessment.passThreshold,
         passed,
+        moduleId: assessment.moduleId,
+        isAllCompleted,
+        progressPercent: updatedProgressPercent,
+        completedModules: completedModulesList,
         totalQuestions: questions.length,
         correctAnswers: correctCount,
         gradedQuestions,

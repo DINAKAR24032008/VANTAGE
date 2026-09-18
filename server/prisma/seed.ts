@@ -80,6 +80,14 @@ async function main() {
     },
   });
 
+  const compPython = await prisma.competency.create({
+    data: {
+      name: 'Python Programming & Scientific Computing',
+      category: 'Data Systems & Geoinformatics',
+      description: 'Foundational programming in Python: syntax, data structures, functional patterns, file I/O, and scientific packages for Earth Sciences.',
+    },
+  });
+
   // 2. Create Role Competency Requirements (Static Matrices)
   console.log('Creating Role Competency Matrices...');
   await prisma.roleCompetencyRequirement.create({
@@ -91,6 +99,7 @@ async function main() {
         { competencyId: compNWP.id, competencyName: compNWP.name, requiredLevel: 4, weight: 1.5 },
         { competencyId: compGIS.id, competencyName: compGIS.name, requiredLevel: 3, weight: 1.0 },
         { competencyId: compHPC.id, competencyName: compHPC.name, requiredLevel: 3, weight: 1.0 },
+        { competencyId: compPython.id, competencyName: compPython.name, requiredLevel: 3, weight: 1.2 },
       ]),
     },
   });
@@ -104,6 +113,7 @@ async function main() {
         { competencyId: compGIS.id, competencyName: compGIS.name, requiredLevel: 4, weight: 1.2 },
         { competencyId: compDeepSea.id, competencyName: compDeepSea.name, requiredLevel: 3, weight: 1.0 },
         { competencyId: compHPC.id, competencyName: compHPC.name, requiredLevel: 3, weight: 1.0 },
+        { competencyId: compPython.id, competencyName: compPython.name, requiredLevel: 4, weight: 1.5 },
       ]),
     },
   });
@@ -140,6 +150,7 @@ async function main() {
         { competencyId: compRadar.id, competencyName: compRadar.name, requiredLevel: 4, weight: 1.2 },
         { competencyId: compGIS.id, competencyName: compGIS.name, requiredLevel: 4, weight: 1.3 },
         { competencyId: compNWP.id, competencyName: compNWP.name, requiredLevel: 3, weight: 1.0 },
+        { competencyId: compPython.id, competencyName: compPython.name, requiredLevel: 3, weight: 1.2 },
       ]),
     },
   });
@@ -199,6 +210,7 @@ async function main() {
         { competencyId: compNWP.id, competencyName: compNWP.name, currentLevel: 1 },
         { competencyId: compGIS.id, competencyName: compGIS.name, currentLevel: 2 },
         { competencyId: compHPC.id, competencyName: compHPC.name, currentLevel: 1 },
+        { competencyId: compPython.id, competencyName: compPython.name, currentLevel: 1 },
       ]),
     },
   });
@@ -221,6 +233,7 @@ async function main() {
         { competencyId: compGIS.id, competencyName: compGIS.name, currentLevel: 2 },
         { competencyId: compDeepSea.id, competencyName: compDeepSea.name, currentLevel: 2 },
         { competencyId: compHPC.id, competencyName: compHPC.name, currentLevel: 2 },
+        { competencyId: compPython.id, competencyName: compPython.name, currentLevel: 2 },
       ]),
     },
   });
@@ -263,6 +276,7 @@ async function main() {
         { competencyId: compDeepSea.id, competencyName: compDeepSea.name, currentLevel: 1 },
         { competencyId: compOceanTsunami.id, competencyName: compOceanTsunami.name, currentLevel: 2 },
         { competencyId: compGIS.id, competencyName: compGIS.name, currentLevel: 1 },
+        { competencyId: compPython.id, competencyName: compPython.name, currentLevel: 1 },
       ]),
     },
   });
@@ -284,6 +298,7 @@ async function main() {
         { competencyId: compRadar.id, competencyName: compRadar.name, currentLevel: 3 },
         { competencyId: compGIS.id, competencyName: compGIS.name, currentLevel: 3 },
         { competencyId: compNWP.id, competencyName: compNWP.name, currentLevel: 1 },
+        { competencyId: compPython.id, competencyName: compPython.name, currentLevel: 1 },
       ]),
     },
   });
@@ -640,6 +655,401 @@ async function main() {
     },
   });
 
+  // Course 7 - Introduction to Python (Modular with per-module video & quizzes)
+  console.log('Creating Course 7: Introduction to Python...');
+  const course7 = await prisma.course.create({
+    data: {
+      title: 'Introduction to Python',
+      description: 'A beginner-friendly course covering Python fundamentals — syntax, data types, control flow, functions, and basic data structures. Aimed at learners with no prior programming background, providing the coding foundation needed for scientific data analysis in Earth Sciences.',
+      difficultyLevel: 'Beginner',
+      trainerId: trainerMet.id,
+      contentUrl: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&w=1200&q=80',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&w=600&q=80',
+      modules: JSON.stringify([
+        {
+          id: 'mod-py-1',
+          title: 'Python Setup & Basics',
+          durationMinutes: 45,
+          order: 1,
+          videoUrl: 'https://www.youtube.com/watch?v=_uQrJ0TkZlc',
+          contentMarkdown: '# Module 1: Python Setup & Basics\n\nWelcome to **Introduction to Python**! In this module, you will learn the role of Python in modern Earth and Atmospheric sciences, how to install Python 3, configure your development environment, and write your first Python statements.\n\n### Key Topics:\n- Installing Python 3 & VS Code\n- Python Interactive Shell (REPL)\n- Comments, indentation, and code formatting\n- Built-in `print()` and `input()` functions\n- Writing and executing your first `.py` script',
+        },
+        {
+          id: 'mod-py-2',
+          title: 'Variables & Data Types',
+          durationMinutes: 50,
+          order: 2,
+          videoUrl: 'https://www.youtube.com/watch?v=khKv-8q7YmY',
+          contentMarkdown: '# Module 2: Variables & Data Types\n\nUnderstand how Python stores information in memory. Learn the dynamic typing system, scalar data types, type casting, and string formatting techniques crucial for processing meteorological and oceanographic observations.\n\n### Key Topics:\n- Integers, Floats, Booleans, and Strings\n- Dynamic typing and variable naming conventions\n- Arithmetic, logical, and comparison operators\n- Type conversion functions: `int()`, `float()`, `str()`\n- String concatenation and f-strings (`f"Temperature: {temp}°C"`)',
+        },
+        {
+          id: 'mod-py-3',
+          title: 'Control Flow (Conditionals & Loops)',
+          durationMinutes: 55,
+          order: 3,
+          videoUrl: 'https://www.youtube.com/watch?v=6iF8Xb7Z3wQ',
+          contentMarkdown: '# Module 3: Control Flow (Conditionals & Loops)\n\nLearn how to direct the flow of execution in your programs using decision structures and iteration. Automate repetitive tasks such as iterating over weather sensor records and evaluating storm warning thresholds.\n\n### Key Topics:\n- `if`, `elif`, and `else` conditional branching\n- Iteration with `for` loops and `range()`\n- `while` loops and sentinel conditions\n- Loop control: `break`, `continue`, and `pass`\n- Nested control structures and list iterations',
+        },
+        {
+          id: 'mod-py-4',
+          title: 'Functions & Scope',
+          durationMinutes: 50,
+          order: 4,
+          videoUrl: 'https://www.youtube.com/watch?v=9Os0o3wzS_I',
+          contentMarkdown: '# Module 4: Functions & Scope\n\nMaster the creation of modular, reusable code blocks. Functions form the backbone of analytical pipelines in scientific workflows, enabling clean separation of concerns and reproducible science.\n\n### Key Topics:\n- Defining functions using `def` and returning values with `return`\n- Positional, keyword, and default parameters\n- Variable length arguments (`*args` and `**kwargs`)\n- Variable scope: Local, Enclosing, Global, and Built-in (LEGB rule)\n- Docstrings and type hinting basics',
+        },
+        {
+          id: 'mod-py-5',
+          title: 'Data Structures (Lists, Tuples, Dictionaries, Sets)',
+          durationMinutes: 60,
+          order: 5,
+          videoUrl: 'https://www.youtube.com/watch?v=R-HLU9Fl5ug',
+          contentMarkdown: '# Module 5: Data Structures\n\nOrganize, store, and manipulate collections of data using Python versatile built-in container types. Learn the differences between mutable and immutable collections and when to use each for geospatial datasets.\n\n### Key Topics:\n- Lists: indexing, slicing, methods (`append`, `pop`, `sort`), and list comprehensions\n- Tuples: immutability, tuple packing and unpacking\n- Dictionaries: key-value mapping, dict methods (`.keys()`, `.values()`, `.items()`, `.get()`)\n- Sets: unique membership, mathematical set operations (union, intersection, difference)\n- Time complexity trade-offs for collections',
+        },
+        {
+          id: 'mod-py-6',
+          title: 'File Handling & Intro to Object-Oriented Programming',
+          durationMinutes: 60,
+          order: 6,
+          videoUrl: 'https://www.youtube.com/watch?v=JeznW_7DlB0',
+          contentMarkdown: '# Module 6: File Handling & Intro to OOP\n\nConclude the foundational course by reading from and writing to disk files (CSV, TXT), managing resources safely with context managers, and getting a hands-on introduction to classes and object-oriented design.\n\n### Key Topics:\n- Safe file handling using `with open(..., mode) as f:`\n- Reading line-by-line, `.read()`, and `.readlines()`\n- Exception handling fundamentals: `try`, `except`, `finally`\n- Defining classes, attributes, and `__init__` constructors\n- Creating objects and invoking instance methods',
+        },
+      ]),
+      competencyTags: {
+        create: [
+          { competencyId: compPython.id, targetLevel: 3 },
+          { competencyId: compGIS.id, targetLevel: 1 },
+        ],
+      },
+    },
+  });
+
+  // Module 1 Quiz (5 questions)
+  await prisma.assessment.create({
+    data: {
+      courseId: course7.id,
+      moduleId: 'mod-py-1',
+      passThreshold: 70,
+      questions: JSON.stringify([
+        {
+          id: 'py1-q1',
+          question: 'Which terminal command displays the currently installed version of Python 3?',
+          options: ['python --version', 'python -getversion', 'py.status()', 'pip check version'],
+          correctIndex: 0,
+          explanation: 'Running `python --version` (or `python3 --version`) in your terminal prints the installed Python version.',
+        },
+        {
+          id: 'py1-q2',
+          question: 'How do you create a single-line comment in a Python script?',
+          options: ['// This is a comment', '# This is a comment', '/* This is a comment */', '-- This is a comment'],
+          correctIndex: 1,
+          explanation: 'In Python, single-line comments begin with the hash character `#`.',
+        },
+        {
+          id: 'py1-q3',
+          question: 'Which of the following is an INVALID variable name in Python?',
+          options: ['radar_reading_1', '_sensor_id', '2nd_station', 'stationDepth'],
+          correctIndex: 2,
+          explanation: 'Python variable names cannot start with a digit (e.g., `2nd_station` triggers a SyntaxError).',
+        },
+        {
+          id: 'py1-q4',
+          question: 'What is the return data type of the built-in input() function in Python 3?',
+          options: ['int', 'str', 'float', 'None'],
+          correctIndex: 1,
+          explanation: 'The `input()` function always reads input from the user as a string (`str`).',
+        },
+        {
+          id: 'py1-q5',
+          question: 'What is the standard indentation level recommended by the official Python PEP 8 style guide?',
+          options: ['2 spaces', '4 spaces', '1 tab character', '8 spaces'],
+          correctIndex: 1,
+          explanation: 'PEP 8 recommends 4 spaces per indentation level rather than tabs or 2 spaces.',
+        },
+      ]),
+    },
+  });
+
+  // Module 2 Quiz (5 questions)
+  await prisma.assessment.create({
+    data: {
+      courseId: course7.id,
+      moduleId: 'mod-py-2',
+      passThreshold: 70,
+      questions: JSON.stringify([
+        {
+          id: 'py2-q1',
+          question: 'What is the result of type(1013.25) in Python?',
+          options: ["<class 'int'>", "<class 'float'>", "<class 'double'>", "<class 'decimal'>"],
+          correctIndex: 1,
+          explanation: 'Numbers with a fractional decimal part are represented by the `float` type in Python.',
+        },
+        {
+          id: 'py2-q2',
+          question: 'What are the outputs of floor division (17 // 5) and modulo (17 % 5)?',
+          options: ['3.4 and 2', '3 and 2', '3 and 0.4', '4 and 2'],
+          correctIndex: 1,
+          explanation: '`17 // 5` performs floor division yielding integer `3`, and `17 % 5` computes the remainder `2`.',
+        },
+        {
+          id: 'py2-q3',
+          question: 'What happens if you execute: greeting = "MoES " + 2026 ?',
+          options: [
+            'greeting is assigned "MoES 2026"',
+            'Raises a TypeError because Python does not automatically coerce integers to strings in concatenation',
+            'greeting is assigned "MoES "',
+            'greeting is assigned 2026',
+          ],
+          correctIndex: 1,
+          explanation: 'Python is strongly typed and will raise `TypeError: can only concatenate str (not "int") to str`. Use `str(2026)` or f-strings.',
+        },
+        {
+          id: 'py2-q4',
+          question: 'Which f-string expression correctly formats a float temp = 28.6789 to exactly 2 decimal places?',
+          options: ['f"{temp:2d}"', 'f"{temp:.2f}"', 'f"{round(temp, 2):format}"', 'f"{temp%2}"'],
+          correctIndex: 1,
+          explanation: 'The format specifier `:.2f` rounds and formats floating-point values to 2 decimal places.',
+        },
+        {
+          id: 'py2-q5',
+          question: 'Which of the following values evaluates to False when passed to bool()?',
+          options: ['bool("0")', 'bool([0])', 'bool("")', 'bool(-1)'],
+          correctIndex: 2,
+          explanation: 'An empty string `""` is falsy in Python; non-empty strings and non-empty lists evaluate to True.',
+        },
+      ]),
+    },
+  });
+
+  // Module 3 Quiz (5 questions)
+  await prisma.assessment.create({
+    data: {
+      courseId: course7.id,
+      moduleId: 'mod-py-3',
+      passThreshold: 70,
+      questions: JSON.stringify([
+        {
+          id: 'py3-q1',
+          question: 'What is the output of list(range(2, 11, 3))?',
+          options: ['[2, 5, 8, 11]', '[2, 5, 8]', '[3, 6, 9]', '[2, 4, 6, 8, 10]'],
+          correctIndex: 1,
+          explanation: '`range(start, stop, step)` generates values up to but NOT including stop: 2, 5, 8.',
+        },
+        {
+          id: 'py3-q2',
+          question: 'What is the function of the break statement within a loop?',
+          options: [
+            'Skips the rest of the current iteration and advances to the next',
+            'Immediately exits the innermost enclosing loop',
+            'Restarts the loop from the beginning',
+            'Terminates the entire Python program',
+          ],
+          correctIndex: 1,
+          explanation: '`break` terminates the execution of the nearest enclosing `for` or `while` loop.',
+        },
+        {
+          id: 'py3-q3',
+          question: 'What does this loop print?\nfor i in range(5):\n    if i == 2:\n        continue\n    print(i, end=" ")',
+          options: ['0 1', '0 1 2 3 4', '0 1 3 4 ', '2 3 4'],
+          correctIndex: 2,
+          explanation: 'When `i == 2`, `continue` skips the `print` statement and jumps to the next iteration.',
+        },
+        {
+          id: 'py3-q4',
+          question: 'Which Python keyword is used as a placeholder to create an empty code block without syntax errors?',
+          options: ['empty', 'void', 'pass', 'null'],
+          correctIndex: 2,
+          explanation: '`pass` is a null statement used as a syntactic placeholder where code is syntactically required.',
+        },
+        {
+          id: 'py3-q5',
+          question: 'How is the expression True or False and False evaluated in Python?',
+          options: [
+            'True, because and has higher precedence than or',
+            'False, because or is evaluated before and',
+            'False, because evaluation is strictly left-to-right',
+            'SyntaxError due to missing parentheses',
+          ],
+          correctIndex: 0,
+          explanation: '`and` binds tighter than `or`. Thus `False and False` is evaluated first to `False`, then `True or False` evaluates to `True`.',
+        },
+      ]),
+    },
+  });
+
+  // Module 4 Quiz (5 questions)
+  await prisma.assessment.create({
+    data: {
+      courseId: course7.id,
+      moduleId: 'mod-py-4',
+      passThreshold: 70,
+      questions: JSON.stringify([
+        {
+          id: 'py4-q1',
+          question: 'Which keyword is used to declare a function in Python?',
+          options: ['function', 'fun', 'def', 'define'],
+          correctIndex: 2,
+          explanation: 'Functions in Python are declared with the `def` keyword followed by the function name and parentheses.',
+        },
+        {
+          id: 'py4-q2',
+          question: 'What does a Python function return if it executes to completion without an explicit return statement?',
+          options: ['0', 'False', '"" (empty string)', 'None'],
+          correctIndex: 3,
+          explanation: 'Functions without an explicit `return` automatically return the singleton object `None`.',
+        },
+        {
+          id: 'py4-q3',
+          question: 'In def calibrate(sensor, offset=0.0):, what is offset called?',
+          options: ['A required positional argument', 'A default (keyword) parameter', 'A global constant', 'A pointer parameter'],
+          correctIndex: 1,
+          explanation: '`offset=0.0` defines a parameter with a default value, making it optional when invoking the function.',
+        },
+        {
+          id: 'py4-q4',
+          question: 'What does the LEGB rule describe in Python scoping?',
+          options: [
+            'List, Element, Global, Boolean order of operations',
+            'Local, Enclosing, Global, Built-in scope lookup priority',
+            'Linear Equation Gradient Balancing algorithm',
+            'Loop Execution Guidance Boundary',
+          ],
+          correctIndex: 1,
+          explanation: 'Python resolves variable names following the LEGB order: Local, Enclosing function locals, Global (module), and Built-in.',
+        },
+        {
+          id: 'py4-q5',
+          question: 'What does placing *args in a function parameter list accomplish?',
+          options: [
+            'Forces arguments to be passed as keyword-only pairs',
+            'Packs any number of extra positional arguments into a tuple',
+            'Multiplies all incoming numerical arguments',
+            'Converts arguments directly into a dictionary',
+          ],
+          correctIndex: 1,
+          explanation: '`*args` collects arbitrary additional positional arguments passed to the function into a tuple.',
+        },
+      ]),
+    },
+  });
+
+  // Module 5 Quiz (5 questions)
+  await prisma.assessment.create({
+    data: {
+      courseId: course7.id,
+      moduleId: 'mod-py-5',
+      passThreshold: 70,
+      questions: JSON.stringify([
+        {
+          id: 'py5-q1',
+          question: 'What is the output of the list comprehension [x * 2 for x in [1, 2, 3] if x > 1]?',
+          options: ['[2, 4, 6]', '[4, 6]', '[2, 3]', '[4]'],
+          correctIndex: 1,
+          explanation: 'The filter `if x > 1` selects 2 and 3, and `x * 2` yields `[4, 6]`.',
+        },
+        {
+          id: 'py5-q2',
+          question: 'Which of the following statements about Python tuples is TRUE?',
+          options: [
+            'Tuples can be modified in-place using .append()',
+            'Tuples are immutable sequences whose elements cannot be reassigned after creation',
+            'Tuples cannot contain elements of different data types',
+            'Tuples are defined exclusively using square brackets []',
+          ],
+          correctIndex: 1,
+          explanation: 'Tuples are immutable; once created, items cannot be added, removed, or reassigned.',
+        },
+        {
+          id: 'py5-q3',
+          question: 'How can you retrieve the value of key "pressure" from dict station without throwing a KeyError if it is missing?',
+          options: [
+            'station["pressure"]',
+            'station.fetch("pressure")',
+            'station.get("pressure", None)',
+            'station.find("pressure")',
+          ],
+          correctIndex: 2,
+          explanation: 'The `.get(key, default)` method returns the value if the key exists, or the default value (or `None`) if missing.',
+        },
+        {
+          id: 'py5-q4',
+          question: 'Which built-in Python collection stores only unique, unordered elements?',
+          options: ['list', 'tuple', 'set', 'dict_values'],
+          correctIndex: 2,
+          explanation: 'A `set` automatically deduplicates items and provides O(1) average lookup time for membership testing.',
+        },
+        {
+          id: 'py5-q5',
+          question: 'Given the list readings = [12, 24, 36, 48, 60], what is the result of readings[1:4]?',
+          options: ['[12, 24, 36]', '[24, 36, 48]', '[24, 36, 48, 60]', '[36, 48]'],
+          correctIndex: 1,
+          explanation: 'Slicing `readings[1:4]` starts at index 1 (24) and stops before index 4 (48), producing `[24, 36, 48]`.',
+        },
+      ]),
+    },
+  });
+
+  // Module 6 Quiz (5 questions)
+  await prisma.assessment.create({
+    data: {
+      courseId: course7.id,
+      moduleId: 'mod-py-6',
+      passThreshold: 70,
+      questions: JSON.stringify([
+        {
+          id: 'py6-q1',
+          question: 'Why is using "with open(filepath, \'r\') as f:" the recommended way to open files in Python?',
+          options: [
+            'It accelerates disk read speeds by 50%',
+            'It acts as a context manager that guarantees the file is closed automatically, even if exceptions occur',
+            'It prevents the file from ever being modified',
+            'It automatically parses CSV files into lists',
+          ],
+          correctIndex: 1,
+          explanation: 'The `with` statement utilizes context management to ensure `f.close()` is executed reliably upon exiting the block.',
+        },
+        {
+          id: 'py6-q2',
+          question: 'Which file open mode appends new data to the end of a file without overwriting existing content?',
+          options: ["'r'", "'w'", "'a'", "'x'"],
+          correctIndex: 2,
+          explanation: "Mode `'a'` (append) writes data to the end of the file, preserving any prior file contents.",
+        },
+        {
+          id: 'py6-q3',
+          question: 'In a Python class, what does the first parameter self represent in an instance method?',
+          options: [
+            'The class blueprint itself',
+            'The specific instance of the class on which the method is called',
+            'A global pointer to the Python runtime',
+            'A keyword for static memory allocation',
+          ],
+          correctIndex: 1,
+          explanation: '`self` represents the instance of the class, allowing access to instance attributes and methods.',
+        },
+        {
+          id: 'py6-q4',
+          question: 'What is the name of the constructor method in a Python class that initializes new object instances?',
+          options: ['__construct__', '__new__', '__init__', '__start__'],
+          correctIndex: 2,
+          explanation: '`__init__` is the initialization method invoked automatically when a new instance of a class is created.',
+        },
+        {
+          id: 'py6-q5',
+          question: 'In a try...except...finally block, when does the finally block execute?',
+          options: [
+            'Only if an exception is successfully caught by an except block',
+            'Only if NO exceptions occurred in the try block',
+            'Always, regardless of whether an exception was raised or handled',
+            'Never, unless explicitly invoked with finally()',
+          ],
+          correctIndex: 2,
+          explanation: 'The `finally` clause always executes before exiting the `try` construct, making it ideal for cleanup actions.',
+        },
+      ]),
+    },
+  });
+
   // 6. Seed Realistic Enrollments, Completed Courses & Certificates for Analytics
   console.log('Seeding Enrollments, Attempts & Official Certificates...');
 
@@ -670,7 +1080,7 @@ async function main() {
   await prisma.assessmentAttempt.create({
     data: {
       userId: learner2.id,
-      assessmentId: (await prisma.assessment.findUnique({ where: { courseId: course3.id } }))!.id,
+      assessmentId: (await prisma.assessment.findFirst({ where: { courseId: course3.id } }))!.id,
       score: 100,
       passed: true,
       answers: JSON.stringify([0, 1]),

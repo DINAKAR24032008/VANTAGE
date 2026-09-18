@@ -6,13 +6,17 @@ import { CheckCircle2, XCircle, AlertCircle, Award, Check, ChevronRight, X } fro
 interface Props {
   courseId: string;
   courseTitle: string;
+  moduleId?: string;
+  moduleTitle?: string;
   onClose: () => void;
-  onAssessmentPassed: (cert: any) => void;
+  onAssessmentPassed: (cert: any, result?: AssessmentAttemptResult) => void;
 }
 
 export const AssessmentModal: React.FC<Props> = ({
   courseId,
   courseTitle,
+  moduleId,
+  moduleTitle,
   onClose,
   onAssessmentPassed,
 }) => {
@@ -26,16 +30,19 @@ export const AssessmentModal: React.FC<Props> = ({
 
   useEffect(() => {
     fetchAssessment();
-  }, [courseId]);
+  }, [courseId, moduleId]);
 
   const fetchAssessment = async () => {
     try {
       setIsLoading(true);
-      const res = await api.get(`/assessments/course/${courseId}`);
+      const url = moduleId
+        ? `/assessments/course/${courseId}?moduleId=${moduleId}`
+        : `/assessments/course/${courseId}`;
+      const res = await api.get(url);
       setAssessment(res.data);
       setQuestions(res.data.questions || []);
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Failed to load assessment for this course.');
+      setError(err.response?.data?.error || 'Failed to load assessment questions.');
     } finally {
       setIsLoading(false);
     }
@@ -65,12 +72,13 @@ export const AssessmentModal: React.FC<Props> = ({
 
       const res = await api.post(`/assessments/${assessment.id}/attempt`, {
         answers: answersArray,
+        moduleId: moduleId || assessment.moduleId || undefined,
       });
 
       setResult(res.data);
 
-      if (res.data.passed && res.data.certificate) {
-        onAssessmentPassed(res.data.certificate);
+      if (res.data.passed) {
+        onAssessmentPassed(res.data.certificate, res.data);
       }
     } catch (err: any) {
       setError(err.response?.data?.error || 'Failed to submit assessment attempt.');
@@ -86,7 +94,7 @@ export const AssessmentModal: React.FC<Props> = ({
         <div className="bg-slate-900 text-white p-5 flex items-center justify-between border-b border-slate-800">
           <div>
             <span className="text-[10px] uppercase font-mono text-emerald-400 font-bold tracking-wider">
-              Competency Evaluation Quiz
+              {moduleTitle ? `Module Quiz • ${moduleTitle}` : 'Competency Evaluation Quiz'}
             </span>
             <h3 className="text-base font-bold text-white line-clamp-1">{courseTitle}</h3>
           </div>

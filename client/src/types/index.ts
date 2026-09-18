@@ -105,6 +105,11 @@ export interface Course {
     id: string;
     passThreshold: number;
   } | null;
+  assessments?: {
+    id: string;
+    moduleId?: string | null;
+    passThreshold: number;
+  }[];
 }
 
 export interface Enrollment {

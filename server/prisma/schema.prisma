@@ -61,7 +61,7 @@ model Course {
   createdAt       DateTime              @default(now())
   competencyTags  CourseCompetencyTag[]
   enrollments     Enrollment[]
-  assessment      Assessment?
+  assessments     Assessment[]
   certificates    Certificate[]
   forumPosts      ForumPost[]
 }
@@ -94,11 +94,14 @@ model Enrollment {
 
 model Assessment {
   id            String              @id @default(uuid())
-  courseId      String              @unique
+  courseId      String
+  moduleId      String?             // null for course-level assessment, or moduleId for per-module quiz
   passThreshold Int                 @default(70) // Percentage (e.g. 70%)
   questions     String              // JSON string: [{ id, question, options: string[], correctIndex: number, explanation?: string }]
   course        Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
   attempts      AssessmentAttempt[]
+
+  @@index([courseId, moduleId])
 }
 
 model AssessmentAttempt {

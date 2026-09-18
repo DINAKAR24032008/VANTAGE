@@ -70,7 +70,7 @@ export class EnrollmentController {
             include: {
               trainer: { select: { name: true } },
               competencyTags: { include: { competency: true } },
-              assessment: { select: { id: true, passThreshold: true } },
+              assessments: { select: { id: true, passThreshold: true } },
               certificates: { where: { userId: req.user.userId } },
             },
           },

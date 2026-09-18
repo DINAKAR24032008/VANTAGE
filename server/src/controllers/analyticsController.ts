@@ -50,7 +50,7 @@ export class AnalyticsController {
       const courses = await prisma.course.findMany({
         include: {
           enrollments: true,
-          assessment: {
+          assessments: {
             include: {
               attempts: true,
             },
@@ -64,7 +64,7 @@ export class AnalyticsController {
         const inProgress = course.enrollments.filter((e) => e.status === 'in_progress').length;
         const completionRate = total > 0 ? Math.round((completed / total) * 100) : 0;
 
-        const attempts = course.assessment?.attempts || [];
+        const attempts = course.assessments.flatMap((a) => a.attempts);
         const avgScore =
           attempts.length > 0
             ? Math.round(attempts.reduce((sum, a) => sum + a.score, 0) / attempts.length)

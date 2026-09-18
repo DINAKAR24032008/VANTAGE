@@ -71,11 +71,11 @@ export class CourseController {
               competency: true,
             },
           },
-          assessment: {
+          assessments: {
             select: {
               id: true,
+              moduleId: true,
               passThreshold: true,
-              // Exclude correct answers from questions for student view
             },
           },
           _count: {
@@ -101,8 +101,13 @@ export class CourseController {
         });
       }
 
+      const primaryAssessment =
+        course.assessments.find((a) => !a.moduleId) || course.assessments[0] || null;
+
       return res.json({
         ...course,
+        assessment: primaryAssessment,
+        assessments: course.assessments,
         modules: JSON.parse(course.modules || '[]'),
         enrollmentCount: (course as any)._count?.enrollments || 0,
         userEnrollment: userEnrollment
