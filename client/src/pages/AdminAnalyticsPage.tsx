@@ -125,7 +125,7 @@ export const AdminAnalyticsPage: React.FC = () => {
           <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
             Ministry of Earth Sciences • Executive Oversight
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white mt-1">
+          <h1 className="text-3xl sm:text-4xl font-display italic text-white mt-1 tracking-tight">
             Capacity Building Analytics & Heatmap
           </h1>
           <p className="text-xs sm:text-sm text-slate-400 mt-1 max-w-2xl">

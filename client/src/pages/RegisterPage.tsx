@@ -36,7 +36,7 @@ export const RegisterPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 text-white">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <h2 className="text-3xl font-black text-white tracking-tight">Create Learner Account</h2>
+        <h2 className="text-3xl sm:text-4xl font-display italic text-white tracking-normal">Create Learner Account</h2>
         <p className="mt-1 text-xs text-emerald-400 font-semibold uppercase tracking-wider">
           Vantage • Onboarding
         </p>

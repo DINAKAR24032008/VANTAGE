@@ -73,7 +73,7 @@ export const LoginPage: React.FC = () => {
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 shadow-xl shadow-emerald-500/20 font-extrabold text-3xl mb-4">
           V
         </div>
-        <h2 className="text-3xl font-black tracking-tight text-white">Vantage</h2>
+        <h2 className="text-4xl font-display italic tracking-wide text-white">Vantage</h2>
         <p className="mt-1 text-xs text-emerald-400 font-semibold tracking-wide uppercase">
           Digital Capacity Building & Learning Portal
         </p>

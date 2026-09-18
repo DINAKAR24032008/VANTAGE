@@ -6,6 +6,10 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        display: ['"Instrument Serif"', 'serif'],
+        sans: ['Inter', 'sans-serif'],
+      },
       colors: {
         primary: {
           50: '#f0fdf4',

@@ -97,7 +97,7 @@ export const LearnerDashboard: React.FC = () => {
                 </span>
                 <span className="text-xs text-slate-400">• Designation: {user?.jobRole}</span>
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight">
+              <h1 className="text-3xl sm:text-4xl font-display italic text-white tracking-tight">
                 Welcome back, {user?.name}
               </h1>
               <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl">

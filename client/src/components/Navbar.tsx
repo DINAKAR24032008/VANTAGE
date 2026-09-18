@@ -41,10 +41,10 @@ export const Navbar: React.FC = () => {
                 V
               </div>
               <div>
-                <span className="font-extrabold text-lg tracking-tight text-white block">
+                <span className="font-display italic text-2xl sm:text-[26px] tracking-wide text-white block leading-none">
                   Vantage
                 </span>
-                <p className="text-[11px] text-slate-400 font-medium leading-none mt-0.5">
+                <p className="text-[11px] text-slate-400 font-medium leading-none mt-1">
                   Ministry of Earth Sciences • Smart Education
                 </p>
               </div>

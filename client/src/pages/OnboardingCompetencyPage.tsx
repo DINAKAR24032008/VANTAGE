@@ -116,7 +116,7 @@ export const OnboardingCompetencyPage: React.FC = () => {
               Learner Self-Assessment • MoES Standard
             </span>
           </div>
-          <h1 className="text-2xl font-black text-slate-900">
+          <h1 className="text-3xl sm:text-4xl font-display italic text-slate-900">
             Competency Baseline Assessment
           </h1>
           <p className="text-xs sm:text-sm text-slate-600 mt-1">

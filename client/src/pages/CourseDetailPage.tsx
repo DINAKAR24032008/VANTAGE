@@ -168,7 +168,7 @@ export const CourseDetailPage: React.FC = () => {
                 </span>
               </div>
 
-              <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+              <h1 className="text-3xl sm:text-4xl font-display italic text-white tracking-tight">
                 {course.title}
               </h1>
               <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">

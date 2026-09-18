@@ -182,7 +182,7 @@ export const TrainerManagePage: React.FC = () => {
             <span className="text-[10px] font-mono text-emerald-600 font-bold uppercase tracking-wider">
               Trainer Curriculum Management Console
             </span>
-            <h1 className="text-2xl font-black text-slate-900 mt-1">
+            <h1 className="text-3xl sm:text-4xl font-display italic text-slate-900 mt-1 tracking-tight">
               Curriculum & Course Creator
             </h1>
             <p className="text-xs text-slate-500">

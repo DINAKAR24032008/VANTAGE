@@ -51,7 +51,7 @@ export const CourseCatalogPage: React.FC = () => {
           <span className="text-[10px] font-mono text-emerald-600 font-bold uppercase tracking-wider">
             Ministry of Earth Sciences Curriculum Library
           </span>
-          <h1 className="text-2xl sm:text-3xl font-black text-slate-900 mt-1">
+          <h1 className="text-3xl sm:text-4xl font-display italic text-slate-900 mt-1 tracking-tight">
             Training & Capacity Building Courses
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
