@@ -1,0 +1,8 @@
+node_modules
+dist
+.env
+uploads
+*.log
+*.sqlite
+*.sqlite-journal
+.DS_Store

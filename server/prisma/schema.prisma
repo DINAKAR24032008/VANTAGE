@@ -1,0 +1,142 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String             @id @default(uuid())
+  name         String
+  email        String             @unique
+  passwordHash String
+  role         String             @default("learner") // admin, trainer, learner
+  department   String
+  jobRole      String
+  createdAt    DateTime           @default(now())
+  profile      CompetencyProfile?
+  enrollments  Enrollment[]
+  attempts     AssessmentAttempt[]
+  certificates Certificate[]
+  courses      Course[]           @relation("TrainerCourses")
+  forumPosts   ForumPost[]
+}
+
+model Competency {
+  id          String                @id @default(uuid())
+  name        String                @unique
+  category    String                // Meteorology, Ocean Sciences, Seismology, Data Systems, etc.
+  description String
+  courseTags  CourseCompetencyTag[]
+}
+
+model CompetencyProfile {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  skills    String   // JSON string: [{ competencyId, competencyName, currentLevel }]
+  updatedAt DateTime @updatedAt
+}
+
+model RoleCompetencyRequirement {
+  id           String   @id @default(uuid())
+  jobRole      String   @unique
+  department   String
+  requirements String   // JSON string: [{ competencyId, competencyName, requiredLevel, weight }]
+  updatedAt    DateTime @updatedAt
+}
+
+model Course {
+  id              String                @id @default(uuid())
+  title           String
+  description     String
+  trainerId       String
+  trainer         User                  @relation("TrainerCourses", fields: [trainerId], references: [id])
+  contentUrl      String?               // Primary video/file URL or mock S3 URL
+  thumbnailUrl    String?
+  modules         String                // JSON string: [{ id, title, duration, videoUrl, notes, order }]
+  difficultyLevel String                @default("Beginner") // Beginner, Intermediate, Advanced
+  createdAt       DateTime              @default(now())
+  competencyTags  CourseCompetencyTag[]
+  enrollments     Enrollment[]
+  assessment      Assessment?
+  certificates    Certificate[]
+  forumPosts      ForumPost[]
+}
+
+model CourseCompetencyTag {
+  id           String     @id @default(uuid())
+  courseId     String
+  competencyId String
+  targetLevel  Int        @default(1) // Level this course elevates the learner to (1-5)
+  course       Course     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  competency   Competency @relation(fields: [competencyId], references: [id], onDelete: Cascade)
+
+  @@unique([courseId, competencyId])
+}
+
+model Enrollment {
+  id               String    @id @default(uuid())
+  userId           String
+  courseId         String
+  status           String    @default("not_started") // not_started, in_progress, completed
+  progressPercent  Int       @default(0)
+  completedModules String    @default("[]") // JSON string of module IDs
+  enrolledAt       DateTime  @default(now())
+  completedAt      DateTime?
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course           Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+model Assessment {
+  id            String              @id @default(uuid())
+  courseId      String              @unique
+  passThreshold Int                 @default(70) // Percentage (e.g. 70%)
+  questions     String              // JSON string: [{ id, question, options: string[], correctIndex: number, explanation?: string }]
+  course        Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  attempts      AssessmentAttempt[]
+}
+
+model AssessmentAttempt {
+  id           String     @id @default(uuid())
+  userId       String
+  assessmentId String
+  score        Int        // Percentage score achieved
+  passed       Boolean
+  answers      String     // JSON string of user selected options
+  attemptedAt  DateTime   @default(now())
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
+}
+
+model Certificate {
+  id                String   @id @default(uuid())
+  userId            String
+  courseId          String
+  certificateNumber String   @unique
+  issuedAt          DateTime @default(now())
+  certificateUrl    String?
+  verificationHash  String   @unique
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course            Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+model ForumPost {
+  id           String      @id @default(uuid())
+  courseId     String?
+  authorId     String
+  parentPostId String?
+  title        String?     // For root threads
+  body         String
+  createdAt    DateTime    @default(now())
+  course       Course?     @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  author       User        @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  parentPost   ForumPost?  @relation("PostThread", fields: [parentPostId], references: [id], onDelete: Cascade)
+  replies      ForumPost[] @relation("PostThread")
+}
