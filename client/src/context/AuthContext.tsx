@@ -16,17 +16,17 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export const DEMO_CREDENTIALS: Record<UserRole, { email: string; pass: string; title: string }> = {
   admin: {
-    email: 'admin@capacityconnect.gov.in',
+    email: 'admin@vantage.gov.in',
     pass: 'Password@123',
     title: 'Dr. Rameshwar Rao (Admin - MoES HQ)',
   },
   trainer: {
-    email: 'trainer.met@capacityconnect.gov.in',
+    email: 'trainer.met@vantage.gov.in',
     pass: 'Password@123',
     title: 'Dr. Ananya Sen (Trainer - IMD)',
   },
   learner: {
-    email: 'learner1@capacityconnect.gov.in',
+    email: 'learner1@vantage.gov.in',
     pass: 'Password@123',
     title: 'Priya Sharma (Learner - Met Assistant)',
   },

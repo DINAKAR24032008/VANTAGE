@@ -1,7 +1,7 @@
 {
-  "name": "capacity-connect-server",
+  "name": "vantage-server",
   "version": "1.0.0",
-  "description": "Backend API for Capacity Connect",
+  "description": "Backend API for Vantage",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc && prisma generate",

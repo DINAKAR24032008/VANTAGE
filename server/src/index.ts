@@ -33,7 +33,7 @@ app.use('/uploads', express.static(uploadDir));
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    service: 'Capacity Connect API (SIH26075)',
+    service: 'Vantage API (SIH26075)',
     timestamp: new Date().toISOString(),
     theme: 'Smart Education - Ministry of Earth Sciences',
   });
@@ -54,7 +54,7 @@ app.use(errorHandler);
 
 app.listen(PORT, () => {
   console.log(`=======================================================`);
-  console.log(`🚀 Capacity Connect API Server running on port ${PORT}`);
+  console.log(`🚀 Vantage API Server running on port ${PORT}`);
   console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
   console.log(`🏛️ Theme: Smart Education (MoES - SIH26075)`);
   console.log(`=======================================================`);

@@ -38,7 +38,7 @@ export const RegisterPage: React.FC = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <h2 className="text-3xl font-black text-white tracking-tight">Create Learner Account</h2>
         <p className="mt-1 text-xs text-emerald-400 font-semibold uppercase tracking-wider">
-          Capacity Connect • Onboarding
+          Vantage • Onboarding
         </p>
       </div>
 

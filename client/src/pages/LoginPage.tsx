@@ -71,11 +71,11 @@ export const LoginPage: React.FC = () => {
     <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 text-white">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
         <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 shadow-xl shadow-emerald-500/20 font-extrabold text-3xl mb-4">
-          CC
+          V
         </div>
-        <h2 className="text-3xl font-black tracking-tight text-white">Capacity Connect</h2>
+        <h2 className="text-3xl font-black tracking-tight text-white">Vantage</h2>
         <p className="mt-1 text-xs text-emerald-400 font-semibold tracking-wide uppercase">
-          Smart India Hackathon • SIH26075
+          Digital Capacity Building & Learning Portal
         </p>
         <p className="text-xs text-slate-400 mt-1">Ministry of Earth Sciences, Government of India</p>
       </div>
@@ -134,7 +134,7 @@ export const LoginPage: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  placeholder="name@capacityconnect.gov.in"
+                  placeholder="name@vantage.gov.in"
                   className="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
                 />
               </div>

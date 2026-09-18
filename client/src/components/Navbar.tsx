@@ -38,16 +38,13 @@ export const Navbar: React.FC = () => {
           <div className="flex items-center gap-3">
             <Link to="/" className="flex items-center gap-2.5">
               <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-lg shadow-emerald-500/20 font-bold text-xl tracking-tighter">
-                CC
+                V
               </div>
               <div>
-                <span className="font-extrabold text-lg tracking-tight text-white flex items-center gap-1.5">
-                  Capacity Connect
-                  <span className="text-[10px] uppercase font-mono px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
-                    SIH26075
-                  </span>
+                <span className="font-extrabold text-lg tracking-tight text-white block">
+                  Vantage
                 </span>
-                <p className="text-[11px] text-slate-400 font-medium leading-none">
+                <p className="text-[11px] text-slate-400 font-medium leading-none mt-0.5">
                   Ministry of Earth Sciences • Smart Education
                 </p>
               </div>

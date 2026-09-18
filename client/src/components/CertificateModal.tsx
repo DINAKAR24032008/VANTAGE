@@ -84,7 +84,7 @@ export const CertificateModal: React.FC<Props> = ({ certificate, onClose }) => {
         <div className="bg-slate-50 px-8 py-4 flex items-center justify-between border-t border-slate-200 print:hidden">
           <span className="text-xs text-slate-500 flex items-center gap-1.5">
             <CheckCircle className="w-4 h-4 text-emerald-500" />
-            Accredited by SIH26075 Digital Learning Directorate
+            Accredited by Vantage • Digital Learning Directorate
           </span>
           <div className="flex items-center gap-2">
             <button

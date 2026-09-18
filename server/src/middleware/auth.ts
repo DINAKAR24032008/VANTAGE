@@ -2,7 +2,7 @@ import { Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { AuthenticatedRequest, AuthUserPayload, UserRole } from '../types';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'capacity_connect_jwt_secret_sih26075_earth_sciences_key_2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'vantage_jwt_secret_sih26075_earth_sciences_key_2026';
 
 export const authenticateToken = (
   req: AuthenticatedRequest,

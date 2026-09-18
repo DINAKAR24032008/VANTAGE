@@ -1,6 +1,6 @@
-# Capacity Connect — 36-Hour Hackathon Demo Script (SIH26075)
+# Vantage — 36-Hour Hackathon Demo Script (SIH26075)
 
-This walkthrough guides you through the live demonstration of **Capacity Connect** for the Smart India Hackathon jury.
+This walkthrough guides you through the live demonstration of **Vantage** for the Smart India Hackathon jury.
 
 ---
 
@@ -8,7 +8,7 @@ This walkthrough guides you through the live demonstration of **Capacity Connect
 
 ### Step 1: Learner Journey (Gap Analysis & Course Completion)
 1. Navigate to **`http://localhost:5173`**.
-2. Click **"Learner"** on the quick-switch bar or log in as `learner1@capacityconnect.gov.in` / `Password@123`.
+2. Click **"Learner"** on the quick-switch bar or log in as `learner1@vantage.gov.in` / `Password@123`.
 3. **Inspect the Dashboard**:
    - Point out the **Role Readiness Index** (e.g. 52%) and **Deficiency Gap** vs the benchmark for *Meteorological Assistant*.
    - View the interactive **Skill Gap Chart**: Highlight how *Numerical Weather Prediction (NWP)* and *Doppler Radar* show critical deficiencies.
@@ -27,7 +27,7 @@ This walkthrough guides you through the live demonstration of **Capacity Connect
 ---
 
 ### Step 2: Trainer Journey (Curriculum & Assessment Authoring)
-1. Click **"Trainer"** on the top navigation quick-switch bar (logged in as `trainer.met@capacityconnect.gov.in`).
+1. Click **"Trainer"** on the top navigation quick-switch bar (logged in as `trainer.met@vantage.gov.in`).
 2. Navigate to **"Trainer Hub & Courses"**.
 3. View existing published courses and click **"Create New Course"**:
    - Enter title and description.
@@ -39,7 +39,7 @@ This walkthrough guides you through the live demonstration of **Capacity Connect
 ---
 
 ### Step 3: Admin Journey (Org Heatmap & Automated Feedback Loop)
-1. Click **"Admin"** on the quick-switch bar (logged in as `admin@capacityconnect.gov.in`).
+1. Click **"Admin"** on the quick-switch bar (logged in as `admin@vantage.gov.in`).
 2. Navigate to **"Executive Analytics & Heatmap"**:
    - **Executive KPIs**: Review active scientists, 70%+ completion velocity, and issued certificates.
    - **Inter-Departmental Competency Gap Heatmap**: Point out the color-coded matrix across IMD, INCOIS, NCS, NIOT, and NCPOR.

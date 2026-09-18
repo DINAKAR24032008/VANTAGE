@@ -5,7 +5,7 @@ import crypto from 'crypto';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding Capacity Connect (SIH26075 - Ministry of Earth Sciences)...');
+  console.log('🌱 Seeding Vantage (SIH26075 - Ministry of Earth Sciences)...');
 
   // Clear existing records to ensure idempotent fresh seed
   await prisma.forumPost.deleteMany();
@@ -160,7 +160,7 @@ async function main() {
   const admin = await prisma.user.create({
     data: {
       name: 'Dr. Rameshwar Rao',
-      email: 'admin@capacityconnect.gov.in',
+      email: 'admin@vantage.gov.in',
       passwordHash,
       role: 'admin',
       department: 'Ministry Headquarters (MoES)',
@@ -171,7 +171,7 @@ async function main() {
   const trainerMet = await prisma.user.create({
     data: {
       name: 'Dr. Ananya Sen',
-      email: 'trainer.met@capacityconnect.gov.in',
+      email: 'trainer.met@vantage.gov.in',
       passwordHash,
       role: 'trainer',
       department: 'India Meteorological Department (IMD)',
@@ -182,7 +182,7 @@ async function main() {
   const trainerOcean = await prisma.user.create({
     data: {
       name: 'Dr. Vikram Nair',
-      email: 'trainer.ocean@capacityconnect.gov.in',
+      email: 'trainer.ocean@vantage.gov.in',
       passwordHash,
       role: 'trainer',
       department: 'National Institute of Ocean Technology (NIOT)',
@@ -195,7 +195,7 @@ async function main() {
   const learner1 = await prisma.user.create({
     data: {
       name: 'Priya Sharma',
-      email: 'learner1@capacityconnect.gov.in',
+      email: 'learner1@vantage.gov.in',
       passwordHash,
       role: 'learner',
       department: 'India Meteorological Department (IMD)',
@@ -218,7 +218,7 @@ async function main() {
   const learner2 = await prisma.user.create({
     data: {
       name: 'Rajesh Kulkarni',
-      email: 'learner2@capacityconnect.gov.in',
+      email: 'learner2@vantage.gov.in',
       passwordHash,
       role: 'learner',
       department: 'Indian National Centre for Ocean Information Services (INCOIS)',
@@ -241,7 +241,7 @@ async function main() {
   const learner3 = await prisma.user.create({
     data: {
       name: 'Sneha Patel',
-      email: 'learner3@capacityconnect.gov.in',
+      email: 'learner3@vantage.gov.in',
       passwordHash,
       role: 'learner',
       department: 'National Centre for Seismology (NCS)',
@@ -262,7 +262,7 @@ async function main() {
   const learner4 = await prisma.user.create({
     data: {
       name: 'Arun Verma',
-      email: 'learner4@capacityconnect.gov.in',
+      email: 'learner4@vantage.gov.in',
       passwordHash,
       role: 'learner',
       department: 'National Institute of Ocean Technology (NIOT)',
@@ -284,7 +284,7 @@ async function main() {
   const learner5 = await prisma.user.create({
     data: {
       name: 'Deepak Menon',
-      email: 'learner5@capacityconnect.gov.in',
+      email: 'learner5@vantage.gov.in',
       passwordHash,
       role: 'learner',
       department: 'National Centre for Polar and Ocean Research (NCPOR)',
@@ -669,15 +669,15 @@ async function main() {
         {
           id: 'mod-py-1',
           title: 'Python Setup & Basics',
-          durationMinutes: 45,
+          durationMinutes: 60,
           order: 1,
-          videoUrl: 'https://www.youtube.com/watch?v=_uQrJ0TkZlc',
+          videoUrl: 'https://www.youtube.com/watch?v=kqtD5dpn9C8',
           contentMarkdown: '# Module 1: Python Setup & Basics\n\nWelcome to **Introduction to Python**! In this module, you will learn the role of Python in modern Earth and Atmospheric sciences, how to install Python 3, configure your development environment, and write your first Python statements.\n\n### Key Topics:\n- Installing Python 3 & VS Code\n- Python Interactive Shell (REPL)\n- Comments, indentation, and code formatting\n- Built-in `print()` and `input()` functions\n- Writing and executing your first `.py` script',
         },
         {
           id: 'mod-py-2',
           title: 'Variables & Data Types',
-          durationMinutes: 50,
+          durationMinutes: 12,
           order: 2,
           videoUrl: 'https://www.youtube.com/watch?v=khKv-8q7YmY',
           contentMarkdown: '# Module 2: Variables & Data Types\n\nUnderstand how Python stores information in memory. Learn the dynamic typing system, scalar data types, type casting, and string formatting techniques crucial for processing meteorological and oceanographic observations.\n\n### Key Topics:\n- Integers, Floats, Booleans, and Strings\n- Dynamic typing and variable naming conventions\n- Arithmetic, logical, and comparison operators\n- Type conversion functions: `int()`, `float()`, `str()`\n- String concatenation and f-strings (`f"Temperature: {temp}°C"`)',
@@ -685,7 +685,7 @@ async function main() {
         {
           id: 'mod-py-3',
           title: 'Control Flow (Conditionals & Loops)',
-          durationMinutes: 55,
+          durationMinutes: 10,
           order: 3,
           videoUrl: 'https://www.youtube.com/watch?v=6iF8Xb7Z3wQ',
           contentMarkdown: '# Module 3: Control Flow (Conditionals & Loops)\n\nLearn how to direct the flow of execution in your programs using decision structures and iteration. Automate repetitive tasks such as iterating over weather sensor records and evaluating storm warning thresholds.\n\n### Key Topics:\n- `if`, `elif`, and `else` conditional branching\n- Iteration with `for` loops and `range()`\n- `while` loops and sentinel conditions\n- Loop control: `break`, `continue`, and `pass`\n- Nested control structures and list iterations',
@@ -693,7 +693,7 @@ async function main() {
         {
           id: 'mod-py-4',
           title: 'Functions & Scope',
-          durationMinutes: 50,
+          durationMinutes: 22,
           order: 4,
           videoUrl: 'https://www.youtube.com/watch?v=9Os0o3wzS_I',
           contentMarkdown: '# Module 4: Functions & Scope\n\nMaster the creation of modular, reusable code blocks. Functions form the backbone of analytical pipelines in scientific workflows, enabling clean separation of concerns and reproducible science.\n\n### Key Topics:\n- Defining functions using `def` and returning values with `return`\n- Positional, keyword, and default parameters\n- Variable length arguments (`*args` and `**kwargs`)\n- Variable scope: Local, Enclosing, Global, and Built-in (LEGB rule)\n- Docstrings and type hinting basics',
@@ -701,15 +701,15 @@ async function main() {
         {
           id: 'mod-py-5',
           title: 'Data Structures (Lists, Tuples, Dictionaries, Sets)',
-          durationMinutes: 60,
+          durationMinutes: 29,
           order: 5,
-          videoUrl: 'https://www.youtube.com/watch?v=R-HLU9Fl5ug',
+          videoUrl: 'https://www.youtube.com/watch?v=W8KRzm-HUcc',
           contentMarkdown: '# Module 5: Data Structures\n\nOrganize, store, and manipulate collections of data using Python versatile built-in container types. Learn the differences between mutable and immutable collections and when to use each for geospatial datasets.\n\n### Key Topics:\n- Lists: indexing, slicing, methods (`append`, `pop`, `sort`), and list comprehensions\n- Tuples: immutability, tuple packing and unpacking\n- Dictionaries: key-value mapping, dict methods (`.keys()`, `.values()`, `.items()`, `.get()`)\n- Sets: unique membership, mathematical set operations (union, intersection, difference)\n- Time complexity trade-offs for collections',
         },
         {
           id: 'mod-py-6',
           title: 'File Handling & Intro to Object-Oriented Programming',
-          durationMinutes: 60,
+          durationMinutes: 53,
           order: 6,
           videoUrl: 'https://www.youtube.com/watch?v=JeznW_7DlB0',
           contentMarkdown: '# Module 6: File Handling & Intro to OOP\n\nConclude the foundational course by reading from and writing to disk files (CSV, TXT), managing resources safely with context managers, and getting a hands-on introduction to classes and object-oriented design.\n\n### Key Topics:\n- Safe file handling using `with open(..., mode) as f:`\n- Reading line-by-line, `.read()`, and `.readlines()`\n- Exception handling fundamentals: `try`, `except`, `finally`\n- Defining classes, attributes, and `__init__` constructors\n- Creating objects and invoking instance methods',
@@ -1065,7 +1065,7 @@ async function main() {
     },
   });
 
-  const certNumber2 = 'MOES-CC-2026-894210';
+  const certNumber2 = 'MOES-VT-2026-894210';
   await prisma.certificate.create({
     data: {
       userId: learner2.id,
@@ -1099,7 +1099,7 @@ async function main() {
     },
   });
 
-  const certNumber1 = 'MOES-CC-2026-319082';
+  const certNumber1 = 'MOES-VT-2026-319082';
   await prisma.certificate.create({
     data: {
       userId: learner1.id,
@@ -1183,11 +1183,11 @@ async function main() {
 
   console.log('✅ Seeding completed successfully!');
   console.log('Default credentials for testing:');
-  console.log('  Admin:   admin@capacityconnect.gov.in / Password@123');
-  console.log('  Trainer: trainer.met@capacityconnect.gov.in / Password@123');
-  console.log('  Trainer: trainer.ocean@capacityconnect.gov.in / Password@123');
-  console.log('  Learner: learner1@capacityconnect.gov.in / Password@123');
-  console.log('  Learner: learner2@capacityconnect.gov.in / Password@123');
+  console.log('  Admin:   admin@vantage.gov.in / Password@123');
+  console.log('  Trainer: trainer.met@vantage.gov.in / Password@123');
+  console.log('  Trainer: trainer.ocean@vantage.gov.in / Password@123');
+  console.log('  Learner: learner1@vantage.gov.in / Password@123');
+  console.log('  Learner: learner2@vantage.gov.in / Password@123');
 }
 
 main()

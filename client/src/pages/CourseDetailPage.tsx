@@ -23,10 +23,28 @@ function getYouTubeEmbedUrl(url?: string): string | null {
   if (!url) return null;
   const regExp = /(?:youtube\.com\/(?:[^\/]+\/.+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([^"&?\/\s]{11})/i;
   const match = url.match(regExp);
-  if (match && match[1]) {
-    return `https://www.youtube-nocookie.com/embed/${match[1]}?rel=0&modestbranding=1`;
+  if (!match || !match[1]) return null;
+
+  const videoId = match[1];
+  let params = '?rel=0&modestbranding=1';
+
+  try {
+    const parsed = new URL(url.startsWith('http') ? url : `https://${url}`);
+    const start = parsed.searchParams.get('start') || parsed.searchParams.get('t');
+    const end = parsed.searchParams.get('end');
+    if (start) {
+      const cleanStart = parseInt(start.replace('s', ''), 10);
+      if (!isNaN(cleanStart)) params += `&start=${cleanStart}`;
+    }
+    if (end) {
+      const cleanEnd = parseInt(end.replace('s', ''), 10);
+      if (!isNaN(cleanEnd)) params += `&end=${cleanEnd}`;
+    }
+  } catch (e) {
+    // URL parsing fallback
   }
-  return null;
+
+  return `https://www.youtube-nocookie.com/embed/${videoId}${params}`;
 }
 
 export const CourseDetailPage: React.FC = () => {

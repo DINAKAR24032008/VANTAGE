@@ -1,7 +1,7 @@
 {
-  "name": "capacity-connect",
+  "name": "vantage",
   "version": "1.0.0",
-  "description": "Capacity Connect - Digital Capacity Building & Learning Management Portal (SIH26075)",
+  "description": "Vantage - Digital Capacity Building & Learning Management Portal (SIH26075)",
   "private": true,
   "scripts": {
     "install:all": "npm install && npm install --prefix server && npm install --prefix client",
