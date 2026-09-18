@@ -71,10 +71,10 @@ export const LearnerDashboard: React.FC = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-          <p className="text-xs font-semibold text-slate-500">
+          <div className="w-10 h-10 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-xs font-semibold text-textSecondary">
             Running heuristic gap analysis & computing MoES recommendations...
           </p>
         </div>
@@ -83,38 +83,38 @@ export const LearnerDashboard: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* Learner Hero Banner */}
-        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 rounded-3xl p-6 sm:p-8 text-white shadow-xl relative overflow-hidden">
-          <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="bg-surface rounded-3xl p-6 sm:p-8 text-textPrimary shadow-xl relative overflow-hidden border border-surfaceBorder">
+          <div className="absolute top-0 right-0 -mt-8 -mr-8 w-64 h-64 bg-accent/5 rounded-full blur-3xl pointer-events-none" />
 
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 relative z-10">
             <div>
               <div className="flex items-center gap-2 mb-2">
-                <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 text-[11px] font-mono font-bold uppercase tracking-wider border border-emerald-500/30">
+                <span className="px-2.5 py-0.5 rounded-full bg-background text-accent text-[11px] font-mono font-bold uppercase tracking-wider border border-surfaceBorder">
                   {user?.department}
                 </span>
-                <span className="text-xs text-slate-400">• Designation: {user?.jobRole}</span>
+                <span className="text-xs text-textSecondary">• Designation: {user?.jobRole}</span>
               </div>
-              <h1 className="text-3xl sm:text-4xl font-display italic text-white tracking-tight">
+              <h1 className="text-3xl sm:text-4xl font-display italic text-textPrimary tracking-tight">
                 Welcome back, {user?.name}
               </h1>
-              <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-2xl">
+              <p className="text-xs sm:text-sm text-textSecondary mt-1 max-w-2xl">
                 Real-time role competency benchmarking against the Ministry of Earth Sciences National Framework.
               </p>
             </div>
 
             {/* Readiness Index Stat Card */}
-            <div className="flex items-center gap-4 bg-slate-800/80 backdrop-blur border border-slate-700/80 p-4 rounded-2xl">
-              <div className="w-16 h-16 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center text-white shadow-lg">
+            <div className="flex items-center gap-4 bg-background/90 border border-surfaceBorder p-4 rounded-2xl">
+              <div className="w-16 h-16 rounded-xl bg-surface border border-surfaceBorder flex items-center justify-center text-accent shadow-[0_0_15px_rgba(57,255,20,0.2)]">
                 <TrendingUp className="w-8 h-8" />
               </div>
               <div>
-                <div className="text-2xl font-black text-white">
+                <div className="text-2xl font-black text-accent">
                   {analysis?.readinessPercentage ?? 0}%
                 </div>
-                <div className="text-[11px] text-slate-400 uppercase font-semibold">
+                <div className="text-[11px] text-textSecondary uppercase font-semibold">
                   Role Readiness Index
                 </div>
                 <div className="text-[10px] text-amber-400 font-medium">
@@ -126,20 +126,20 @@ export const LearnerDashboard: React.FC = () => {
         </div>
 
         {/* Section 1: Dynamic Gap Analysis Engine Visualization */}
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200/80">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-slate-100 gap-2">
+        <div className="bg-surface rounded-2xl p-6 shadow-sm border border-surfaceBorder">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-surfaceBorder gap-2">
             <div>
-              <h2 className="text-base font-bold text-slate-900 flex items-center gap-2">
-                <BarChart2 className="w-5 h-5 text-emerald-600" />
+              <h2 className="text-base font-bold text-textPrimary flex items-center gap-2">
+                <BarChart2 className="w-5 h-5 text-accent" />
                 Target Role Competency Gap Analysis
               </h2>
-              <p className="text-xs text-slate-500">
-                Benchmark: <strong>{user?.jobRole}</strong> standards vs your current validated skill levels.
+              <p className="text-xs text-textSecondary">
+                Benchmark: <strong className="text-textPrimary">{user?.jobRole}</strong> standards vs your current validated skill levels.
               </p>
             </div>
             <Link
               to="/onboarding"
-              className="text-xs font-semibold text-emerald-600 hover:text-emerald-700 hover:underline flex items-center gap-1"
+              className="text-xs font-semibold text-accent hover:underline flex items-center gap-1"
             >
               Update Self-Assessment Profile <ArrowRight className="w-3.5 h-3.5" />
             </Link>
@@ -154,15 +154,15 @@ export const LearnerDashboard: React.FC = () => {
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-amber-500" />
+              <h2 className="text-lg font-bold text-textPrimary flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-accent" />
                 Ranked Course Recommendations
               </h2>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs text-textSecondary">
                 Calculated by prioritizing courses bridging your highest weighted competency deficits.
               </p>
             </div>
-            <Link to="/catalog" className="text-xs font-semibold text-emerald-600 hover:underline">
+            <Link to="/catalog" className="text-xs font-semibold text-accent hover:underline">
               View All Courses →
             </Link>
           </div>
@@ -171,28 +171,28 @@ export const LearnerDashboard: React.FC = () => {
             {analysis?.recommendedCourses.slice(0, 3).map((rec) => (
               <div
                 key={rec.courseId}
-                className="bg-white rounded-2xl border border-slate-200/80 shadow-sm hover:shadow-md transition flex flex-col justify-between overflow-hidden group"
+                className="bg-surface rounded-2xl border border-surfaceBorder shadow-sm hover:border-accent/40 transition flex flex-col justify-between overflow-hidden group"
               >
                 <div className="p-5">
                   <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">
+                    <span className="text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded bg-background text-accent border border-surfaceBorder">
                       {rec.difficultyLevel}
                     </span>
-                    <span className="text-[11px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full flex items-center gap-1">
-                      <Sparkles className="w-3 h-3" /> {rec.relevanceScore} pts match
+                    <span className="text-[11px] font-bold text-accentMuted bg-background px-2 py-0.5 rounded-full flex items-center gap-1 border border-surfaceBorder">
+                      <Sparkles className="w-3 h-3 text-accent" /> {rec.relevanceScore} pts match
                     </span>
                   </div>
 
-                  <h3 className="font-bold text-slate-900 text-sm leading-snug group-hover:text-emerald-600 transition line-clamp-2">
+                  <h3 className="font-bold text-textPrimary text-sm leading-snug group-hover:text-accent transition line-clamp-2">
                     {rec.title}
                   </h3>
-                  <p className="text-xs text-slate-500 mt-2 line-clamp-3">{rec.description}</p>
+                  <p className="text-xs text-textSecondary mt-2 line-clamp-3">{rec.description}</p>
 
                   <div className="mt-4 flex flex-wrap gap-1.5">
                     {rec.targetCompetencies.map((c, i) => (
                       <span
                         key={i}
-                        className="text-[10px] bg-slate-100 text-slate-600 px-2 py-0.5 rounded-md font-medium"
+                        className="text-[10px] bg-background text-textSecondary border border-border px-2 py-0.5 rounded-md font-medium"
                       >
                         {c}
                       </span>
@@ -200,10 +200,10 @@ export const LearnerDashboard: React.FC = () => {
                   </div>
                 </div>
 
-                <div className="p-5 pt-0 border-t border-slate-100 mt-4 bg-slate-50/50 flex items-center justify-between">
+                <div className="p-5 pt-3 border-t border-surfaceBorder mt-4 bg-background/50 flex items-center justify-between">
                   <Link
                     to={`/courses/${rec.courseId}`}
-                    className="text-xs font-bold text-slate-700 hover:text-emerald-600 flex items-center gap-1"
+                    className="text-xs font-bold text-textSecondary hover:text-accent flex items-center gap-1"
                   >
                     View Syllabus
                   </Link>
@@ -211,7 +211,7 @@ export const LearnerDashboard: React.FC = () => {
                   {rec.enrolled ? (
                     <Link
                       to={`/courses/${rec.courseId}`}
-                      className="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow"
+                      className="px-3.5 py-1.5 bg-accent hover:bg-accentMuted text-background rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-[0_0_10px_rgba(57,255,20,0.3)]"
                     >
                       <PlayCircle className="w-3.5 h-3.5" /> Continue Course
                     </Link>
@@ -219,7 +219,7 @@ export const LearnerDashboard: React.FC = () => {
                     <button
                       onClick={() => handleEnroll(rec.courseId)}
                       disabled={enrollingCourseId === rec.courseId}
-                      className="px-3.5 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition flex items-center gap-1 shadow disabled:opacity-50"
+                      className="px-3.5 py-1.5 bg-accent hover:bg-accentMuted text-background rounded-xl text-xs font-bold transition flex items-center gap-1 shadow-[0_0_10px_rgba(57,255,20,0.3)] disabled:opacity-50"
                     >
                       {enrollingCourseId === rec.courseId ? 'Enrolling...' : 'Enroll Now'}
                     </button>
@@ -232,13 +232,13 @@ export const LearnerDashboard: React.FC = () => {
 
         {/* Section 3: Active Enrollments & Progress */}
         <div className="space-y-4">
-          <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-emerald-600" />
+          <h2 className="text-lg font-bold text-textPrimary flex items-center gap-2">
+            <BookOpen className="w-5 h-5 text-accent" />
             My Active Learning Programs ({enrollments.length})
           </h2>
 
           {enrollments.length === 0 ? (
-            <div className="p-8 text-center bg-white rounded-2xl border border-slate-200 text-xs text-slate-500">
+            <div className="p-8 text-center bg-surface rounded-2xl border border-surfaceBorder text-xs text-textSecondary">
               You have not enrolled in any courses yet. Select from the recommendations above to begin.
             </div>
           ) : (
@@ -246,61 +246,59 @@ export const LearnerDashboard: React.FC = () => {
               {enrollments.map((enrollment) => (
                 <div
                   key={enrollment.id}
-                  className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between"
+                  className="bg-surface p-5 rounded-2xl border border-surfaceBorder shadow-sm flex flex-col justify-between"
                 >
                   <div>
                     <div className="flex items-center justify-between gap-2 mb-2">
                       <span
-                        className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded ${
+                        className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded border ${
                           enrollment.status === 'completed'
-                            ? 'bg-emerald-100 text-emerald-700'
-                            : 'bg-blue-100 text-blue-700'
+                            ? 'bg-accent/15 text-accent border-accent/40 shadow-[0_0_6px_rgba(57,255,20,0.2)]'
+                            : 'bg-surfaceBorder/50 text-textSecondary border-surfaceBorder'
                         }`}
                       >
                         {enrollment.status === 'completed' ? 'Completed' : 'In Progress'}
                       </span>
-                      <span className="text-xs text-slate-400 flex items-center gap-1">
+                      <span className="text-xs text-textSecondary flex items-center gap-1">
                         <Clock className="w-3 h-3" />
                         {new Date(enrollment.enrolledAt).toLocaleDateString()}
                       </span>
                     </div>
 
-                    <h3 className="font-bold text-slate-900 text-sm line-clamp-1">
+                    <h3 className="font-bold text-textPrimary text-sm line-clamp-1">
                       {enrollment.course?.title}
                     </h3>
 
                     {/* Progress Bar */}
                     <div className="mt-4">
-                      <div className="flex justify-between text-xs font-semibold text-slate-600 mb-1">
+                      <div className="flex justify-between text-xs font-semibold text-textSecondary mb-1">
                         <span>Course Completion</span>
-                        <span>{enrollment.progressPercent}%</span>
+                        <span className="text-accent">{enrollment.progressPercent}%</span>
                       </div>
-                      <div className="w-full bg-slate-100 rounded-full h-2 overflow-hidden">
+                      <div className="w-full bg-border rounded-full h-2 overflow-hidden">
                         <div
-                          className={`h-full transition-all duration-500 ${
-                            enrollment.progressPercent === 100 ? 'bg-emerald-500' : 'bg-blue-600'
-                          }`}
+                          className="h-full bg-accent transition-all duration-500 shadow-[0_0_8px_rgba(57,255,20,0.5)]"
                           style={{ width: `${enrollment.progressPercent}%` }}
                         />
                       </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between mt-5 pt-3 border-t border-slate-100">
+                  <div className="flex items-center justify-between mt-5 pt-3 border-t border-surfaceBorder">
                     {enrollment.hasCertificate && enrollment.certificate ? (
                       <button
                         onClick={() => setSelectedCert(enrollment.certificate!)}
-                        className="text-xs font-bold text-amber-600 hover:text-amber-700 flex items-center gap-1"
+                        className="text-xs font-bold text-accent hover:text-accentMuted flex items-center gap-1"
                       >
                         <Award className="w-4 h-4" /> View Certificate
                       </button>
                     ) : (
-                      <span className="text-[11px] text-slate-400">Quiz assessment pending</span>
+                      <span className="text-[11px] text-textSecondary">Quiz assessment pending</span>
                     )}
 
                     <Link
                       to={`/courses/${enrollment.courseId}`}
-                      className="px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white rounded-lg text-xs font-bold flex items-center gap-1 transition"
+                      className="px-3.5 py-1.5 bg-accent hover:bg-accentMuted text-background rounded-lg text-xs font-bold flex items-center gap-1 transition shadow-[0_0_10px_rgba(57,255,20,0.3)]"
                     >
                       {enrollment.progressPercent === 100 ? 'Review Modules' : 'Resume Learning'}
                       <ArrowRight className="w-3 h-3" />
@@ -314,9 +312,9 @@ export const LearnerDashboard: React.FC = () => {
 
         {/* Section 4: Earned Official Certificates */}
         {certificates.length > 0 && (
-          <div className="bg-gradient-to-r from-amber-500/10 via-amber-50 to-emerald-500/10 rounded-2xl p-6 border border-amber-200/80">
-            <h2 className="text-base font-bold text-slate-900 flex items-center gap-2 mb-3">
-              <Award className="w-5 h-5 text-amber-600" />
+          <div className="bg-surface rounded-2xl p-6 border border-surfaceBorder">
+            <h2 className="text-base font-bold text-textPrimary flex items-center gap-2 mb-3">
+              <Award className="w-5 h-5 text-accent" />
               Verified Competency Credentials ({certificates.length})
             </h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -324,19 +322,19 @@ export const LearnerDashboard: React.FC = () => {
                 <div
                   key={cert.id}
                   onClick={() => setSelectedCert(cert)}
-                  className="bg-white p-4 rounded-xl border border-amber-200 hover:border-amber-400 cursor-pointer shadow-sm hover:shadow transition flex flex-col justify-between"
+                  className="bg-background p-4 rounded-xl border border-surfaceBorder hover:border-accent/40 cursor-pointer shadow-sm transition flex flex-col justify-between"
                 >
                   <div>
-                    <span className="text-[9px] font-mono text-amber-700 font-bold uppercase">
+                    <span className="text-[9px] font-mono text-accent font-bold uppercase">
                       Credential #{cert.certificateNumber}
                     </span>
-                    <h4 className="font-bold text-xs text-slate-800 line-clamp-2 mt-1">
+                    <h4 className="font-bold text-xs text-textPrimary line-clamp-2 mt-1">
                       {cert.course?.title || 'Earth Sciences Specialization'}
                     </h4>
                   </div>
-                  <div className="flex items-center justify-between text-[10px] text-slate-400 mt-3 pt-2 border-t border-slate-100">
+                  <div className="flex items-center justify-between text-[10px] text-textSecondary mt-3 pt-2 border-t border-surfaceBorder">
                     <span>{new Date(cert.issuedAt).toLocaleDateString()}</span>
-                    <span className="text-emerald-600 font-bold flex items-center gap-1">
+                    <span className="text-accent font-bold flex items-center gap-1">
                       <CheckCircle2 className="w-3 h-3" /> Verified
                     </span>
                   </div>

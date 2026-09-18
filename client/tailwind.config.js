@@ -11,16 +11,24 @@ export default {
         sans: ['Inter', 'sans-serif'],
       },
       colors: {
+        background: '#050805',
+        surface: '#0C140C',
+        surfaceBorder: '#1E3A1E',
+        accent: '#39FF14',
+        accentMuted: '#CFFFC2',
+        textPrimary: '#E8FBE8',
+        textSecondary: '#6FA36F',
+        border: '#163016',
         primary: {
-          50: '#f0fdf4',
-          100: '#dcfce7',
-          500: '#22c55e',
-          600: '#16a34a',
-          700: '#15803d',
+          50: '#0C140C',
+          100: '#163016',
+          500: '#39FF14',
+          600: '#2ed110',
+          700: '#24a30d',
         },
         navy: {
-          800: '#0f172a',
-          900: '#020617',
+          800: '#0C140C',
+          900: '#050805',
         }
       }
     },

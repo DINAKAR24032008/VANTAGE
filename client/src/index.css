@@ -4,7 +4,7 @@
 
 @layer base {
   body {
-    @apply bg-slate-50 text-slate-900 min-h-screen font-sans;
+    @apply bg-background text-textPrimary min-h-screen font-sans;
   }
 }
 
@@ -14,12 +14,12 @@
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #050805;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #1E3A1E;
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #39FF14;
 }

@@ -174,61 +174,61 @@ export const TrainerManagePage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8">
+    <div className="min-h-screen bg-background text-textPrimary py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <span className="text-[10px] font-mono text-emerald-600 font-bold uppercase tracking-wider">
+            <span className="text-[10px] font-mono text-accent font-bold uppercase tracking-wider">
               Trainer Curriculum Management Console
             </span>
-            <h1 className="text-3xl sm:text-4xl font-display italic text-slate-900 mt-1 tracking-tight">
+            <h1 className="text-3xl sm:text-4xl font-display italic text-textPrimary mt-1 tracking-tight">
               Curriculum & Course Creator
             </h1>
-            <p className="text-xs text-slate-500">
+            <p className="text-xs text-textSecondary">
               Author instructional modules, upload scientific media, map competencies, and configure quizzes.
             </p>
           </div>
 
           <button
             onClick={() => setIsModalOpen(true)}
-            className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/30 transition flex items-center gap-1.5 self-start"
+            className="px-4 py-2.5 bg-accent hover:bg-accent/90 text-background rounded-xl text-xs font-bold shadow-lg shadow-accent/20 transition flex items-center gap-1.5 self-start"
           >
             <Plus className="w-4 h-4" /> Create New Course
           </button>
         </div>
 
         {/* Existing Courses Table */}
-        <div className="bg-white rounded-2xl border border-slate-200/90 shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-            <h3 className="font-bold text-sm text-slate-900 flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-emerald-600" />
+        <div className="bg-surface rounded-2xl border border-surfaceBorder shadow-sm overflow-hidden">
+          <div className="p-5 border-b border-surfaceBorder flex items-center justify-between">
+            <h3 className="font-bold text-sm text-textPrimary flex items-center gap-2">
+              <BookOpen className="w-4 h-4 text-accent" />
               Published Training Programs ({courses.length})
             </h3>
           </div>
 
           {loading ? (
-            <div className="p-12 text-center text-xs text-slate-400">Loading courses...</div>
+            <div className="p-12 text-center text-xs text-textSecondary">Loading courses...</div>
           ) : courses.length === 0 ? (
-            <div className="p-12 text-center text-xs text-slate-400">No courses published yet.</div>
+            <div className="p-12 text-center text-xs text-textSecondary">No courses published yet.</div>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-surfaceBorder">
               {courses.map((course) => (
-                <div key={course.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-slate-50/60 transition">
+                <div key={course.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-surfaceBorder/20 transition">
                   <div className="space-y-1 max-w-2xl">
                     <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-slate-100 text-slate-700">
+                      <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-surfaceBorder/40 text-textSecondary border border-surfaceBorder">
                         {course.difficultyLevel}
                       </span>
-                      <span className="text-xs text-slate-400">
+                      <span className="text-xs text-textSecondary">
                         Author: {course.trainer?.name || 'MoES Trainer'}
                       </span>
                     </div>
-                    <h4 className="font-bold text-sm text-slate-900">{course.title}</h4>
-                    <p className="text-xs text-slate-500 line-clamp-1">{course.description}</p>
+                    <h4 className="font-bold text-sm text-textPrimary">{course.title}</h4>
+                    <p className="text-xs text-textSecondary line-clamp-1">{course.description}</p>
                     <div className="flex flex-wrap gap-1 mt-1">
                       {course.competencyTags.map((tag) => (
-                        <span key={tag.id} className="text-[9px] bg-emerald-50 text-emerald-700 px-2 py-0.5 rounded font-medium border border-emerald-100">
+                        <span key={tag.id} className="text-[9px] bg-accent/10 text-accent px-2 py-0.5 rounded font-medium border border-accent/20">
                           {tag.competency.name} (L{tag.targetLevel})
                         </span>
                       ))}
@@ -238,7 +238,7 @@ export const TrainerManagePage: React.FC = () => {
                   <div className="flex items-center gap-3">
                     <button
                       onClick={() => handleDeleteCourse(course.id)}
-                      className="p-2 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
+                      className="p-2 text-textSecondary hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition"
                       title="Delete Course"
                     >
                       <Trash2 className="w-4 h-4" />
@@ -253,18 +253,18 @@ export const TrainerManagePage: React.FC = () => {
 
       {/* Course Creator Modal */}
       {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full border border-slate-200 overflow-hidden relative max-h-[90vh] flex flex-col">
-            <div className="bg-slate-900 text-white p-5 flex items-center justify-between border-b border-slate-800">
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-surface rounded-2xl shadow-2xl max-w-3xl w-full border border-surfaceBorder overflow-hidden relative max-h-[90vh] flex flex-col">
+            <div className="bg-surface text-textPrimary p-5 flex items-center justify-between border-b border-surfaceBorder">
               <div>
-                <span className="text-[10px] font-mono text-emerald-400 font-bold uppercase tracking-wider">
+                <span className="text-[10px] font-mono text-accent font-bold uppercase tracking-wider">
                   MoES Training Framework
                 </span>
-                <h3 className="text-base font-bold text-white">Create New Curriculum Course</h3>
+                <h3 className="text-base font-bold text-textPrimary">Create New Curriculum Course</h3>
               </div>
               <button
                 onClick={() => setIsModalOpen(false)}
-                className="p-1.5 text-slate-400 hover:text-white rounded-lg hover:bg-slate-800 transition"
+                className="p-1.5 text-textSecondary hover:text-textPrimary rounded-lg hover:bg-surfaceBorder/40 transition"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -272,36 +272,36 @@ export const TrainerManagePage: React.FC = () => {
 
             <form onSubmit={handleCreateCourse} className="p-6 overflow-y-auto flex-1 space-y-5">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Course Title</label>
+                <label className="block text-xs font-semibold text-textSecondary mb-1">Course Title</label>
                 <input
                   type="text"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Advanced Satellite Oceanography and Cyclone Tracking"
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                  className="w-full p-2.5 bg-background border border-surfaceBorder rounded-xl text-xs text-textPrimary placeholder-textSecondary/50 focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">Description</label>
+                <label className="block text-xs font-semibold text-textSecondary mb-1">Description</label>
                 <textarea
                   required
                   rows={3}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Detailed learning objectives and domain outcomes..."
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:ring-2 focus:ring-emerald-500"
+                  className="w-full p-2.5 bg-background border border-surfaceBorder rounded-xl text-xs text-textPrimary placeholder-textSecondary/50 focus:border-accent focus:outline-none"
                 />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">Difficulty Level</label>
+                  <label className="block text-xs font-semibold text-textSecondary mb-1">Difficulty Level</label>
                   <select
                     value={difficultyLevel}
                     onChange={(e) => setDifficultyLevel(e.target.value)}
-                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium text-slate-900"
+                    className="w-full p-2.5 bg-background border border-surfaceBorder rounded-xl text-xs font-medium text-textPrimary focus:border-accent focus:outline-none"
                   >
                     <option>Beginner</option>
                     <option>Intermediate</option>
@@ -310,47 +310,47 @@ export const TrainerManagePage: React.FC = () => {
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1">
+                  <label className="block text-xs font-semibold text-textSecondary mb-1">
                     Upload Course Document / Media (Local / S3 Mock)
                   </label>
                   <input
                     type="file"
                     onChange={handleFileUpload}
-                    className="w-full text-xs text-slate-500 file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-emerald-50 file:text-emerald-700 hover:file:bg-emerald-100"
+                    className="w-full text-xs text-textSecondary file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-accent/10 file:text-accent hover:file:bg-accent/20"
                   />
-                  {uploading && <p className="text-[10px] text-emerald-600 mt-1">Uploading file...</p>}
+                  {uploading && <p className="text-[10px] text-accent mt-1">Uploading file...</p>}
                 </div>
               </div>
 
               {/* Tag Competencies */}
-              <div className="border-t pt-4">
-                <label className="block text-xs font-bold text-slate-800 mb-2">
+              <div className="border-t border-surfaceBorder pt-4">
+                <label className="block text-xs font-bold text-textPrimary mb-2">
                   Map Course to Target Competencies & Elevation Levels
                 </label>
-                <div className="space-y-2 max-h-40 overflow-y-auto p-3 bg-slate-50 rounded-xl border border-slate-200">
+                <div className="space-y-2 max-h-40 overflow-y-auto p-3 bg-background rounded-xl border border-surfaceBorder">
                   {competencies.map((comp) => {
                     const tag = selectedTags.find((t) => t.competencyId === comp.id);
                     const isChecked = !!tag;
 
                     return (
-                      <div key={comp.id} className="flex items-center justify-between text-xs py-1 border-b border-slate-100 last:border-none">
+                      <div key={comp.id} className="flex items-center justify-between text-xs py-1 border-b border-surfaceBorder last:border-none">
                         <label className="flex items-center gap-2 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={isChecked}
                             onChange={() => handleToggleCompetencyTag(comp.id)}
-                            className="rounded text-emerald-600 focus:ring-emerald-500"
+                            className="rounded accent-accent"
                           />
-                          <span className="font-medium text-slate-800">{comp.name}</span>
+                          <span className="font-medium text-textPrimary">{comp.name}</span>
                         </label>
 
                         {isChecked && (
                           <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-slate-400">Target Level:</span>
+                            <span className="text-[10px] text-textSecondary">Target Level:</span>
                             <select
                               value={tag?.targetLevel || 3}
                               onChange={(e) => handleUpdateTagLevel(comp.id, parseInt(e.target.value, 10))}
-                              className="px-2 py-0.5 bg-white border border-slate-300 rounded text-xs"
+                              className="px-2 py-0.5 bg-surface border border-surfaceBorder rounded text-xs text-textPrimary"
                             >
                               {[1, 2, 3, 4, 5].map((lvl) => (
                                 <option key={lvl} value={lvl}>Level {lvl}</option>
@@ -365,15 +365,15 @@ export const TrainerManagePage: React.FC = () => {
               </div>
 
               {/* Instructional Modules */}
-              <div className="border-t pt-4">
+              <div className="border-t border-surfaceBorder pt-4">
                 <div className="flex items-center justify-between mb-2">
-                  <label className="block text-xs font-bold text-slate-800">
+                  <label className="block text-xs font-bold text-textPrimary">
                     Instructional Modules ({modules.length})
                   </label>
                   <button
                     type="button"
                     onClick={handleAddModule}
-                    className="text-xs font-bold text-emerald-600 hover:underline flex items-center gap-1"
+                    className="text-xs font-bold text-accent hover:underline flex items-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" /> Add Module
                   </button>
@@ -381,7 +381,7 @@ export const TrainerManagePage: React.FC = () => {
 
                 <div className="space-y-3">
                   {modules.map((mod, idx) => (
-                    <div key={mod.id} className="p-3 bg-slate-50 rounded-xl border border-slate-200 space-y-2">
+                    <div key={mod.id} className="p-3 bg-background rounded-xl border border-surfaceBorder space-y-2">
                       <div className="flex items-center justify-between gap-2">
                         <input
                           type="text"
@@ -391,7 +391,7 @@ export const TrainerManagePage: React.FC = () => {
                             updated[idx].title = e.target.value;
                             setModules(updated);
                           }}
-                          className="flex-1 p-2 bg-white border border-slate-200 rounded-lg text-xs font-semibold"
+                          className="flex-1 p-2 bg-surface border border-surfaceBorder rounded-lg text-xs font-semibold text-textPrimary"
                           placeholder="Module Title"
                         />
                         <input
@@ -402,7 +402,7 @@ export const TrainerManagePage: React.FC = () => {
                             updated[idx].durationMinutes = parseInt(e.target.value, 10) || 30;
                             setModules(updated);
                           }}
-                          className="w-20 p-2 bg-white border border-slate-200 rounded-lg text-xs"
+                          className="w-20 p-2 bg-surface border border-surfaceBorder rounded-lg text-xs text-textPrimary"
                           placeholder="Mins"
                         />
                       </div>
@@ -414,7 +414,7 @@ export const TrainerManagePage: React.FC = () => {
                           updated[idx].contentMarkdown = e.target.value;
                           setModules(updated);
                         }}
-                        className="w-full p-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-600"
+                        className="w-full p-2 bg-surface border border-surfaceBorder rounded-lg text-xs text-textSecondary"
                         placeholder="Lecture notes, equations, or case study markdown..."
                       />
                     </div>
@@ -422,8 +422,8 @@ export const TrainerManagePage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="border-t pt-4">
-                <label className="block text-xs font-bold text-slate-800 mb-1">
+              <div className="border-t border-surfaceBorder pt-4">
+                <label className="block text-xs font-bold text-textPrimary mb-1">
                   Pass Threshold Percentage
                 </label>
                 <input
@@ -432,22 +432,22 @@ export const TrainerManagePage: React.FC = () => {
                   max="100"
                   value={passThreshold}
                   onChange={(e) => setPassThreshold(parseInt(e.target.value, 10))}
-                  className="w-32 p-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-bold"
+                  className="w-32 p-2 bg-background border border-surfaceBorder rounded-xl text-xs font-bold text-textPrimary"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2 pt-4 border-t">
+              <div className="flex items-center justify-end gap-2 pt-4 border-t border-surfaceBorder">
                 <button
                   type="button"
                   onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl"
+                  className="px-4 py-2 text-xs font-semibold text-textSecondary hover:text-textPrimary hover:bg-surfaceBorder/40 rounded-xl transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={saving}
-                  className="px-6 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl text-xs font-bold shadow-lg shadow-emerald-600/30 transition disabled:opacity-50"
+                  className="px-6 py-2.5 bg-accent hover:bg-accent/90 text-background rounded-xl text-xs font-bold shadow-lg shadow-accent/20 transition disabled:opacity-50"
                 >
                   {saving ? 'Publishing Course...' : 'Save & Publish Course'}
                 </button>

@@ -28,7 +28,7 @@ export const App: React.FC = () => {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 font-sans">
+        <div className="min-h-screen flex flex-col bg-background text-textPrimary font-sans">
           <Navbar />
           <main className="flex-1">
             <Routes>

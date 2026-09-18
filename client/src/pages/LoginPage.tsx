@@ -68,20 +68,20 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-950 text-white">
+    <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-background text-textPrimary">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-tr from-emerald-500 to-teal-400 shadow-xl shadow-emerald-500/20 font-extrabold text-3xl mb-4">
+        <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-accent/15 border border-accent/40 shadow-xl shadow-accent/20 font-extrabold text-3xl mb-4 text-accent">
           V
         </div>
-        <h2 className="text-4xl font-display italic tracking-wide text-white">Vantage</h2>
-        <p className="mt-1 text-xs text-emerald-400 font-semibold tracking-wide uppercase">
+        <h2 className="text-4xl font-display italic tracking-wide text-accent">Vantage</h2>
+        <p className="mt-1 text-xs text-textSecondary font-semibold tracking-wide uppercase">
           Digital Capacity Building & Learning Portal
         </p>
-        <p className="text-xs text-slate-400 mt-1">Ministry of Earth Sciences, Government of India</p>
+        <p className="text-xs text-textSecondary mt-1">Ministry of Earth Sciences, Government of India</p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-slate-900/90 py-8 px-6 shadow-2xl rounded-2xl sm:px-10 border border-slate-800 backdrop-blur-md">
+        <div className="bg-surface py-8 px-6 shadow-2xl rounded-2xl sm:px-10 border border-surfaceBorder backdrop-blur-md">
           {error && (
             <div className="mb-4 p-3 bg-rose-950/80 border border-rose-800 text-rose-300 text-xs rounded-xl flex items-center gap-2">
               <ShieldAlert className="w-4 h-4 flex-shrink-0 text-rose-400" />
@@ -90,43 +90,43 @@ export const LoginPage: React.FC = () => {
           )}
 
           {/* Quick Demo Pre-fill Box for Judges */}
-          <div className="mb-6 p-4 rounded-xl bg-slate-800/80 border border-slate-700">
-            <span className="text-[11px] font-bold text-slate-300 flex items-center gap-1 mb-2">
-              <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Instant Hackathon Demo Login:
+          <div className="mb-6 p-4 rounded-xl bg-background border border-surfaceBorder">
+            <span className="text-[11px] font-bold text-textPrimary flex items-center gap-1 mb-2">
+              <Sparkles className="w-3.5 h-3.5 text-accent" /> Instant Hackathon Demo Login:
             </span>
             <div className="grid grid-cols-3 gap-2">
               <button
                 type="button"
                 onClick={() => handleQuickDemoSelect('learner')}
-                className="px-2.5 py-2 bg-emerald-600/20 hover:bg-emerald-600/40 text-emerald-400 border border-emerald-500/30 rounded-lg text-xs font-semibold text-center transition"
+                className="px-2.5 py-2 bg-surface hover:bg-surfaceBorder/60 text-accent border border-accent/40 rounded-lg text-xs font-semibold text-center transition"
               >
                 Learner
-                <span className="block text-[9px] text-slate-400 font-normal">Met Assistant</span>
+                <span className="block text-[9px] text-textSecondary font-normal">Met Assistant</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickDemoSelect('trainer')}
-                className="px-2.5 py-2 bg-blue-600/20 hover:bg-blue-600/40 text-blue-400 border border-blue-500/30 rounded-lg text-xs font-semibold text-center transition"
+                className="px-2.5 py-2 bg-surface hover:bg-surfaceBorder/60 text-accentMuted border border-accentMuted/40 rounded-lg text-xs font-semibold text-center transition"
               >
                 Trainer
-                <span className="block text-[9px] text-slate-400 font-normal">IMD Scientist</span>
+                <span className="block text-[9px] text-textSecondary font-normal">IMD Scientist</span>
               </button>
               <button
                 type="button"
                 onClick={() => handleQuickDemoSelect('admin')}
-                className="px-2.5 py-2 bg-purple-600/20 hover:bg-purple-600/40 text-purple-400 border border-purple-500/30 rounded-lg text-xs font-semibold text-center transition"
+                className="px-2.5 py-2 bg-surface hover:bg-surfaceBorder/60 text-accent border border-accent/40 rounded-lg text-xs font-semibold text-center transition"
               >
                 Admin
-                <span className="block text-[9px] text-slate-400 font-normal">Director HQ</span>
+                <span className="block text-[9px] text-textSecondary font-normal">Director HQ</span>
               </button>
             </div>
           </div>
 
           <form className="space-y-4" onSubmit={handleLogin}>
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Official Email Address</label>
+              <label className="block text-xs font-medium text-textSecondary mb-1">Official Email Address</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-textSecondary">
                   <Mail className="w-4 h-4" />
                 </div>
                 <input
@@ -135,15 +135,15 @@ export const LoginPage: React.FC = () => {
                   onChange={(e) => setEmail(e.target.value)}
                   required
                   placeholder="name@vantage.gov.in"
-                  className="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full pl-9 pr-3 py-2 bg-background border border-surfaceBorder rounded-xl text-xs text-textPrimary placeholder-textSecondary/50 focus:outline-none focus:border-accent"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Password</label>
+              <label className="block text-xs font-medium text-textSecondary mb-1">Password</label>
               <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-500">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-textSecondary">
                   <Lock className="w-4 h-4" />
                 </div>
                 <input
@@ -152,7 +152,7 @@ export const LoginPage: React.FC = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   placeholder="••••••••••••"
-                  className="w-full pl-9 pr-3 py-2 bg-slate-800 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  className="w-full pl-9 pr-3 py-2 bg-background border border-surfaceBorder rounded-xl text-xs text-textPrimary placeholder-textSecondary/50 focus:outline-none focus:border-accent"
                 />
               </div>
             </div>
@@ -160,7 +160,7 @@ export const LoginPage: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-600/30 transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+              className="w-full py-2.5 px-4 rounded-xl bg-accent hover:bg-accent/90 text-background font-bold text-xs shadow-lg shadow-accent/20 transition flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
               {loading ? 'Authenticating...' : 'Sign In with Credentials'}
               <ArrowRight className="w-3.5 h-3.5" />
@@ -168,21 +168,21 @@ export const LoginPage: React.FC = () => {
           </form>
 
           {/* SSO Mock Button */}
-          <div className="mt-6 border-t border-slate-800 pt-5">
+          <div className="mt-6 border-t border-surfaceBorder pt-5">
             <button
               type="button"
               onClick={handleSSOMock}
               disabled={loading}
-              className="w-full py-2.5 px-4 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-semibold text-xs transition flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 rounded-xl bg-surface hover:bg-surfaceBorder/60 text-textPrimary border border-surfaceBorder font-semibold text-xs transition flex items-center justify-center gap-2"
             >
-              <Building2 className="w-4 h-4 text-emerald-400" />
+              <Building2 className="w-4 h-4 text-accent" />
               Sign in with iGOT Karmayogi / Parichay (SSO Stub)
             </button>
           </div>
 
-          <div className="mt-6 text-center text-xs text-slate-400">
+          <div className="mt-6 text-center text-xs text-textSecondary">
             Don't have an account?{' '}
-            <Link to="/register" className="text-emerald-400 font-semibold hover:underline">
+            <Link to="/register" className="text-accent font-semibold hover:underline">
               Register New Learner
             </Link>
           </div>

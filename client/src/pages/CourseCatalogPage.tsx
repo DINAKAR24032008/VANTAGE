@@ -44,31 +44,31 @@ export const CourseCatalogPage: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         {/* Header */}
         <div>
-          <span className="text-[10px] font-mono text-emerald-600 font-bold uppercase tracking-wider">
+          <span className="text-[10px] font-mono text-accent font-bold uppercase tracking-wider">
             Ministry of Earth Sciences Curriculum Library
           </span>
-          <h1 className="text-3xl sm:text-4xl font-display italic text-slate-900 mt-1 tracking-tight">
+          <h1 className="text-3xl sm:text-4xl font-display italic text-textPrimary mt-1 tracking-tight">
             Training & Capacity Building Courses
           </h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1">
+          <p className="text-xs sm:text-sm text-textSecondary mt-1">
             Certified programs spanning Atmospheric Sciences, Ocean Technology, Seismology, and Geoinformatics.
           </p>
         </div>
 
         {/* Filter & Search Bar */}
-        <div className="bg-white p-4 rounded-2xl border border-slate-200/90 shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
+        <div className="bg-surface p-4 rounded-2xl border border-surfaceBorder shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
           <form onSubmit={handleSearchSubmit} className="relative w-full md:w-80">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5 pointer-events-none" />
+            <Search className="w-4 h-4 text-textSecondary absolute left-3 top-2.5 pointer-events-none" />
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search by topic, model, sensor..."
-              className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-xl text-xs text-textPrimary placeholder:text-textSecondary focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent"
             />
           </form>
 
@@ -77,25 +77,25 @@ export const CourseCatalogPage: React.FC = () => {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700"
+              className="px-3 py-2 bg-background border border-border rounded-xl text-xs font-semibold text-textPrimary focus:ring-1 focus:ring-accent focus:border-accent"
             >
-              <option value="all">All Disciplines</option>
-              <option value="Atmospheric Sciences">Atmospheric Sciences</option>
-              <option value="Ocean Sciences">Ocean Sciences</option>
-              <option value="Seismology & Solid Earth">Seismology</option>
-              <option value="Data Systems & Geoinformatics">Data Systems / HPC</option>
+              <option value="all" className="bg-background text-textPrimary">All Disciplines</option>
+              <option value="Atmospheric Sciences" className="bg-background text-textPrimary">Atmospheric Sciences</option>
+              <option value="Ocean Sciences" className="bg-background text-textPrimary">Ocean Sciences</option>
+              <option value="Seismology & Solid Earth" className="bg-background text-textPrimary">Seismology</option>
+              <option value="Data Systems & Geoinformatics" className="bg-background text-textPrimary">Data Systems / HPC</option>
             </select>
 
             {/* Difficulty Filter */}
             <select
               value={selectedDifficulty}
               onChange={(e) => setSelectedDifficulty(e.target.value)}
-              className="px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-700"
+              className="px-3 py-2 bg-background border border-border rounded-xl text-xs font-semibold text-textPrimary focus:ring-1 focus:ring-accent focus:border-accent"
             >
-              <option value="all">All Difficulty Levels</option>
-              <option value="Beginner">Beginner</option>
-              <option value="Intermediate">Intermediate</option>
-              <option value="Advanced">Advanced</option>
+              <option value="all" className="bg-background text-textPrimary">All Difficulty Levels</option>
+              <option value="Beginner" className="bg-background text-textPrimary">Beginner</option>
+              <option value="Intermediate" className="bg-background text-textPrimary">Intermediate</option>
+              <option value="Advanced" className="bg-background text-textPrimary">Advanced</option>
             </select>
           </div>
         </div>
@@ -103,11 +103,11 @@ export const CourseCatalogPage: React.FC = () => {
         {/* Course Cards Grid */}
         {loading ? (
           <div className="py-20 text-center">
-            <div className="w-8 h-8 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-            <p className="text-xs text-slate-400">Loading courses...</p>
+            <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            <p className="text-xs text-textSecondary">Loading courses...</p>
           </div>
         ) : filteredCourses.length === 0 ? (
-          <div className="py-20 text-center bg-white rounded-2xl border border-slate-200 text-slate-500 text-xs">
+          <div className="py-20 text-center bg-surface rounded-2xl border border-surfaceBorder text-textSecondary text-xs">
             No courses match the specified filters.
           </div>
         ) : (
@@ -115,29 +115,29 @@ export const CourseCatalogPage: React.FC = () => {
             {filteredCourses.map((course) => (
               <div
                 key={course.id}
-                className="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition flex flex-col justify-between overflow-hidden group"
+                className="bg-surface rounded-2xl border border-surfaceBorder shadow-sm hover:border-accent/40 transition flex flex-col justify-between overflow-hidden group"
               >
                 {/* Course Header Banner */}
-                <div className="h-32 bg-slate-800 relative overflow-hidden">
+                <div className="h-32 bg-background relative overflow-hidden border-b border-surfaceBorder">
                   {course.thumbnailUrl ? (
                     <img
                       src={course.thumbnailUrl}
                       alt={course.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300 opacity-90"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-slate-600">
+                    <div className="w-full h-full flex items-center justify-center text-textSecondary">
                       <BookOpen className="w-12 h-12" />
                     </div>
                   )}
                   <div className="absolute top-3 right-3">
                     <span
-                      className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded shadow ${
+                      className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded shadow border ${
                         course.difficultyLevel === 'Advanced'
-                          ? 'bg-rose-500 text-white'
+                          ? 'bg-rose-500/20 text-rose-400 border-rose-500/40'
                           : course.difficultyLevel === 'Intermediate'
-                          ? 'bg-amber-500 text-white'
-                          : 'bg-emerald-500 text-white'
+                          ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
+                          : 'bg-accent/20 text-accent border-accent/40 shadow-[0_0_6px_rgba(57,255,20,0.3)]'
                       }`}
                     >
                       {course.difficultyLevel}
@@ -148,10 +148,10 @@ export const CourseCatalogPage: React.FC = () => {
                 {/* Course Content */}
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-bold text-sm text-slate-900 leading-snug group-hover:text-emerald-600 transition line-clamp-2">
+                    <h3 className="font-bold text-sm text-textPrimary leading-snug group-hover:text-accent transition line-clamp-2">
                       {course.title}
                     </h3>
-                    <p className="text-xs text-slate-500 mt-2 line-clamp-3 leading-relaxed">
+                    <p className="text-xs text-textSecondary mt-2 line-clamp-3 leading-relaxed">
                       {course.description}
                     </p>
 
@@ -160,7 +160,7 @@ export const CourseCatalogPage: React.FC = () => {
                       {course.competencyTags.map((tag) => (
                         <span
                           key={tag.id}
-                          className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium border border-slate-200/80"
+                          className="text-[10px] bg-background text-textSecondary px-2 py-0.5 rounded font-medium border border-border"
                         >
                           {tag.competency.name} (L{tag.targetLevel})
                         </span>
@@ -168,14 +168,14 @@ export const CourseCatalogPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                  <div className="mt-6 pt-4 border-t border-surfaceBorder flex items-center justify-between text-xs text-textSecondary">
                     <span className="flex items-center gap-1 text-[11px]">
-                      <Users className="w-3.5 h-3.5 text-slate-400" />
+                      <Users className="w-3.5 h-3.5 text-textSecondary" />
                       {course.enrollmentCount || 0} Enrolled
                     </span>
                     <Link
                       to={`/courses/${course.id}`}
-                      className="px-4 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-xl font-bold text-xs shadow transition"
+                      className="px-4 py-1.5 bg-accent hover:bg-accentMuted text-background rounded-xl font-bold text-xs shadow-[0_0_10px_rgba(57,255,20,0.3)] transition"
                     >
                       View Syllabus & Enroll
                     </Link>

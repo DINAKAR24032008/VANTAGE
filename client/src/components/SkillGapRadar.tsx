@@ -18,7 +18,7 @@ interface Props {
 export const SkillGapRadar: React.FC<Props> = ({ breakdown }) => {
   if (!breakdown || breakdown.length === 0) {
     return (
-      <div className="p-8 text-center text-slate-400 text-sm">
+      <div className="p-8 text-center text-textSecondary text-sm">
         No competency profile data available. Complete self-assessment to view skill gap analytics.
       </div>
     );
@@ -40,10 +40,10 @@ export const SkillGapRadar: React.FC<Props> = ({ breakdown }) => {
             data={chartData}
             margin={{ top: 20, right: 30, left: 0, bottom: 25 }}
           >
-            <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#163016" />
             <XAxis
               dataKey="name"
-              stroke="#64748b"
+              stroke="#6FA36F"
               fontSize={11}
               interval={0}
               angle={-15}
@@ -52,7 +52,7 @@ export const SkillGapRadar: React.FC<Props> = ({ breakdown }) => {
             <YAxis
               domain={[0, 5]}
               ticks={[1, 2, 3, 4, 5]}
-              stroke="#64748b"
+              stroke="#6FA36F"
               fontSize={12}
             />
             <Tooltip
@@ -60,13 +60,13 @@ export const SkillGapRadar: React.FC<Props> = ({ breakdown }) => {
                 if (active && payload && payload.length) {
                   const data = payload[0].payload;
                   return (
-                    <div className="bg-slate-900 text-white p-3 rounded-xl shadow-xl text-xs border border-slate-700">
-                      <p className="font-bold text-emerald-400 mb-1">{data.fullName}</p>
-                      <p className="text-slate-300">
-                        Current Level: <span className="font-bold text-white">{data['Current Level']} / 5</span>
+                    <div className="bg-surface text-textPrimary p-3 rounded-xl shadow-xl text-xs border border-surfaceBorder">
+                      <p className="font-bold text-accent mb-1">{data.fullName}</p>
+                      <p className="text-textSecondary">
+                        Current Level: <span className="font-bold text-textPrimary">{data['Current Level']} / 5</span>
                       </p>
-                      <p className="text-slate-300">
-                        Required Benchmark: <span className="font-bold text-white">{data['Required Level']} / 5</span>
+                      <p className="text-textSecondary">
+                        Required Benchmark: <span className="font-bold text-textPrimary">{data['Required Level']} / 5</span>
                       </p>
                       <p className="text-amber-400 font-semibold mt-1">
                         Deficiency Gap: {data['Skill Gap']} levels
@@ -77,9 +77,9 @@ export const SkillGapRadar: React.FC<Props> = ({ breakdown }) => {
                 return null;
               }}
             />
-            <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-            <Bar dataKey="Current Level" fill="#10b981" radius={[4, 4, 0, 0]} />
-            <Bar dataKey="Required Level" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+            <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '10px', color: '#6FA36F' }} />
+            <Bar dataKey="Current Level" fill="#39FF14" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="Required Level" fill="#CFFFC2" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -91,31 +91,31 @@ export const SkillGapRadar: React.FC<Props> = ({ breakdown }) => {
             key={item.competencyId}
             className={`p-3 rounded-xl border flex flex-col justify-between ${
               item.gap === 0
-                ? 'bg-emerald-50/60 border-emerald-200'
+                ? 'bg-surface border-accent/30'
                 : item.gap >= 2
-                ? 'bg-rose-50/60 border-rose-200'
-                : 'bg-amber-50/60 border-amber-200'
+                ? 'bg-surface border-rose-500/30'
+                : 'bg-surface border-amber-500/30'
             }`}
           >
             <div className="flex items-start justify-between gap-2">
-              <span className="font-medium text-xs text-slate-800 line-clamp-1">{item.competencyName}</span>
+              <span className="font-medium text-xs text-textPrimary line-clamp-1">{item.competencyName}</span>
               <span
-                className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded ${
+                className={`text-[10px] uppercase font-bold px-1.5 py-0.5 rounded border ${
                   item.gap === 0
-                    ? 'bg-emerald-100 text-emerald-700'
+                    ? 'bg-accent/15 text-accent border-accent/40 shadow-[0_0_6px_rgba(57,255,20,0.3)]'
                     : item.gap >= 2
-                    ? 'bg-rose-100 text-rose-700'
-                    : 'bg-amber-100 text-amber-700'
+                    ? 'bg-rose-500/15 text-rose-400 border-rose-500/40'
+                    : 'bg-amber-500/15 text-amber-400 border-amber-500/40'
                 }`}
               >
                 {item.gap === 0 ? 'Target Met' : `-${item.gap} Gap`}
               </span>
             </div>
-            <div className="flex items-center justify-between text-[11px] text-slate-500 mt-2">
+            <div className="flex items-center justify-between text-[11px] text-textSecondary mt-2">
               <span>Level {item.currentLevel} of {item.requiredLevel}</span>
-              <div className="w-20 bg-slate-200 rounded-full h-1.5 overflow-hidden">
+              <div className="w-20 bg-border rounded-full h-1.5 overflow-hidden">
                 <div
-                  className={`h-full ${item.gap === 0 ? 'bg-emerald-500' : 'bg-amber-500'}`}
+                  className={`h-full ${item.gap === 0 ? 'bg-accent' : 'bg-amber-500'}`}
                   style={{ width: `${Math.min(100, (item.currentLevel / item.requiredLevel) * 100)}%` }}
                 />
               </div>
