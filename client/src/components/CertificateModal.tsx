@@ -33,10 +33,10 @@ export const CertificateModal: React.FC<Props> = ({ certificate, onClose }) => {
               <Award className="w-8 h-8 text-accent" />
             </div>
             <span className="text-xs font-bold uppercase tracking-widest text-textSecondary font-mono">
-              Government of India • Ministry of Earth Sciences
+              Vantage Learning Platform
             </span>
             <h2 className="text-2xl sm:text-3xl font-display italic font-bold text-accent mt-2">
-              Certificate of Competency
+              Certificate of Completion
             </h2>
             <div className="w-24 h-0.5 bg-gradient-to-r from-transparent via-accent to-transparent my-3" />
           </div>
@@ -44,19 +44,16 @@ export const CertificateModal: React.FC<Props> = ({ certificate, onClose }) => {
           {/* Certificate Body */}
           <p className="text-xs text-textSecondary italic mt-2">This is to officially certify that</p>
           <h3 className="text-xl sm:text-2xl font-bold text-textPrimary mt-1 border-b border-surfaceBorder pb-2 inline-block">
-            {certificate.user?.name || 'Officer / Scientist'}
+            {certificate.user?.name || 'Enrolled Learner'}
           </h3>
-          <p className="text-xs text-textSecondary mt-1">
-            Department: <span className="font-semibold text-textPrimary">{certificate.user?.department || 'Ministry of Earth Sciences'}</span>
-          </p>
 
           <p className="text-xs text-textSecondary mt-5 leading-relaxed max-w-md mx-auto">
-            has successfully fulfilled all instructional modules, practical assignments, and rigorous competency assessments in
+            has successfully completed all video modules, practical coursework, and verified module assessments in
           </p>
 
           <div className="my-4 p-4 bg-surface rounded-xl border border-surfaceBorder inline-block max-w-lg">
             <h4 className="text-base sm:text-lg font-extrabold text-accent">
-              {certificate.course?.title || 'Advanced Earth Sciences Specialization'}
+              {certificate.course?.title || 'Introduction to Python'}
             </h4>
           </div>
 
@@ -84,7 +81,7 @@ export const CertificateModal: React.FC<Props> = ({ certificate, onClose }) => {
         <div className="bg-surface px-8 py-4 flex items-center justify-between border-t border-surfaceBorder print:hidden">
           <span className="text-xs text-textSecondary flex items-center gap-1.5">
             <CheckCircle className="w-4 h-4 text-accent" />
-            Accredited by Vantage • Digital Learning Directorate
+            Verified by Vantage • Learning & Certification Platform
           </span>
           <div className="flex items-center gap-2">
             <button

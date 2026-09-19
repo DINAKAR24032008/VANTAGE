@@ -49,13 +49,13 @@ export const CourseCatalogPage: React.FC = () => {
         {/* Header */}
         <div>
           <span className="text-[10px] font-mono text-accent font-bold uppercase tracking-wider">
-            Ministry of Earth Sciences Curriculum Library
+            Curriculum & Programs
           </span>
           <h1 className="text-3xl sm:text-4xl font-display italic text-textPrimary mt-1 tracking-tight">
-            Training & Capacity Building Courses
+            Course Catalog
           </h1>
           <p className="text-xs sm:text-sm text-textSecondary mt-1">
-            Certified programs spanning Atmospheric Sciences, Ocean Technology, Seismology, and Geoinformatics.
+            Self-paced courses with structured video lessons, hands-on modules, and verified assessments.
           </p>
         </div>
 
@@ -67,7 +67,7 @@ export const CourseCatalogPage: React.FC = () => {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by topic, model, sensor..."
+              placeholder="Search courses, topics, or modules..."
               className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-xl text-xs text-textPrimary placeholder:text-textSecondary focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent"
             />
           </form>
@@ -79,11 +79,9 @@ export const CourseCatalogPage: React.FC = () => {
               onChange={(e) => setSelectedCategory(e.target.value)}
               className="px-3 py-2 bg-background border border-border rounded-xl text-xs font-semibold text-textPrimary focus:ring-1 focus:ring-accent focus:border-accent"
             >
-              <option value="all" className="bg-background text-textPrimary">All Disciplines</option>
-              <option value="Atmospheric Sciences" className="bg-background text-textPrimary">Atmospheric Sciences</option>
-              <option value="Ocean Sciences" className="bg-background text-textPrimary">Ocean Sciences</option>
-              <option value="Seismology & Solid Earth" className="bg-background text-textPrimary">Seismology</option>
-              <option value="Data Systems & Geoinformatics" className="bg-background text-textPrimary">Data Systems / HPC</option>
+              <option value="all" className="bg-background text-textPrimary">All Categories</option>
+              <option value="Software Development" className="bg-background text-textPrimary">Software Development</option>
+              <option value="Programming" className="bg-background text-textPrimary">Programming</option>
             </select>
 
             {/* Difficulty Filter */}

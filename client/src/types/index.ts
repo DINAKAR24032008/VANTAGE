@@ -92,6 +92,7 @@ export interface Course {
   thumbnailUrl?: string | null;
   modules: CourseModule[];
   difficultyLevel: string;
+  status: 'draft' | 'published';
   createdAt: string;
   competencyTags: CourseCompetencyTag[];
   enrollmentCount?: number;
@@ -179,6 +180,7 @@ export interface ForumPost {
   authorId: string;
   title?: string | null;
   body: string;
+  isPinned?: boolean;
   createdAt: string;
   author: {
     id: string;
@@ -189,6 +191,57 @@ export interface ForumPost {
   course?: {
     id: string;
     title: string;
+    trainerId?: string;
   } | null;
   replies?: ForumPost[];
 }
+
+export interface LearnerRosterItem {
+  id: string;
+  userId: string;
+  name: string;
+  email: string;
+  progressPercent: number;
+  completedModulesCount: number;
+  totalModulesCount: number;
+  status: 'not_started' | 'in_progress' | 'completed';
+  enrolledAt: string;
+  lastActiveAt: string;
+  latestQuizScore: number | null;
+  passedQuizzesCount: number;
+  isStuck: boolean;
+}
+
+export interface QuestionInsight {
+  id: string;
+  question: string;
+  options: string[];
+  correctIndex: number;
+  explanation?: string;
+  totalAttempts: number;
+  incorrectCount: number;
+  failureRate: number;
+  needsReview: boolean;
+  optionDistribution: Record<number, number>;
+}
+
+export interface ModuleQuizInsight {
+  assessmentId: string;
+  moduleId: string | null;
+  moduleTitle: string;
+  passThreshold: number;
+  totalAttempts: number;
+  passedAttempts: number;
+  passRate: number;
+  avgScore: number;
+  needsReviewCount: number;
+  questions: QuestionInsight[];
+}
+
+export interface CourseInsightsResponse {
+  courseId: string;
+  courseTitle: string;
+  totalAssessments: number;
+  moduleInsights: ModuleQuizInsight[];
+}
+

@@ -18,17 +18,17 @@ export const DEMO_CREDENTIALS: Record<UserRole, { email: string; pass: string; t
   admin: {
     email: 'admin@vantage.gov.in',
     pass: 'Password@123',
-    title: 'Dr. Rameshwar Rao (Admin - MoES HQ)',
+    title: 'Administrator',
   },
   trainer: {
-    email: 'trainer.met@vantage.gov.in',
+    email: 'trainer@vantage.gov.in',
     pass: 'Password@123',
-    title: 'Dr. Ananya Sen (Trainer - IMD)',
+    title: 'Instructor',
   },
   learner: {
     email: 'learner1@vantage.gov.in',
     pass: 'Password@123',
-    title: 'Priya Sharma (Learner - Met Assistant)',
+    title: 'Learner',
   },
 };
 

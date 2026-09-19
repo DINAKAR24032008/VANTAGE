@@ -61,10 +61,17 @@ export class AssessmentController {
   static async saveAssessment(req: AuthenticatedRequest, res: Response) {
     try {
       if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'trainer')) {
-        return res.status(403).json({ error: 'Only trainers or admins can configure assessments' });
+        return res.status(403).json({ error: 'Only instructors or admins can configure assessments' });
       }
 
       const courseId = String(req.params.courseId);
+      const course = await prisma.course.findUnique({ where: { id: courseId } });
+      if (!course) return res.status(404).json({ error: 'Course not found' });
+
+      if (req.user?.role !== 'admin' && course.trainerId !== req.user?.userId) {
+        return res.status(403).json({ error: 'You are not authorized to configure assessments for this course' });
+      }
+
       const { passThreshold = 70, questions, moduleId } = req.body;
 
       if (!Array.isArray(questions) || questions.length === 0) {
@@ -106,6 +113,147 @@ export class AssessmentController {
           ...assessment,
           questions: JSON.parse(assessment.questions),
         },
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  static async getModuleAssessment(req: AuthenticatedRequest, res: Response) {
+    try {
+      const courseId = String(req.params.courseId);
+      const moduleId = String(req.params.moduleId);
+
+      const course = await prisma.course.findUnique({ where: { id: courseId } });
+      if (!course) return res.status(404).json({ error: 'Course not found' });
+
+      const assessment = await prisma.assessment.findFirst({
+        where: { courseId, moduleId },
+      });
+
+      if (!assessment) {
+        return res.json({
+          courseId,
+          moduleId,
+          passThreshold: 70,
+          questions: [],
+          exists: false,
+        });
+      }
+
+      return res.json({
+        id: assessment.id,
+        courseId: assessment.courseId,
+        moduleId: assessment.moduleId,
+        passThreshold: assessment.passThreshold,
+        questions: JSON.parse(assessment.questions || '[]'),
+        exists: true,
+      });
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  static async getQuizInsights(req: AuthenticatedRequest, res: Response) {
+    try {
+      const courseId = String(req.params.courseId);
+      const course = await prisma.course.findUnique({ where: { id: courseId } });
+      if (!course) return res.status(404).json({ error: 'Course not found' });
+
+      if (req.user?.role !== 'admin' && course.trainerId !== req.user?.userId) {
+        return res.status(403).json({ error: 'You are not authorized to view insights for this course' });
+      }
+
+      const assessments = await prisma.assessment.findMany({
+        where: { courseId },
+        include: {
+          attempts: true,
+        },
+      });
+
+      const courseModules: any[] = JSON.parse(course.modules || '[]');
+
+      const moduleInsights = assessments.map((assessment) => {
+        const moduleObj = courseModules.find((m) => m.id === assessment.moduleId);
+        const moduleTitle = moduleObj?.title || (assessment.moduleId ? `Module: ${assessment.moduleId}` : 'Course Final Assessment');
+
+        let questions: any[] = [];
+        try {
+          questions = JSON.parse(assessment.questions || '[]');
+        } catch (e) {
+          questions = [];
+        }
+
+        const attempts = assessment.attempts;
+        const totalAttempts = attempts.length;
+        const passedAttempts = attempts.filter((a) => a.passed).length;
+        const passRate = totalAttempts > 0 ? Math.round((passedAttempts / totalAttempts) * 100) : 0;
+        const avgScore =
+          totalAttempts > 0
+            ? Math.round(attempts.reduce((sum, a) => sum + a.score, 0) / totalAttempts)
+            : 0;
+
+        // Per question diagnostic calculation
+        const questionInsights = questions.map((q, qIdx) => {
+          let incorrectCount = 0;
+          const optionDistribution: Record<number, number> = {};
+          if (Array.isArray(q.options)) {
+            q.options.forEach((_: any, optIdx: number) => {
+              optionDistribution[optIdx] = 0;
+            });
+          }
+
+          attempts.forEach((attempt) => {
+            try {
+              const userAnswers = JSON.parse(attempt.answers || '[]');
+              const chosen = userAnswers[qIdx];
+              if (chosen !== undefined) {
+                optionDistribution[chosen] = (optionDistribution[chosen] || 0) + 1;
+                if (chosen !== q.correctIndex) {
+                  incorrectCount++;
+                }
+              }
+            } catch (e) {}
+          });
+
+          const failureRate = totalAttempts > 0 ? Math.round((incorrectCount / totalAttempts) * 100) : 0;
+          const needsReview = totalAttempts > 0 && failureRate >= 40;
+
+          return {
+            id: q.id,
+            question: q.question,
+            options: q.options || [],
+            correctIndex: q.correctIndex,
+            explanation: q.explanation,
+            totalAttempts,
+            incorrectCount,
+            failureRate,
+            needsReview,
+            optionDistribution,
+          };
+        });
+
+        const needsReviewCount = questionInsights.filter((qi) => qi.needsReview).length;
+
+        return {
+          assessmentId: assessment.id,
+          moduleId: assessment.moduleId,
+          moduleTitle,
+          passThreshold: assessment.passThreshold,
+          totalAttempts,
+          passedAttempts,
+          passRate,
+          avgScore,
+          needsReviewCount,
+          questions: questionInsights,
+        };
+      });
+
+      return res.json({
+        courseId,
+        courseTitle: course.title,
+        totalAssessments: assessments.length,
+        moduleInsights,
       });
     } catch (err: any) {
       return res.status(500).json({ error: err.message });

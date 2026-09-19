@@ -11,7 +11,6 @@ import { OnboardingCompetencyPage } from './pages/OnboardingCompetencyPage';
 import { CourseCatalogPage } from './pages/CourseCatalogPage';
 import { CourseDetailPage } from './pages/CourseDetailPage';
 import { TrainerManagePage } from './pages/TrainerManagePage';
-import { AdminAnalyticsPage } from './pages/AdminAnalyticsPage';
 import { ForumPage } from './pages/ForumPage';
 
 const RootRedirect: React.FC = () => {
@@ -19,8 +18,7 @@ const RootRedirect: React.FC = () => {
 
   if (isLoading) return null;
   if (!user) return <Navigate to="/login" replace />;
-  if (user.role === 'admin') return <Navigate to="/admin" replace />;
-  if (user.role === 'trainer') return <Navigate to="/trainer" replace />;
+  if (user.role === 'admin' || user.role === 'trainer') return <Navigate to="/catalog" replace />;
   return <Navigate to="/dashboard" replace />;
 };
 
@@ -72,7 +70,7 @@ export const App: React.FC = () => {
                 }
               />
 
-              {/* Trainer Portal */}
+              {/* Trainer / Admin Curriculum Portal */}
               <Route
                 path="/trainer"
                 element={
@@ -82,17 +80,7 @@ export const App: React.FC = () => {
                 }
               />
 
-              {/* Admin Portal */}
-              <Route
-                path="/admin"
-                element={
-                  <ProtectedRoute allowedRoles={['admin']}>
-                    <AdminAnalyticsPage />
-                  </ProtectedRoute>
-                }
-              />
-
-              {/* Collaborative Forum */}
+              {/* Discussion Forum */}
               <Route
                 path="/forum"
                 element={
@@ -101,6 +89,9 @@ export const App: React.FC = () => {
                   </ProtectedRoute>
                 }
               />
+
+              {/* Legacy / Admin Redirect */}
+              <Route path="/admin" element={<Navigate to="/catalog" replace />} />
 
               {/* Root */}
               <Route path="/" element={<RootRedirect />} />

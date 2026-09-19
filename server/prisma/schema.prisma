@@ -13,8 +13,8 @@ model User {
   email        String             @unique
   passwordHash String
   role         String             @default("learner") // admin, trainer, learner
-  department   String
-  jobRole      String
+  department   String             @default("General")
+  jobRole      String             @default("Learner")
   createdAt    DateTime           @default(now())
   profile      CompetencyProfile?
   enrollments  Enrollment[]
@@ -27,7 +27,7 @@ model User {
 model Competency {
   id          String                @id @default(uuid())
   name        String                @unique
-  category    String                // Meteorology, Ocean Sciences, Seismology, Data Systems, etc.
+  category    String                // Programming, Software Development, etc.
   description String
   courseTags  CourseCompetencyTag[]
 }
@@ -40,14 +40,6 @@ model CompetencyProfile {
   updatedAt DateTime @updatedAt
 }
 
-model RoleCompetencyRequirement {
-  id           String   @id @default(uuid())
-  jobRole      String   @unique
-  department   String
-  requirements String   // JSON string: [{ competencyId, competencyName, requiredLevel, weight }]
-  updatedAt    DateTime @updatedAt
-}
-
 model Course {
   id              String                @id @default(uuid())
   title           String
@@ -58,6 +50,7 @@ model Course {
   thumbnailUrl    String?
   modules         String                // JSON string: [{ id, title, duration, videoUrl, notes, order }]
   difficultyLevel String                @default("Beginner") // Beginner, Intermediate, Advanced
+  status          String                @default("draft") // draft, published
   createdAt       DateTime              @default(now())
   competencyTags  CourseCompetencyTag[]
   enrollments     Enrollment[]
@@ -85,6 +78,7 @@ model Enrollment {
   progressPercent  Int       @default(0)
   completedModules String    @default("[]") // JSON string of module IDs
   enrolledAt       DateTime  @default(now())
+  updatedAt        DateTime  @default(now()) @updatedAt
   completedAt      DateTime?
   user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   course           Course    @relation(fields: [courseId], references: [id], onDelete: Cascade)
@@ -137,6 +131,7 @@ model ForumPost {
   parentPostId String?
   title        String?     // For root threads
   body         String
+  isPinned     Boolean     @default(false)
   createdAt    DateTime    @default(now())
   course       Course?     @relation(fields: [courseId], references: [id], onDelete: Cascade)
   author       User        @relation(fields: [authorId], references: [id], onDelete: Cascade)

@@ -6,7 +6,7 @@ import { uploadMiddleware } from '../services/storageService';
 const router = Router();
 
 router.get('/', CourseController.getAllCourses);
-router.get('/:id', authenticateToken, CourseController.getCourseById);
+router.get('/:id', CourseController.getCourseById);
 router.post(
   '/',
   authenticateToken,
@@ -19,11 +19,29 @@ router.put(
   requireRole(['admin', 'trainer']),
   CourseController.updateCourse
 );
+router.patch(
+  '/:id/status',
+  authenticateToken,
+  requireRole(['admin', 'trainer']),
+  CourseController.updateCourseStatus
+);
 router.delete(
   '/:id',
   authenticateToken,
   requireRole(['admin', 'trainer']),
   CourseController.deleteCourse
+);
+router.get(
+  '/:id/learners',
+  authenticateToken,
+  requireRole(['admin', 'trainer']),
+  CourseController.getCourseLearners
+);
+router.get(
+  '/:id/learners/export',
+  authenticateToken,
+  requireRole(['admin', 'trainer']),
+  CourseController.exportCourseLearnersCSV
 );
 router.post(
   '/upload',

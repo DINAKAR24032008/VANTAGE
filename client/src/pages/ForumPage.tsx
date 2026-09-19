@@ -13,6 +13,10 @@ import {
   Clock,
   Sparkles,
   X,
+  Pin,
+  Trash2,
+  Edit3,
+  Check,
 } from 'lucide-react';
 
 export const ForumPage: React.FC = () => {
@@ -32,6 +36,11 @@ export const ForumPage: React.FC = () => {
   // Reply Form State: postId -> reply text
   const [replyTexts, setReplyTexts] = useState<Record<string, string>>({});
   const [replyingTo, setReplyingTo] = useState<string | null>(null);
+
+  // Edit Form State
+  const [editingPostId, setEditingPostId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState<string>('');
+  const [savingEdit, setSavingEdit] = useState(false);
 
   useEffect(() => {
     loadForumData();
@@ -100,6 +109,40 @@ export const ForumPage: React.FC = () => {
     }
   };
 
+  const handleTogglePin = async (postId: string) => {
+    try {
+      await api.put(`/forum/posts/${postId}/pin`);
+      await loadForumData();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to toggle pin status');
+    }
+  };
+
+  const handleDeletePost = async (postId: string) => {
+    if (!window.confirm('Are you sure you want to delete this post?')) return;
+    try {
+      await api.delete(`/forum/posts/${postId}`);
+      await loadForumData();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to delete post');
+    }
+  };
+
+  const handleSaveEdit = async (postId: string) => {
+    if (!editingText.trim()) return;
+    try {
+      setSavingEdit(true);
+      await api.put(`/forum/posts/${postId}`, { body: editingText });
+      setEditingPostId(null);
+      setEditingText('');
+      await loadForumData();
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to update post');
+    } finally {
+      setSavingEdit(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background text-textPrimary py-8">
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
@@ -107,13 +150,13 @@ export const ForumPage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <span className="text-[10px] font-mono text-accent font-bold uppercase tracking-wider">
-              MoES Knowledge Sharing & Colleague Discourse
+              Community Knowledge Sharing & Discussions
             </span>
             <h1 className="text-3xl sm:text-4xl font-display italic text-textPrimary mt-1 tracking-tight">
-              Scientific & Operational Forum
+              Discussion Forum
             </h1>
             <p className="text-xs text-textSecondary">
-              Cross-institutional discussions between scientists, trainers, and field officers.
+              Collaborative discussions, questions, and insights between learners and instructors.
             </p>
           </div>
 
@@ -141,7 +184,7 @@ export const ForumPage: React.FC = () => {
               filter === 'general' ? 'bg-accent text-background font-bold' : 'text-textSecondary hover:bg-surfaceBorder/40 hover:text-textPrimary'
             }`}
           >
-            <Globe className="w-3.5 h-3.5" /> General Science & Open Data
+            <Globe className="w-3.5 h-3.5" /> General Discussions
           </button>
 
           <select
@@ -165,108 +208,276 @@ export const ForumPage: React.FC = () => {
           </div>
         ) : (
           <div className="space-y-4">
-            {posts.map((post) => (
-              <div key={post.id} className="bg-surface rounded-2xl border border-surfaceBorder shadow-sm p-6 space-y-4">
-                {/* Thread Header */}
-                <div className="flex items-start justify-between gap-3">
-                  <div>
-                    {post.course ? (
-                      <span className="text-[10px] font-mono font-bold uppercase bg-accent/10 text-accent px-2 py-0.5 rounded border border-accent/20">
-                        Course: {post.course.title}
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-mono font-bold uppercase bg-accentMuted/10 text-accentMuted px-2 py-0.5 rounded border border-accentMuted/20">
-                        General Discourse
-                      </span>
-                    )}
-                    <h3 className="text-base font-bold text-textPrimary mt-1.5">{post.title || 'Discussion'}</h3>
-                  </div>
+            {posts.map((post) => {
+              const isCourseInstructor = Boolean(
+                post.course?.trainerId &&
+                (post.course.trainerId === post.author?.id || post.course.trainerId === post.authorId)
+              );
+              const canPin = Boolean(post.courseId && (user?.role === 'admin' || post.course?.trainerId === user?.id));
+              const canModerateThread = Boolean(
+                user?.role === 'admin' ||
+                post.author?.id === user?.id ||
+                post.authorId === user?.id ||
+                (post.course?.trainerId && post.course.trainerId === user?.id)
+              );
 
-                  <div className="text-right text-[11px] text-textSecondary flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5" />
-                    <span>{new Date(post.createdAt).toLocaleDateString()}</span>
-                  </div>
-                </div>
-
-                {/* Author Info */}
-                <div className="flex items-center gap-2">
-                  <div className="w-7 h-7 rounded-full bg-surfaceBorder text-accent flex items-center justify-center text-[10px] font-bold border border-surfaceBorder">
-                    {post.author?.name?.charAt(0) || 'U'}
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold text-textPrimary">{post.author?.name}</span>
-                    <span className="text-[10px] text-textSecondary ml-1.5 font-mono">
-                      ({post.author?.role} • {post.author?.department?.split(' ')[0]})
-                    </span>
-                  </div>
-                </div>
-
-                {/* Post Body */}
-                <p className="text-xs sm:text-sm text-textPrimary leading-relaxed whitespace-pre-wrap">
-                  {post.body}
-                </p>
-
-                {/* Nested Replies Section */}
-                <div className="pt-3 border-t border-surfaceBorder space-y-3">
-                  {post.replies && post.replies.length > 0 && (
-                    <div className="space-y-2.5 pl-4 border-l-2 border-accent/40 my-3">
-                      {post.replies.map((reply) => (
-                        <div key={reply.id} className="p-3 bg-background rounded-xl border border-surfaceBorder text-xs">
-                          <div className="flex items-center justify-between text-[10px] text-textSecondary mb-1">
-                            <span className="font-bold text-textPrimary">
-                              {reply.author?.name} ({reply.author?.role})
-                            </span>
-                            <span>{new Date(reply.createdAt).toLocaleDateString()}</span>
-                          </div>
-                          <p className="text-textPrimary leading-relaxed whitespace-pre-wrap">{reply.body}</p>
-                        </div>
-                      ))}
+              return (
+                <div
+                  key={post.id}
+                  className={`bg-surface rounded-2xl border shadow-sm p-6 space-y-4 transition ${
+                    post.isPinned ? 'border-accent/60 bg-surface/90 shadow-accent/5 ring-1 ring-accent/30' : 'border-surfaceBorder'
+                  }`}
+                >
+                  {/* Thread Header */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="space-y-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {post.isPinned && (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold uppercase bg-accent text-background px-2 py-0.5 rounded shadow-sm">
+                            <Pin className="w-3 h-3 fill-current" /> Pinned Thread
+                          </span>
+                        )}
+                        {post.course ? (
+                          <span className="text-[10px] font-mono font-bold uppercase bg-accent/10 text-accent px-2 py-0.5 rounded border border-accent/20">
+                            Course: {post.course.title}
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-mono font-bold uppercase bg-accentMuted/10 text-accentMuted px-2 py-0.5 rounded border border-accentMuted/20">
+                            General Discourse
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-base font-bold text-textPrimary mt-1.5">{post.title || 'Discussion'}</h3>
                     </div>
-                  )}
 
-                  {/* Reply Action Form */}
-                  <div className="pt-1">
-                    {replyingTo === post.id ? (
-                      <div className="flex items-center gap-2">
-                        <input
-                          type="text"
-                          value={replyTexts[post.id] || ''}
-                          onChange={(e) =>
-                            setReplyTexts({ ...replyTexts, [post.id]: e.target.value })
-                          }
-                          placeholder="Write a constructive response..."
-                          className="flex-1 p-2 bg-background border border-surfaceBorder rounded-xl text-xs text-textPrimary placeholder-textSecondary/50 focus:outline-none focus:border-accent"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleSendReply(post.id);
-                          }}
-                        />
+                    {/* Thread Actions */}
+                    <div className="flex items-center gap-2">
+                      {canPin && (
                         <button
-                          onClick={() => handleSendReply(post.id)}
-                          className="p-2 bg-accent hover:bg-accent/90 text-background rounded-xl transition"
-                          title="Send Reply"
+                          onClick={() => handleTogglePin(post.id)}
+                          title={post.isPinned ? 'Unpin thread' : 'Pin thread to top'}
+                          className={`p-1.5 rounded-lg border text-xs transition flex items-center gap-1 ${
+                            post.isPinned
+                              ? 'bg-accent/20 border-accent text-accent'
+                              : 'bg-background border-surfaceBorder text-textSecondary hover:text-accent hover:border-accent'
+                          }`}
                         >
-                          <Send className="w-4 h-4" />
+                          <Pin className="w-3.5 h-3.5" />
+                          <span className="hidden sm:inline text-[10px] font-mono font-bold">
+                            {post.isPinned ? 'Unpin' : 'Pin'}
+                          </span>
+                        </button>
+                      )}
+                      {canModerateThread && (
+                        <>
+                          <button
+                            onClick={() => {
+                              setEditingPostId(post.id);
+                              setEditingText(post.body);
+                            }}
+                            title="Edit Post"
+                            className="p-1.5 bg-background border border-surfaceBorder rounded-lg text-xs text-textSecondary hover:text-accent hover:border-accent transition"
+                          >
+                            <Edit3 className="w-3.5 h-3.5" />
+                          </button>
+                          <button
+                            onClick={() => handleDeletePost(post.id)}
+                            title="Delete Post"
+                            className="p-1.5 bg-background border border-surfaceBorder rounded-lg text-xs text-textSecondary hover:text-red-400 hover:border-red-500 transition"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </>
+                      )}
+                      <div className="text-right text-[11px] text-textSecondary flex items-center gap-1 ml-2">
+                        <Clock className="w-3.5 h-3.5" />
+                        <span>{new Date(post.createdAt).toLocaleDateString()}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Author Info */}
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-surfaceBorder text-accent flex items-center justify-center text-[10px] font-bold border border-surfaceBorder">
+                      {post.author?.name?.charAt(0) || 'U'}
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-semibold text-textPrimary">{post.author?.name}</span>
+                      {isCourseInstructor ? (
+                        <span className="text-[9px] font-mono font-bold uppercase bg-accent text-background px-1.5 py-0.5 rounded shadow-sm">
+                          Instructor
+                        </span>
+                      ) : (
+                        <span className="text-[10px] text-textSecondary font-mono capitalize">
+                          ({post.author?.role})
+                        </span>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Post Body / Edit Form */}
+                  {editingPostId === post.id ? (
+                    <div className="space-y-2">
+                      <textarea
+                        rows={4}
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        className="w-full p-2.5 bg-background border border-accent rounded-xl text-xs text-textPrimary focus:outline-none"
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button
+                          onClick={() => setEditingPostId(null)}
+                          className="px-3 py-1 bg-surface border border-surfaceBorder rounded-lg text-xs text-textSecondary hover:text-textPrimary"
+                        >
+                          Cancel
                         </button>
                         <button
-                          onClick={() => setReplyingTo(null)}
-                          className="p-2 text-textSecondary hover:text-textPrimary transition"
+                          disabled={savingEdit}
+                          onClick={() => handleSaveEdit(post.id)}
+                          className="px-3 py-1 bg-accent text-background rounded-lg text-xs font-bold hover:bg-accent/90 flex items-center gap-1"
                         >
-                          <X className="w-4 h-4" />
+                          <Check className="w-3.5 h-3.5" /> Save
                         </button>
                       </div>
-                    ) : (
-                      <button
-                        onClick={() => setReplyingTo(post.id)}
-                        className="text-xs font-bold text-textSecondary hover:text-accent flex items-center gap-1.5 transition"
-                      >
-                        <CornerDownRight className="w-3.5 h-3.5 text-accent" />
-                        Reply to Thread ({post.replies?.length || 0} replies)
-                      </button>
+                    </div>
+                  ) : (
+                    <p className="text-xs sm:text-sm text-textPrimary leading-relaxed whitespace-pre-wrap">
+                      {post.body}
+                    </p>
+                  )}
+
+                  {/* Nested Replies Section */}
+                  <div className="pt-3 border-t border-surfaceBorder space-y-3">
+                    {post.replies && post.replies.length > 0 && (
+                      <div className="space-y-2.5 pl-4 border-l-2 border-accent/40 my-3">
+                        {post.replies.map((reply) => {
+                          const isReplyInstructor = Boolean(
+                            post.course?.trainerId &&
+                            (post.course.trainerId === reply.author?.id || post.course.trainerId === reply.authorId)
+                          );
+                          const canModerateReply = Boolean(
+                            user?.role === 'admin' ||
+                            reply.author?.id === user?.id ||
+                            reply.authorId === user?.id ||
+                            (post.course?.trainerId && post.course.trainerId === user?.id)
+                          );
+
+                          return (
+                            <div key={reply.id} className="p-3 bg-background rounded-xl border border-surfaceBorder text-xs space-y-1.5">
+                              <div className="flex items-center justify-between text-[10px] text-textSecondary">
+                                <div className="flex items-center gap-1.5">
+                                  <span className="font-bold text-textPrimary">{reply.author?.name}</span>
+                                  {isReplyInstructor ? (
+                                    <span className="text-[9px] font-mono font-bold uppercase bg-accent text-background px-1.5 py-0.2 rounded">
+                                      Instructor
+                                    </span>
+                                  ) : (
+                                    <span>({reply.author?.role})</span>
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span>{new Date(reply.createdAt).toLocaleDateString()}</span>
+                                  {canModerateReply && (
+                                    <div className="flex items-center gap-1">
+                                      <button
+                                        onClick={() => {
+                                          setEditingPostId(reply.id);
+                                          setEditingText(reply.body);
+                                        }}
+                                        title="Edit reply"
+                                        className="text-textSecondary hover:text-accent"
+                                      >
+                                        <Edit3 className="w-3 h-3" />
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeletePost(reply.id)}
+                                        title="Delete reply"
+                                        className="text-textSecondary hover:text-red-400"
+                                      >
+                                        <Trash2 className="w-3 h-3" />
+                                      </button>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+
+                              {editingPostId === reply.id ? (
+                                <div className="space-y-2 pt-1">
+                                  <textarea
+                                    rows={2}
+                                    value={editingText}
+                                    onChange={(e) => setEditingText(e.target.value)}
+                                    className="w-full p-2 bg-surface border border-accent rounded-lg text-xs text-textPrimary focus:outline-none"
+                                  />
+                                  <div className="flex justify-end gap-1.5">
+                                    <button
+                                      onClick={() => setEditingPostId(null)}
+                                      className="px-2 py-0.5 bg-surface border border-surfaceBorder rounded text-[11px] text-textSecondary hover:text-textPrimary"
+                                    >
+                                      Cancel
+                                    </button>
+                                    <button
+                                      disabled={savingEdit}
+                                      onClick={() => handleSaveEdit(reply.id)}
+                                      className="px-2 py-0.5 bg-accent text-background rounded text-[11px] font-bold hover:bg-accent/90"
+                                    >
+                                      Save
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <p className="text-textPrimary leading-relaxed whitespace-pre-wrap">{reply.body}</p>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
                     )}
+
+                    {/* Reply Action Form */}
+                    <div className="pt-1">
+                      {replyingTo === post.id ? (
+                        <div className="flex items-center gap-2">
+                          <input
+                            type="text"
+                            value={replyTexts[post.id] || ''}
+                            onChange={(e) =>
+                              setReplyTexts({ ...replyTexts, [post.id]: e.target.value })
+                            }
+                            placeholder="Write a constructive response..."
+                            className="flex-1 p-2 bg-background border border-surfaceBorder rounded-xl text-xs text-textPrimary placeholder-textSecondary/50 focus:outline-none focus:border-accent"
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleSendReply(post.id);
+                            }}
+                          />
+                          <button
+                            onClick={() => handleSendReply(post.id)}
+                            className="p-2 bg-accent hover:bg-accent/90 text-background rounded-xl transition"
+                            title="Send Reply"
+                          >
+                            <Send className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setReplyingTo(null)}
+                            className="p-2 text-textSecondary hover:text-textPrimary transition"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => setReplyingTo(post.id)}
+                          className="text-xs font-bold text-textSecondary hover:text-accent flex items-center gap-1.5 transition"
+                        >
+                          <CornerDownRight className="w-3.5 h-3.5 text-accent" />
+                          Reply to Thread ({post.replies?.length || 0} replies)
+                        </button>
+                      )}
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
@@ -293,7 +504,7 @@ export const ForumPage: React.FC = () => {
                   required
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  placeholder="e.g. Guidance on high-resolution radar clutter mitigation filters"
+                  placeholder="e.g. Tips for mastering Python list comprehensions and generators"
                   className="w-full p-2.5 bg-background border border-surfaceBorder rounded-xl text-xs text-textPrimary placeholder-textSecondary/50 focus:outline-none focus:border-accent"
                 />
               </div>
@@ -305,7 +516,7 @@ export const ForumPage: React.FC = () => {
                   onChange={(e) => setNewCourseId(e.target.value)}
                   className="w-full p-2.5 bg-background border border-surfaceBorder rounded-xl text-xs font-medium text-textPrimary focus:outline-none focus:border-accent"
                 >
-                  <option value="">General Knowledge Sharing (MoES-wide)</option>
+                  <option value="">General Discussion (Platform-wide)</option>
                   {courses.map((c) => (
                     <option key={c.id} value={c.id}>Course: {c.title}</option>
                   ))}
@@ -319,7 +530,7 @@ export const ForumPage: React.FC = () => {
                   rows={4}
                   value={newBody}
                   onChange={(e) => setNewBody(e.target.value)}
-                  placeholder="Elaborate on the scientific problem, code snippet, or operational observation..."
+                  placeholder="Elaborate on your question, share code snippets, or start a discussion..."
                   className="w-full p-2.5 bg-background border border-surfaceBorder rounded-xl text-xs text-textPrimary placeholder-textSecondary/50 focus:outline-none focus:border-accent"
                 />
               </div>

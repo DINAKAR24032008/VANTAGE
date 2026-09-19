@@ -7,9 +7,7 @@ import competencyRoutes from './routes/competencyRoutes';
 import courseRoutes from './routes/courseRoutes';
 import enrollmentRoutes from './routes/enrollmentRoutes';
 import assessmentRoutes from './routes/assessmentRoutes';
-import analyticsRoutes from './routes/analyticsRoutes';
 import forumRoutes from './routes/forumRoutes';
-import adminRoutes from './routes/adminRoutes';
 import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
@@ -33,9 +31,9 @@ app.use('/uploads', express.static(uploadDir));
 app.get('/api/health', (req, res) => {
   res.json({
     status: 'ok',
-    service: 'Vantage API (SIH26075)',
+    service: 'Vantage API',
     timestamp: new Date().toISOString(),
-    theme: 'Smart Education - Ministry of Earth Sciences',
+    theme: 'Course Learning Platform',
   });
 });
 
@@ -45,9 +43,7 @@ app.use('/api', competencyRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/assessments', assessmentRoutes);
-app.use('/api/analytics', analyticsRoutes);
 app.use('/api/forum', forumRoutes);
-app.use('/api/admin', adminRoutes);
 
 // Error Handling Middleware
 app.use(errorHandler);
@@ -56,6 +52,6 @@ app.listen(PORT, () => {
   console.log(`=======================================================`);
   console.log(`🚀 Vantage API Server running on port ${PORT}`);
   console.log(`📡 Health check: http://localhost:${PORT}/api/health`);
-  console.log(`🏛️ Theme: Smart Education (MoES - SIH26075)`);
+  console.log(`🎓 Platform: Course Learning & Certification`);
   console.log(`=======================================================`);
 });

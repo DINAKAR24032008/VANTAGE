@@ -27,9 +27,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children, allowe
   }
 
   if (allowedRoles && !allowedRoles.includes(user.role)) {
-    // Redirect to proper role homepage
-    if (user.role === 'admin') return <Navigate to="/admin" replace />;
-    if (user.role === 'trainer') return <Navigate to="/trainer" replace />;
+    if (user.role === 'admin' || user.role === 'trainer') return <Navigate to="/trainer" replace />;
     return <Navigate to="/dashboard" replace />;
   }
 

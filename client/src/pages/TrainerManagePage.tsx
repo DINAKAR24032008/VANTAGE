@@ -1,18 +1,37 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Course, Competency } from '../types';
+import {
+  Course,
+  CourseModule,
+  Competency,
+  LearnerRosterItem,
+  CourseInsightsResponse,
+  AssessmentQuestion,
+} from '../types';
 import {
   Plus,
   BookOpen,
   Trash2,
   Edit3,
-  UploadCloud,
-  Layers,
-  Award,
+  Users,
+  BarChart2,
+  ArrowUpDown,
   CheckCircle2,
+  AlertTriangle,
+  Download,
+  HelpCircle,
+  Eye,
+  EyeOff,
+  ChevronUp,
+  ChevronDown,
+  Save,
   X,
-  FileText,
+  Sparkles,
+  Award,
+  Clock,
+  Video,
+  FileCheck,
 } from 'lucide-react';
 
 export const TrainerManagePage: React.FC = () => {
@@ -20,157 +39,345 @@ export const TrainerManagePage: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
   const [competencies, setCompetencies] = useState<Competency[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [activeTab, setActiveTab] = useState<'courses' | 'learners' | 'insights'>('courses');
 
-  // Form State
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [difficultyLevel, setDifficultyLevel] = useState('Intermediate');
-  const [thumbnailUrl, setThumbnailUrl] = useState('');
-  const [modules, setModules] = useState([
-    { id: 'mod-1', title: 'Module 1: Domain Foundations', durationMinutes: 45, contentMarkdown: 'Foundational concepts and principles.', order: 1 },
-  ]);
-  const [selectedTags, setSelectedTags] = useState<{ competencyId: string; targetLevel: number }[]>([]);
+  // Selected course for Learners / Insights tab
+  const [selectedCourseId, setSelectedCourseId] = useState<string>('');
 
-  // Assessment Config for course
-  const [passThreshold, setPassThreshold] = useState(70);
-  const [quizQuestions, setQuizQuestions] = useState([
-    {
-      id: 'q-1',
-      question: 'Sample assessment question relating to this curriculum?',
-      options: ['Option A (Correct)', 'Option B', 'Option C', 'Option D'],
-      correctIndex: 0,
-      explanation: 'Explanation for correct choice.',
-    },
-  ]);
+  // Course Creation Modal State
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newDescription, setNewDescription] = useState('');
+  const [newDifficulty, setNewDifficulty] = useState('Beginner');
+  const [newStatus, setNewStatus] = useState<'draft' | 'published'>('draft');
+  const [newThumbnailUrl, setNewThumbnailUrl] = useState('');
+  const [selectedCompetencyId, setSelectedCompetencyId] = useState('');
+  const [savingCourse, setSavingCourse] = useState(false);
+
+  // Curriculum & Module Editor Modal State
+  const [editingCourse, setEditingCourse] = useState<Course | null>(null);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDescription, setEditDescription] = useState('');
+  const [editDifficulty, setEditDifficulty] = useState('Beginner');
+  const [editStatus, setEditStatus] = useState<'draft' | 'published'>('draft');
+  const [editModules, setEditModules] = useState<CourseModule[]>([]);
+  const [savingCurriculum, setSavingCurriculum] = useState(false);
+
+  // Single Module Edit Modal
+  const [editingModule, setEditingModule] = useState<CourseModule | null>(null);
+  const [moduleTitle, setModuleTitle] = useState('');
+  const [moduleVideoUrl, setModuleVideoUrl] = useState('');
+  const [moduleDuration, setModuleDuration] = useState(15);
+  const [moduleMarkdown, setModuleMarkdown] = useState('');
+
+  // 5-Question MCQ Assessment Builder Modal
+  const [quizModule, setQuizModule] = useState<CourseModule | null>(null);
+  const [quizQuestions, setQuizQuestions] = useState<AssessmentQuestion[]>([]);
+  const [quizPassThreshold, setQuizPassThreshold] = useState(70);
+  const [loadingQuiz, setLoadingQuiz] = useState(false);
+  const [savingQuiz, setSavingQuiz] = useState(false);
+
+  // Learners Roster State
+  const [roster, setRoster] = useState<LearnerRosterItem[]>([]);
+  const [loadingRoster, setLoadingRoster] = useState(false);
+
+  // Quiz Quality Insights State
+  const [insights, setInsights] = useState<CourseInsightsResponse | null>(null);
+  const [loadingInsights, setLoadingInsights] = useState(false);
 
   useEffect(() => {
-    loadData();
+    loadInitialData();
   }, []);
 
-  const loadData = async () => {
+  const loadInitialData = async () => {
     try {
       setLoading(true);
       const [coursesRes, compsRes] = await Promise.all([
-        api.get('/courses'),
+        api.get('/courses?myCourses=true'),
         api.get('/competencies'),
       ]);
       setCourses(coursesRes.data);
       setCompetencies(compsRes.data);
-
+      if (coursesRes.data.length > 0) {
+        setSelectedCourseId(coursesRes.data[0].id);
+      }
       if (compsRes.data.length > 0) {
-        setSelectedTags([{ competencyId: compsRes.data[0].id, targetLevel: 3 }]);
+        setSelectedCompetencyId(compsRes.data[0].id);
       }
     } catch (err) {
-      console.error('Failed to load trainer portal data:', err);
+      console.error('Failed to load courses:', err);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
+  // Load Learners whenever selectedCourseId or activeTab === 'learners' changes
+  useEffect(() => {
+    if (activeTab === 'learners' && selectedCourseId) {
+      loadRoster(selectedCourseId);
+    } else if (activeTab === 'insights' && selectedCourseId) {
+      loadInsights(selectedCourseId);
+    }
+  }, [activeTab, selectedCourseId]);
 
+  const loadRoster = async (courseId: string) => {
     try {
-      setUploading(true);
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const res = await api.post('/courses/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-      });
-
-      setThumbnailUrl(res.data.url);
+      setLoadingRoster(true);
+      const res = await api.get(`/courses/${courseId}/learners`);
+      setRoster(res.data.learners || []);
     } catch (err) {
-      console.error('Upload failed:', err);
-      alert('Upload failed. Please ensure file format is supported.');
+      console.error('Failed to load roster:', err);
     } finally {
-      setUploading(false);
+      setLoadingRoster(false);
     }
   };
 
-  const handleAddModule = () => {
-    setModules([
-      ...modules,
-      {
-        id: `mod-${modules.length + 1}`,
-        title: `Module ${modules.length + 1}: Advanced Practices`,
-        durationMinutes: 45,
-        contentMarkdown: '',
-        order: modules.length + 1,
-      },
-    ]);
-  };
-
-  const handleToggleCompetencyTag = (compId: string) => {
-    const exists = selectedTags.find((t) => t.competencyId === compId);
-    if (exists) {
-      setSelectedTags(selectedTags.filter((t) => t.competencyId !== compId));
-    } else {
-      setSelectedTags([...selectedTags, { competencyId: compId, targetLevel: 3 }]);
+  const loadInsights = async (courseId: string) => {
+    try {
+      setLoadingInsights(true);
+      const res = await api.get(`/assessments/course/${courseId}/insights`);
+      setInsights(res.data);
+    } catch (err) {
+      console.error('Failed to load quiz insights:', err);
+    } finally {
+      setLoadingInsights(false);
     }
   };
 
-  const handleUpdateTagLevel = (compId: string, level: number) => {
-    setSelectedTags(
-      selectedTags.map((t) => (t.competencyId === compId ? { ...t, targetLevel: level } : t))
-    );
+  // Toggle Course Draft / Published Status
+  const handleToggleStatus = async (course: Course) => {
+    const nextStatus = course.status === 'published' ? 'draft' : 'published';
+    try {
+      await api.patch(`/courses/${course.id}/status`, { status: nextStatus });
+      setCourses(
+        courses.map((c) => (c.id === course.id ? { ...c, status: nextStatus } : c))
+      );
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to update course status');
+    }
   };
 
+  // Create Course
   const handleCreateCourse = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      setSaving(true);
-
-      const courseRes = await api.post('/courses', {
-        title,
-        description,
-        difficultyLevel,
-        thumbnailUrl: thumbnailUrl || 'https://images.unsplash.com/photo-1507499739999-097706ad8914?auto=format&fit=crop&w=600&q=80',
-        modules,
-        competencyTags: selectedTags,
-      });
-
-      // Also create assessment for course
-      if (quizQuestions.length > 0) {
-        await api.post(`/assessments/course/${courseRes.data.id}`, {
-          passThreshold,
-          questions: quizQuestions,
-        });
+      setSavingCourse(true);
+      const payload: any = {
+        title: newTitle,
+        description: newDescription,
+        difficultyLevel: newDifficulty,
+        status: newStatus,
+        thumbnailUrl:
+          newThumbnailUrl ||
+          'https://images.unsplash.com/photo-1526379095098-d400fd0bf935?auto=format&fit=crop&w=600&q=80',
+        modules: [
+          {
+            id: 'mod-1',
+            title: 'Module 1: Orientation & Basics',
+            durationMinutes: 30,
+            videoUrl: '',
+            contentMarkdown: 'Welcome to this course!',
+            order: 1,
+          },
+        ],
+      };
+      if (selectedCompetencyId) {
+        payload.competencyTags = [{ competencyId: selectedCompetencyId, targetLevel: 3 }];
       }
 
-      setIsModalOpen(false);
-      resetForm();
-      await loadData();
+      const res = await api.post('/courses', payload);
+      setCourses([res.data, ...courses]);
+      setIsCreateModalOpen(false);
+      setNewTitle('');
+      setNewDescription('');
+      setNewStatus('draft');
+      alert(`Course created in ${newStatus.toUpperCase()} mode.`);
     } catch (err: any) {
-      console.error('Error creating course:', err);
       alert(err.response?.data?.error || 'Failed to create course');
     } finally {
-      setSaving(false);
+      setSavingCourse(false);
     }
   };
 
+  // Delete Course
   const handleDeleteCourse = async (courseId: string) => {
-    if (!window.confirm('Are you sure you want to delete this course?')) return;
+    if (!window.confirm('Are you sure you want to delete this course and all its modules?')) return;
     try {
       await api.delete(`/courses/${courseId}`);
-      await loadData();
-    } catch (err) {
-      console.error('Failed to delete course:', err);
+      setCourses(courses.filter((c) => c.id !== courseId));
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to delete course');
     }
   };
 
-  const resetForm = () => {
-    setTitle('');
-    setDescription('');
-    setDifficultyLevel('Intermediate');
-    setThumbnailUrl('');
-    setModules([
-      { id: 'mod-1', title: 'Module 1: Domain Foundations', durationMinutes: 45, contentMarkdown: '', order: 1 },
-    ]);
+  // Open Course & Curriculum Editor
+  const openCurriculumEditor = (course: Course) => {
+    setEditingCourse(course);
+    setEditTitle(course.title);
+    setEditDescription(course.description);
+    setEditDifficulty(course.difficultyLevel);
+    setEditStatus(course.status);
+    setEditModules(course.modules ? [...course.modules] : []);
+  };
+
+  // Save Curriculum Changes
+  const handleSaveCurriculum = async () => {
+    if (!editingCourse) return;
+    try {
+      setSavingCurriculum(true);
+      const res = await api.put(`/courses/${editingCourse.id}`, {
+        title: editTitle,
+        description: editDescription,
+        difficultyLevel: editDifficulty,
+        status: editStatus,
+        modules: editModules,
+      });
+      setCourses(
+        courses.map((c) => (c.id === editingCourse.id ? res.data.course : c))
+      );
+      setEditingCourse(null);
+      alert('Course curriculum successfully saved!');
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to save curriculum');
+    } finally {
+      setSavingCurriculum(false);
+    }
+  };
+
+  // Reorder Modules
+  const moveModule = (index: number, direction: 'up' | 'down') => {
+    const updated = [...editModules];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= updated.length) return;
+    const temp = updated[index];
+    updated[index] = updated[targetIndex];
+    updated[targetIndex] = temp;
+    // Re-index order
+    updated.forEach((m, idx) => {
+      m.order = idx + 1;
+    });
+    setEditModules(updated);
+  };
+
+  // Add Module
+  const handleAddNewModule = () => {
+    const nextOrder = editModules.length + 1;
+    const newMod: CourseModule = {
+      id: `mod-${Date.now()}`,
+      title: `Module ${nextOrder}: New Lesson`,
+      durationMinutes: 20,
+      videoUrl: '',
+      contentMarkdown: '',
+      order: nextOrder,
+    };
+    setEditModules([...editModules, newMod]);
+  };
+
+  // Delete Module
+  const handleDeleteModule = (modId: string) => {
+    if (!window.confirm('Delete this module?')) return;
+    const updated = editModules.filter((m) => m.id !== modId);
+    updated.forEach((m, idx) => {
+      m.order = idx + 1;
+    });
+    setEditModules(updated);
+  };
+
+  // Open Edit Module Modal
+  const openModuleEditor = (mod: CourseModule) => {
+    setEditingModule(mod);
+    setModuleTitle(mod.title);
+    setModuleVideoUrl(mod.videoUrl || '');
+    setModuleDuration(mod.durationMinutes || 15);
+    setModuleMarkdown(mod.contentMarkdown || '');
+  };
+
+  // Save Single Module
+  const handleSaveSingleModule = () => {
+    if (!editingModule) return;
+    const updated = editModules.map((m) =>
+      m.id === editingModule.id
+        ? {
+            ...m,
+            title: moduleTitle,
+            videoUrl: moduleVideoUrl,
+            durationMinutes: Number(moduleDuration),
+            contentMarkdown: moduleMarkdown,
+          }
+        : m
+    );
+    setEditModules(updated);
+    setEditingModule(null);
+  };
+
+  // Open 5-Question MCQ Assessment Builder
+  const openQuizBuilder = async (courseId: string, mod: CourseModule) => {
+    setQuizModule(mod);
+    setLoadingQuiz(true);
+    try {
+      const res = await api.get(`/assessments/course/${courseId}/module/${mod.id}`);
+      if (res.data.exists && res.data.questions?.length > 0) {
+        setQuizQuestions(res.data.questions);
+        setQuizPassThreshold(res.data.passThreshold || 70);
+      } else {
+        // Initialize default 5 blank questions
+        const defaultQuestions: AssessmentQuestion[] = Array.from({ length: 5 }).map((_, i) => ({
+          id: `q-${mod.id}-${i + 1}`,
+          question: `Question ${i + 1}: `,
+          options: ['Option A', 'Option B', 'Option C', 'Option D'],
+          correctIndex: 0,
+          explanation: '',
+        }));
+        setQuizQuestions(defaultQuestions);
+        setQuizPassThreshold(70);
+      }
+    } catch (err) {
+      console.error('Failed to load module quiz:', err);
+    } finally {
+      setLoadingQuiz(false);
+    }
+  };
+
+  // Save Quiz Questions
+  const handleSaveQuiz = async () => {
+    if (!editingCourse || !quizModule) return;
+    try {
+      setSavingQuiz(true);
+      await api.put(`/assessments/course/${editingCourse.id}/module/${quizModule.id}`, {
+        passThreshold: quizPassThreshold,
+        questions: quizQuestions,
+      });
+      alert(`Quiz for "${quizModule.title}" saved successfully!`);
+      setQuizModule(null);
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to save assessment');
+    } finally {
+      setSavingQuiz(false);
+    }
+  };
+
+  // Download CSV Export for Course Roster
+  const handleDownloadCSV = async () => {
+    if (!selectedCourseId) return;
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch(`/api/courses/${selectedCourseId}/learners/export`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `learners_roster_${Date.now()}.csv`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    } catch (err) {
+      console.error('CSV export failed:', err);
+      alert('Failed to export CSV');
+    }
   };
 
   return (
@@ -179,283 +386,939 @@ export const TrainerManagePage: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <span className="text-[10px] font-mono text-accent font-bold uppercase tracking-wider">
-              Trainer Curriculum Management Console
-            </span>
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-mono text-accent font-bold uppercase tracking-wider">
+                Instructor Studio
+              </span>
+              <span className="text-xs text-textSecondary">• Role: {user?.role}</span>
+            </div>
             <h1 className="text-3xl sm:text-4xl font-display italic text-textPrimary mt-1 tracking-tight">
-              Curriculum & Course Creator
+              Course & Curriculum Management
             </h1>
-            <p className="text-xs text-textSecondary">
-              Author instructional modules, upload scientific media, map competencies, and configure quizzes.
+            <p className="text-xs text-textSecondary mt-0.5">
+              Author programs, publish drafts, inspect learner velocity, and diagnose quiz quality.
             </p>
           </div>
 
           <button
-            onClick={() => setIsModalOpen(true)}
-            className="px-4 py-2.5 bg-accent hover:bg-accent/90 text-background rounded-xl text-xs font-bold shadow-lg shadow-accent/20 transition flex items-center gap-1.5 self-start"
+            onClick={() => setIsCreateModalOpen(true)}
+            className="px-4 py-2.5 bg-accent hover:bg-accentMuted text-background rounded-xl text-xs font-bold shadow-lg shadow-accent/20 transition flex items-center gap-1.5 self-start"
           >
             <Plus className="w-4 h-4" /> Create New Course
           </button>
         </div>
 
-        {/* Existing Courses Table */}
-        <div className="bg-surface rounded-2xl border border-surfaceBorder shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-surfaceBorder flex items-center justify-between">
-            <h3 className="font-bold text-sm text-textPrimary flex items-center gap-2">
-              <BookOpen className="w-4 h-4 text-accent" />
-              Published Training Programs ({courses.length})
-            </h3>
-          </div>
-
-          {loading ? (
-            <div className="p-12 text-center text-xs text-textSecondary">Loading courses...</div>
-          ) : courses.length === 0 ? (
-            <div className="p-12 text-center text-xs text-textSecondary">No courses published yet.</div>
-          ) : (
-            <div className="divide-y divide-surfaceBorder">
-              {courses.map((course) => (
-                <div key={course.id} className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 hover:bg-surfaceBorder/20 transition">
-                  <div className="space-y-1 max-w-2xl">
-                    <div className="flex items-center gap-2">
-                      <span className="text-[10px] font-mono font-bold uppercase px-2 py-0.5 rounded bg-surfaceBorder/40 text-textSecondary border border-surfaceBorder">
-                        {course.difficultyLevel}
-                      </span>
-                      <span className="text-xs text-textSecondary">
-                        Author: {course.trainer?.name || 'MoES Trainer'}
-                      </span>
-                    </div>
-                    <h4 className="font-bold text-sm text-textPrimary">{course.title}</h4>
-                    <p className="text-xs text-textSecondary line-clamp-1">{course.description}</p>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      {course.competencyTags.map((tag) => (
-                        <span key={tag.id} className="text-[9px] bg-accent/10 text-accent px-2 py-0.5 rounded font-medium border border-accent/20">
-                          {tag.competency.name} (L{tag.targetLevel})
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <button
-                      onClick={() => handleDeleteCourse(course.id)}
-                      className="p-2 text-textSecondary hover:text-rose-400 hover:bg-rose-950/40 rounded-lg transition"
-                      title="Delete Course"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+        {/* Tab Navigation */}
+        <div className="flex items-center gap-2 bg-surface p-1.5 rounded-2xl border border-surfaceBorder text-xs font-semibold">
+          <button
+            onClick={() => setActiveTab('courses')}
+            className={`px-4 py-2 rounded-xl transition flex items-center gap-1.5 ${
+              activeTab === 'courses'
+                ? 'bg-accent text-background font-bold shadow-md shadow-accent/20'
+                : 'text-textSecondary hover:text-textPrimary hover:bg-surfaceBorder/40'
+            }`}
+          >
+            <BookOpen className="w-4 h-4" /> My Courses & Curriculum ({courses.length})
+          </button>
+          <button
+            onClick={() => setActiveTab('learners')}
+            className={`px-4 py-2 rounded-xl transition flex items-center gap-1.5 ${
+              activeTab === 'learners'
+                ? 'bg-accent text-background font-bold shadow-md shadow-accent/20'
+                : 'text-textSecondary hover:text-textPrimary hover:bg-surfaceBorder/40'
+            }`}
+          >
+            <Users className="w-4 h-4" /> Learner Progress & Roster
+          </button>
+          <button
+            onClick={() => setActiveTab('insights')}
+            className={`px-4 py-2 rounded-xl transition flex items-center gap-1.5 ${
+              activeTab === 'insights'
+                ? 'bg-accent text-background font-bold shadow-md shadow-accent/20'
+                : 'text-textSecondary hover:text-textPrimary hover:bg-surfaceBorder/40'
+            }`}
+          >
+            <BarChart2 className="w-4 h-4" /> Quiz Quality Insights
+          </button>
         </div>
-      </div>
 
-      {/* Course Creator Modal */}
-      {isModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-surface rounded-2xl shadow-2xl max-w-3xl w-full border border-surfaceBorder overflow-hidden relative max-h-[90vh] flex flex-col">
-            <div className="bg-surface text-textPrimary p-5 flex items-center justify-between border-b border-surfaceBorder">
-              <div>
-                <span className="text-[10px] font-mono text-accent font-bold uppercase tracking-wider">
-                  MoES Training Framework
-                </span>
-                <h3 className="text-base font-bold text-textPrimary">Create New Curriculum Course</h3>
+        {/* TAB 1: COURSES MANAGEMENT */}
+        {activeTab === 'courses' && (
+          <div className="space-y-4">
+            {loading ? (
+              <div className="py-20 text-center text-xs text-textSecondary">
+                <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                Loading instructor courses...
               </div>
+            ) : courses.length === 0 ? (
+              <div className="p-12 text-center bg-surface rounded-2xl border border-surfaceBorder text-xs text-textSecondary">
+                You have not created any courses yet. Click "Create New Course" above to begin.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+                {courses.map((course) => {
+                  const isAuthor = course.trainerId === user?.id || user?.role === 'admin';
+                  const isPublished = course.status === 'published';
+
+                  return (
+                    <div
+                      key={course.id}
+                      className="bg-surface rounded-2xl border border-surfaceBorder shadow-sm p-5 flex flex-col justify-between hover:border-accent/40 transition"
+                    >
+                      <div className="space-y-3">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded bg-background text-accent border border-surfaceBorder">
+                            {course.difficultyLevel}
+                          </span>
+                          <span
+                            className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full uppercase flex items-center gap-1 border ${
+                              isPublished
+                                ? 'bg-accent/10 text-accent border-accent/30'
+                                : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                            }`}
+                          >
+                            {isPublished ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+                            {course.status}
+                          </span>
+                        </div>
+
+                        <h3 className="font-bold text-base text-textPrimary leading-snug">
+                          {course.title}
+                        </h3>
+                        <p className="text-xs text-textSecondary line-clamp-2">
+                          {course.description}
+                        </p>
+
+                        <div className="flex items-center gap-3 text-xs text-textSecondary pt-1 border-t border-surfaceBorder">
+                          <span className="flex items-center gap-1">
+                            <Video className="w-3.5 h-3.5 text-accent" /> {course.modules?.length || 0} Modules
+                          </span>
+                          <span className="flex items-center gap-1">
+                            <Users className="w-3.5 h-3.5 text-accent" /> {course.enrollmentCount || 0} Learners
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Card Action Buttons */}
+                      <div className="mt-5 pt-3 border-t border-surfaceBorder space-y-2">
+                        <div className="flex items-center justify-between gap-2">
+                          <button
+                            onClick={() => handleToggleStatus(course)}
+                            disabled={!isAuthor}
+                            className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 border disabled:opacity-40 ${
+                              isPublished
+                                ? 'bg-background hover:bg-surface border-surfaceBorder text-textSecondary hover:text-amber-400'
+                                : 'bg-accent/15 hover:bg-accent/25 border-accent/40 text-accent'
+                            }`}
+                            title={isPublished ? 'Unpublish course (make draft)' : 'Publish to public catalog'}
+                          >
+                            {isPublished ? 'Unpublish' : 'Publish Course'}
+                          </button>
+
+                          <button
+                            onClick={() => openCurriculumEditor(course)}
+                            disabled={!isAuthor}
+                            className="flex-1 py-1.5 px-2 bg-background hover:bg-surface border border-surfaceBorder hover:border-accent/40 text-textPrimary text-xs font-bold rounded-lg transition flex items-center justify-center gap-1 disabled:opacity-40"
+                          >
+                            <Edit3 className="w-3.5 h-3.5 text-accent" /> Edit Curriculum
+                          </button>
+                        </div>
+
+                        <div className="flex items-center justify-between gap-2 pt-1 text-[11px]">
+                          <button
+                            onClick={() => {
+                              setSelectedCourseId(course.id);
+                              setActiveTab('learners');
+                            }}
+                            className="text-textSecondary hover:text-accent font-semibold flex items-center gap-1"
+                          >
+                            <Users className="w-3 h-3" /> View Learners
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedCourseId(course.id);
+                              setActiveTab('insights');
+                            }}
+                            className="text-textSecondary hover:text-accent font-semibold flex items-center gap-1"
+                          >
+                            <BarChart2 className="w-3 h-3" /> Quiz Insights
+                          </button>
+                          {isAuthor && (
+                            <button
+                              onClick={() => handleDeleteCourse(course.id)}
+                              className="text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1 ml-auto"
+                            >
+                              <Trash2 className="w-3 h-3" /> Delete
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* TAB 2: LEARNERS PROGRESS & ROSTER */}
+        {activeTab === 'learners' && (
+          <div className="space-y-6">
+            {/* Course Selector Bar & Export Button */}
+            <div className="bg-surface p-4 rounded-2xl border border-surfaceBorder shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
+              <div className="flex items-center gap-2 w-full md:w-auto">
+                <span className="text-xs font-bold text-textSecondary uppercase font-mono">Select Course:</span>
+                <select
+                  value={selectedCourseId}
+                  onChange={(e) => setSelectedCourseId(e.target.value)}
+                  className="px-3 py-2 bg-background border border-surfaceBorder rounded-xl text-xs font-medium text-textPrimary focus:outline-none focus:border-accent"
+                >
+                  {courses.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.title} ({c.status})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               <button
-                onClick={() => setIsModalOpen(false)}
-                className="p-1.5 text-textSecondary hover:text-textPrimary rounded-lg hover:bg-surfaceBorder/40 transition"
+                onClick={handleDownloadCSV}
+                className="px-4 py-2 bg-background hover:bg-surface border border-surfaceBorder hover:border-accent/50 text-accent text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm"
               >
-                <X className="w-5 h-5" />
+                <Download className="w-3.5 h-3.5" /> Export Roster (CSV)
               </button>
             </div>
 
-            <form onSubmit={handleCreateCourse} className="p-6 overflow-y-auto flex-1 space-y-5">
-              <div>
-                <label className="block text-xs font-semibold text-textSecondary mb-1">Course Title</label>
-                <input
-                  type="text"
-                  required
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g. Advanced Satellite Oceanography and Cyclone Tracking"
-                  className="w-full p-2.5 bg-background border border-surfaceBorder rounded-xl text-xs text-textPrimary placeholder-textSecondary/50 focus:border-accent focus:outline-none"
-                />
+            {/* Roster Table */}
+            {loadingRoster ? (
+              <div className="py-20 text-center text-xs text-textSecondary">
+                <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                Loading enrolled learners...
               </div>
-
-              <div>
-                <label className="block text-xs font-semibold text-textSecondary mb-1">Description</label>
-                <textarea
-                  required
-                  rows={3}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Detailed learning objectives and domain outcomes..."
-                  className="w-full p-2.5 bg-background border border-surfaceBorder rounded-xl text-xs text-textPrimary placeholder-textSecondary/50 focus:border-accent focus:outline-none"
-                />
+            ) : roster.length === 0 ? (
+              <div className="p-12 text-center bg-surface rounded-2xl border border-surfaceBorder text-xs text-textSecondary">
+                No learners have enrolled in this course yet.
               </div>
+            ) : (
+              <div className="bg-surface rounded-2xl border border-surfaceBorder overflow-hidden shadow-sm">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left text-xs">
+                    <thead className="bg-background/80 text-textSecondary uppercase font-mono text-[10px] border-b border-surfaceBorder">
+                      <tr>
+                        <th className="p-4">Learner Name & Email</th>
+                        <th className="p-4">Status</th>
+                        <th className="p-4">Modules Completed</th>
+                        <th className="p-4">Overall Progress</th>
+                        <th className="p-4">Latest Quiz Score</th>
+                        <th className="p-4">Last Activity</th>
+                        <th className="p-4">Pacing Diagnostic</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-surfaceBorder">
+                      {roster.map((learner) => (
+                        <tr key={learner.id} className="hover:bg-background/30 transition">
+                          <td className="p-4">
+                            <div className="font-bold text-textPrimary">{learner.name}</div>
+                            <div className="text-[11px] text-textSecondary font-mono">{learner.email}</div>
+                          </td>
+                          <td className="p-4">
+                            <span
+                              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
+                                learner.status === 'completed'
+                                  ? 'bg-accent/15 text-accent border-accent/40'
+                                  : learner.status === 'in_progress'
+                                  ? 'bg-blue-500/15 text-blue-400 border-blue-500/40'
+                                  : 'bg-surfaceBorder text-textSecondary border-border'
+                              }`}
+                            >
+                              {learner.status}
+                            </span>
+                          </td>
+                          <td className="p-4 font-mono font-semibold">
+                            {learner.completedModulesCount} / {learner.totalModulesCount} Modules
+                          </td>
+                          <td className="p-4">
+                            <div className="flex items-center gap-2">
+                              <div className="w-24 h-2 bg-background rounded-full overflow-hidden border border-surfaceBorder">
+                                <div
+                                  className="h-full bg-accent rounded-full"
+                                  style={{ width: `${learner.progressPercent}%` }}
+                                />
+                              </div>
+                              <span className="font-mono text-accent font-bold">
+                                {learner.progressPercent}%
+                              </span>
+                            </div>
+                          </td>
+                          <td className="p-4 font-mono font-bold">
+                            {learner.latestQuizScore !== null ? (
+                              <span
+                                className={learner.latestQuizScore >= 70 ? 'text-accent' : 'text-rose-400'}
+                              >
+                                {learner.latestQuizScore}%
+                              </span>
+                            ) : (
+                              <span className="text-textSecondary font-normal">None</span>
+                            )}
+                          </td>
+                          <td className="p-4 text-textSecondary text-[11px] font-mono">
+                            {new Date(learner.lastActiveAt).toLocaleDateString()}
+                          </td>
+                          <td className="p-4">
+                            {learner.isStuck ? (
+                              <span className="px-2 py-1 rounded bg-amber-950/80 text-amber-400 border border-amber-800 text-[10px] font-bold flex items-center gap-1 w-fit">
+                                <AlertTriangle className="w-3 h-3 text-amber-400" /> Stuck (&gt;7d Inactive)
+                              </span>
+                            ) : learner.status === 'completed' ? (
+                              <span className="text-accent text-[10px] font-semibold flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3 text-accent" /> Completed Track
+                              </span>
+                            ) : (
+                              <span className="text-textSecondary text-[10px] font-mono">On Track</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-textSecondary mb-1">Difficulty Level</label>
-                  <select
-                    value={difficultyLevel}
-                    onChange={(e) => setDifficultyLevel(e.target.value)}
-                    className="w-full p-2.5 bg-background border border-surfaceBorder rounded-xl text-xs font-medium text-textPrimary focus:border-accent focus:outline-none"
+        {/* TAB 3: QUIZ QUALITY INSIGHTS */}
+        {activeTab === 'insights' && (
+          <div className="space-y-6">
+            {/* Course Selector Bar */}
+            <div className="bg-surface p-4 rounded-2xl border border-surfaceBorder shadow-sm flex items-center gap-2">
+              <span className="text-xs font-bold text-textSecondary uppercase font-mono">Select Course:</span>
+              <select
+                value={selectedCourseId}
+                onChange={(e) => setSelectedCourseId(e.target.value)}
+                className="px-3 py-2 bg-background border border-surfaceBorder rounded-xl text-xs font-medium text-textPrimary focus:outline-none focus:border-accent"
+              >
+                {courses.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.title}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {loadingInsights ? (
+              <div className="py-20 text-center text-xs text-textSecondary">
+                <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                Computing quiz failure rates & quality metrics...
+              </div>
+            ) : !insights || insights.moduleInsights.length === 0 ? (
+              <div className="p-12 text-center bg-surface rounded-2xl border border-surfaceBorder text-xs text-textSecondary">
+                No quiz assessments configured for this course yet. Add module quizzes in the Curriculum Editor.
+              </div>
+            ) : (
+              <div className="space-y-6">
+                {insights.moduleInsights.map((mInsight, idx) => (
+                  <div
+                    key={mInsight.assessmentId}
+                    className="bg-surface rounded-2xl border border-surfaceBorder shadow-sm p-6 space-y-4"
                   >
-                    <option>Beginner</option>
-                    <option>Intermediate</option>
-                    <option>Advanced</option>
+                    {/* Module Assessment Header */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-surfaceBorder gap-2">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-[10px] font-mono text-accent font-bold uppercase">
+                            Quiz Assessment #{idx + 1}
+                          </span>
+                          {mInsight.needsReviewCount > 0 && (
+                            <span className="px-2 py-0.5 rounded bg-amber-950/80 text-amber-400 border border-amber-800 text-[10px] font-bold flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3 text-amber-400" /> {mInsight.needsReviewCount} Question(s) Need Review
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="font-bold text-base text-textPrimary mt-0.5">
+                          {mInsight.moduleTitle}
+                        </h3>
+                      </div>
+
+                      <div className="flex items-center gap-4 text-xs font-mono">
+                        <div className="text-right">
+                          <div className="text-textSecondary text-[10px]">TOTAL ATTEMPTS</div>
+                          <div className="font-bold text-textPrimary">{mInsight.totalAttempts}</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-textSecondary text-[10px]">PASS RATE</div>
+                          <div className="font-bold text-accent">{mInsight.passRate}%</div>
+                        </div>
+                        <div className="text-right">
+                          <div className="text-textSecondary text-[10px]">AVG SCORE</div>
+                          <div className="font-bold text-textPrimary">{mInsight.avgScore}%</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Question Diagnostic Cards */}
+                    <div className="space-y-3">
+                      {mInsight.questions.map((q, qIndex) => (
+                        <div
+                          key={q.id}
+                          className={`p-4 rounded-xl border transition ${
+                            q.needsReview
+                              ? 'bg-amber-950/15 border-amber-500/40'
+                              : 'bg-background/60 border-surfaceBorder'
+                          }`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="space-y-1">
+                              <div className="flex items-center gap-2">
+                                <span className="text-[10px] font-mono text-accent font-bold">
+                                  Q{qIndex + 1}
+                                </span>
+                                {q.needsReview && (
+                                  <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[9px] font-mono font-bold uppercase">
+                                    ⚠️ Needs Review (&gt;40% Failure Rate)
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-xs font-semibold text-textPrimary leading-snug">
+                                {q.question}
+                              </p>
+                            </div>
+
+                            <div className="text-right flex-shrink-0">
+                              <div className="text-[10px] font-mono text-textSecondary uppercase">Failure Rate</div>
+                              <div
+                                className={`text-sm font-mono font-extrabold ${
+                                  q.needsReview ? 'text-amber-400' : 'text-accent'
+                                }`}
+                              >
+                                {q.failureRate}%
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Options Breakdown & Chosen Distribution */}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 pt-2 border-t border-surfaceBorder/60">
+                            {q.options.map((opt, optIdx) => {
+                              const isCorrect = optIdx === q.correctIndex;
+                              const chosenCount = q.optionDistribution[optIdx] || 0;
+                              const pct =
+                                q.totalAttempts > 0
+                                  ? Math.round((chosenCount / q.totalAttempts) * 100)
+                                  : 0;
+
+                              return (
+                                <div
+                                  key={optIdx}
+                                  className={`p-2 rounded-lg border text-xs flex items-center justify-between ${
+                                    isCorrect
+                                      ? 'bg-accent/10 border-accent/40 text-textPrimary'
+                                      : 'bg-background border-border text-textSecondary'
+                                  }`}
+                                >
+                                  <span className="flex items-center gap-1.5 truncate mr-2">
+                                    <span className="font-mono font-bold text-[10px] text-accent">
+                                      {String.fromCharCode(65 + optIdx)}.
+                                    </span>
+                                    <span className="truncate">{opt}</span>
+                                    {isCorrect && (
+                                      <span className="text-[9px] font-bold text-accent ml-1 font-mono uppercase">
+                                        (Correct)
+                                      </span>
+                                    )}
+                                  </span>
+                                  <span className="text-[10px] font-mono text-textSecondary flex-shrink-0">
+                                    {chosenCount} ({pct}%)
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* MODAL 1: CREATE COURSE */}
+        {isCreateModalOpen && (
+          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-surface rounded-2xl shadow-2xl max-w-xl w-full border border-surfaceBorder p-6 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-surfaceBorder">
+                <h3 className="text-base font-bold text-textPrimary">Create New Course</h3>
+                <button
+                  onClick={() => setIsCreateModalOpen(false)}
+                  className="p-1.5 text-textSecondary hover:text-textPrimary rounded-lg hover:bg-surfaceBorder/40 transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateCourse} className="space-y-3 text-xs">
+                <div>
+                  <label className="block text-textSecondary font-semibold mb-1">Course Title</label>
+                  <input
+                    type="text"
+                    required
+                    value={newTitle}
+                    onChange={(e) => setNewTitle(e.target.value)}
+                    placeholder="e.g. Advanced Python for Data Science"
+                    className="w-full p-2 bg-background border border-surfaceBorder rounded-xl text-textPrimary focus:border-accent focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-textSecondary font-semibold mb-1">Course Description</label>
+                  <textarea
+                    required
+                    rows={3}
+                    value={newDescription}
+                    onChange={(e) => setNewDescription(e.target.value)}
+                    placeholder="Explain course objectives, prerequisites, and learning outcomes..."
+                    className="w-full p-2 bg-background border border-surfaceBorder rounded-xl text-textPrimary focus:border-accent focus:outline-none"
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-textSecondary font-semibold mb-1">Difficulty Level</label>
+                    <select
+                      value={newDifficulty}
+                      onChange={(e) => setNewDifficulty(e.target.value)}
+                      className="w-full p-2 bg-background border border-surfaceBorder rounded-xl text-textPrimary focus:border-accent focus:outline-none"
+                    >
+                      <option value="Beginner">Beginner</option>
+                      <option value="Intermediate">Intermediate</option>
+                      <option value="Advanced">Advanced</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-textSecondary font-semibold mb-1">Initial Status</label>
+                    <select
+                      value={newStatus}
+                      onChange={(e) => setNewStatus(e.target.value as 'draft' | 'published')}
+                      className="w-full p-2 bg-background border border-surfaceBorder rounded-xl text-textPrimary focus:border-accent focus:outline-none"
+                    >
+                      <option value="draft">Draft (Visible only to you)</option>
+                      <option value="published">Published (Catalog visible)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-textSecondary font-semibold mb-1">Competency Domain</label>
+                  <select
+                    value={selectedCompetencyId}
+                    onChange={(e) => setSelectedCompetencyId(e.target.value)}
+                    className="w-full p-2 bg-background border border-surfaceBorder rounded-xl text-textPrimary focus:border-accent focus:outline-none"
+                  >
+                    {competencies.map((comp) => (
+                      <option key={comp.id} value={comp.id}>
+                        {comp.name} ({comp.category})
+                      </option>
+                    ))}
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-xs font-semibold text-textSecondary mb-1">
-                    Upload Course Document / Media (Local / S3 Mock)
-                  </label>
-                  <input
-                    type="file"
-                    onChange={handleFileUpload}
-                    className="w-full text-xs text-textSecondary file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-accent/10 file:text-accent hover:file:bg-accent/20"
-                  />
-                  {uploading && <p className="text-[10px] text-accent mt-1">Uploading file...</p>}
-                </div>
-              </div>
-
-              {/* Tag Competencies */}
-              <div className="border-t border-surfaceBorder pt-4">
-                <label className="block text-xs font-bold text-textPrimary mb-2">
-                  Map Course to Target Competencies & Elevation Levels
-                </label>
-                <div className="space-y-2 max-h-40 overflow-y-auto p-3 bg-background rounded-xl border border-surfaceBorder">
-                  {competencies.map((comp) => {
-                    const tag = selectedTags.find((t) => t.competencyId === comp.id);
-                    const isChecked = !!tag;
-
-                    return (
-                      <div key={comp.id} className="flex items-center justify-between text-xs py-1 border-b border-surfaceBorder last:border-none">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={isChecked}
-                            onChange={() => handleToggleCompetencyTag(comp.id)}
-                            className="rounded accent-accent"
-                          />
-                          <span className="font-medium text-textPrimary">{comp.name}</span>
-                        </label>
-
-                        {isChecked && (
-                          <div className="flex items-center gap-1.5">
-                            <span className="text-[10px] text-textSecondary">Target Level:</span>
-                            <select
-                              value={tag?.targetLevel || 3}
-                              onChange={(e) => handleUpdateTagLevel(comp.id, parseInt(e.target.value, 10))}
-                              className="px-2 py-0.5 bg-surface border border-surfaceBorder rounded text-xs text-textPrimary"
-                            >
-                              {[1, 2, 3, 4, 5].map((lvl) => (
-                                <option key={lvl} value={lvl}>Level {lvl}</option>
-                              ))}
-                            </select>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Instructional Modules */}
-              <div className="border-t border-surfaceBorder pt-4">
-                <div className="flex items-center justify-between mb-2">
-                  <label className="block text-xs font-bold text-textPrimary">
-                    Instructional Modules ({modules.length})
-                  </label>
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-surfaceBorder">
                   <button
                     type="button"
-                    onClick={handleAddModule}
-                    className="text-xs font-bold text-accent hover:underline flex items-center gap-1"
+                    onClick={() => setIsCreateModalOpen(false)}
+                    className="px-4 py-2 bg-background hover:bg-surface border border-surfaceBorder text-textSecondary rounded-xl font-semibold"
                   >
-                    <Plus className="w-3.5 h-3.5" /> Add Module
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={savingCourse}
+                    className="px-4 py-2 bg-accent hover:bg-accentMuted text-background font-bold rounded-xl shadow-md shadow-accent/20 transition disabled:opacity-50"
+                  >
+                    {savingCourse ? 'Creating...' : 'Create Course'}
                   </button>
                 </div>
+              </form>
+            </div>
+          </div>
+        )}
 
+        {/* MODAL 2: CURRICULUM & MODULE EDITOR */}
+        {editingCourse && (
+          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-surface rounded-2xl shadow-2xl max-w-4xl w-full border border-surfaceBorder p-6 space-y-5 max-h-[90vh] flex flex-col">
+              <div className="flex items-center justify-between pb-3 border-b border-surfaceBorder">
+                <div>
+                  <span className="text-[10px] font-mono text-accent font-bold uppercase">Curriculum Studio</span>
+                  <h3 className="text-base font-bold text-textPrimary">{editingCourse.title}</h3>
+                </div>
+                <button
+                  onClick={() => setEditingCourse(null)}
+                  className="p-1.5 text-textSecondary hover:text-textPrimary rounded-lg hover:bg-surfaceBorder/40 transition"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="flex-1 overflow-y-auto space-y-4 pr-1 text-xs">
+                {/* Basic Details */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-background p-3 rounded-xl border border-surfaceBorder">
+                  <div className="sm:col-span-2">
+                    <label className="block text-textSecondary font-semibold mb-1">Course Title</label>
+                    <input
+                      type="text"
+                      value={editTitle}
+                      onChange={(e) => setEditTitle(e.target.value)}
+                      className="w-full p-2 bg-surface border border-surfaceBorder rounded-lg text-textPrimary focus:border-accent focus:outline-none"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-textSecondary font-semibold mb-1">Status</label>
+                    <select
+                      value={editStatus}
+                      onChange={(e) => setEditStatus(e.target.value as 'draft' | 'published')}
+                      className="w-full p-2 bg-surface border border-surfaceBorder rounded-lg text-textPrimary focus:border-accent focus:outline-none"
+                    >
+                      <option value="draft">Draft</option>
+                      <option value="published">Published</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Modules List */}
                 <div className="space-y-3">
-                  {modules.map((mod, idx) => (
-                    <div key={mod.id} className="p-3 bg-background rounded-xl border border-surfaceBorder space-y-2">
-                      <div className="flex items-center justify-between gap-2">
-                        <input
-                          type="text"
-                          value={mod.title}
-                          onChange={(e) => {
-                            const updated = [...modules];
-                            updated[idx].title = e.target.value;
-                            setModules(updated);
-                          }}
-                          className="flex-1 p-2 bg-surface border border-surfaceBorder rounded-lg text-xs font-semibold text-textPrimary"
-                          placeholder="Module Title"
-                        />
-                        <input
-                          type="number"
-                          value={mod.durationMinutes}
-                          onChange={(e) => {
-                            const updated = [...modules];
-                            updated[idx].durationMinutes = parseInt(e.target.value, 10) || 30;
-                            setModules(updated);
-                          }}
-                          className="w-20 p-2 bg-surface border border-surfaceBorder rounded-lg text-xs text-textPrimary"
-                          placeholder="Mins"
-                        />
+                  <div className="flex items-center justify-between">
+                    <h4 className="font-bold text-textPrimary text-xs uppercase font-mono">
+                      Curriculum Modules ({editModules.length})
+                    </h4>
+                    <button
+                      onClick={handleAddNewModule}
+                      className="px-3 py-1 bg-accent/15 hover:bg-accent/25 text-accent border border-accent/40 rounded-lg text-xs font-bold transition flex items-center gap-1"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add Module
+                    </button>
+                  </div>
+
+                  <div className="space-y-2">
+                    {editModules.map((mod, index) => (
+                      <div
+                        key={mod.id}
+                        className="bg-background p-3.5 rounded-xl border border-surfaceBorder flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                      >
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-mono text-accent font-bold">
+                              #{index + 1}
+                            </span>
+                            <span className="font-bold text-textPrimary text-xs">{mod.title}</span>
+                          </div>
+                          <div className="flex items-center gap-3 text-[11px] text-textSecondary">
+                            <span className="flex items-center gap-1">
+                              <Clock className="w-3 h-3 text-accent" /> {mod.durationMinutes} min
+                            </span>
+                            {mod.videoUrl && (
+                              <span className="flex items-center gap-1 truncate max-w-xs text-textSecondary font-mono">
+                                <Video className="w-3 h-3 text-accent" /> {mod.videoUrl}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Module Actions */}
+                        <div className="flex items-center gap-1.5 self-end sm:self-center">
+                          {/* Reordering */}
+                          <button
+                            onClick={() => moveModule(index, 'up')}
+                            disabled={index === 0}
+                            className="p-1 text-textSecondary hover:text-accent disabled:opacity-20"
+                            title="Move Up"
+                          >
+                            <ChevronUp className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => moveModule(index, 'down')}
+                            disabled={index === editModules.length - 1}
+                            className="p-1 text-textSecondary hover:text-accent disabled:opacity-20"
+                            title="Move Down"
+                          >
+                            <ChevronDown className="w-4 h-4" />
+                          </button>
+
+                          {/* Edit Module Info */}
+                          <button
+                            onClick={() => openModuleEditor(mod)}
+                            className="px-2.5 py-1 bg-surface hover:bg-surfaceBorder text-textPrimary border border-surfaceBorder rounded-lg text-xs font-semibold"
+                          >
+                            Edit Lesson
+                          </button>
+
+                          {/* 5-Question MCQ Quiz Button */}
+                          <button
+                            onClick={() => openQuizBuilder(editingCourse.id, mod)}
+                            className="px-2.5 py-1 bg-accent/15 hover:bg-accent/25 text-accent border border-accent/40 rounded-lg text-xs font-bold flex items-center gap-1"
+                          >
+                            <FileCheck className="w-3.5 h-3.5" /> MCQ Quiz
+                          </button>
+
+                          {/* Delete Module */}
+                          <button
+                            onClick={() => handleDeleteModule(mod.id)}
+                            className="p-1.5 text-rose-400 hover:text-rose-300"
+                            title="Delete Module"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </div>
-                      <textarea
-                        rows={2}
-                        value={mod.contentMarkdown}
-                        onChange={(e) => {
-                          const updated = [...modules];
-                          updated[idx].contentMarkdown = e.target.value;
-                          setModules(updated);
-                        }}
-                        className="w-full p-2 bg-surface border border-surfaceBorder rounded-lg text-xs text-textSecondary"
-                        placeholder="Lecture notes, equations, or case study markdown..."
-                      />
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               </div>
 
-              <div className="border-t border-surfaceBorder pt-4">
-                <label className="block text-xs font-bold text-textPrimary mb-1">
-                  Pass Threshold Percentage
-                </label>
-                <input
-                  type="number"
-                  min="50"
-                  max="100"
-                  value={passThreshold}
-                  onChange={(e) => setPassThreshold(parseInt(e.target.value, 10))}
-                  className="w-32 p-2 bg-background border border-surfaceBorder rounded-xl text-xs font-bold text-textPrimary"
-                />
-              </div>
-
-              <div className="flex items-center justify-end gap-2 pt-4 border-t border-surfaceBorder">
+              {/* Bottom Save Bar */}
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-surfaceBorder">
                 <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-4 py-2 text-xs font-semibold text-textSecondary hover:text-textPrimary hover:bg-surfaceBorder/40 rounded-xl transition"
+                  onClick={() => setEditingCourse(null)}
+                  className="px-4 py-2 bg-background hover:bg-surface border border-surfaceBorder text-textSecondary rounded-xl font-semibold text-xs"
                 >
                   Cancel
                 </button>
                 <button
-                  type="submit"
-                  disabled={saving}
-                  className="px-6 py-2.5 bg-accent hover:bg-accent/90 text-background rounded-xl text-xs font-bold shadow-lg shadow-accent/20 transition disabled:opacity-50"
+                  onClick={handleSaveCurriculum}
+                  disabled={savingCurriculum}
+                  className="px-5 py-2 bg-accent hover:bg-accentMuted text-background font-bold rounded-xl text-xs shadow-md shadow-accent/20 transition flex items-center gap-1.5 disabled:opacity-50"
                 >
-                  {saving ? 'Publishing Course...' : 'Save & Publish Course'}
+                  <Save className="w-3.5 h-3.5" /> {savingCurriculum ? 'Saving...' : 'Save Curriculum'}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
-        </div>
-      )}
+        )}
+
+        {/* MODAL 3: EDIT SINGLE MODULE DETAILS */}
+        {editingModule && (
+          <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-surface rounded-2xl shadow-2xl max-w-lg w-full border border-surfaceBorder p-6 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-surfaceBorder">
+                <h3 className="text-base font-bold text-textPrimary">Edit Module Details</h3>
+                <button
+                  onClick={() => setEditingModule(null)}
+                  className="p-1.5 text-textSecondary hover:text-textPrimary rounded-lg"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              <div className="space-y-3 text-xs">
+                <div>
+                  <label className="block text-textSecondary font-semibold mb-1">Module Title</label>
+                  <input
+                    type="text"
+                    value={moduleTitle}
+                    onChange={(e) => setModuleTitle(e.target.value)}
+                    className="w-full p-2 bg-background border border-surfaceBorder rounded-xl text-textPrimary focus:border-accent focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-textSecondary font-semibold mb-1">
+                    YouTube Video URL (embed or watch link)
+                  </label>
+                  <input
+                    type="text"
+                    value={moduleVideoUrl}
+                    onChange={(e) => setModuleVideoUrl(e.target.value)}
+                    placeholder="https://www.youtube.com/watch?v=..."
+                    className="w-full p-2 bg-background border border-surfaceBorder rounded-xl text-textPrimary focus:border-accent focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-textSecondary font-semibold mb-1">Duration (minutes)</label>
+                  <input
+                    type="number"
+                    value={moduleDuration}
+                    onChange={(e) => setModuleDuration(Number(e.target.value))}
+                    className="w-full p-2 bg-background border border-surfaceBorder rounded-xl text-textPrimary focus:border-accent focus:outline-none"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-textSecondary font-semibold mb-1">Lesson Content / Notes (Markdown)</label>
+                  <textarea
+                    rows={4}
+                    value={moduleMarkdown}
+                    onChange={(e) => setModuleMarkdown(e.target.value)}
+                    placeholder="# Lesson Notes..."
+                    className="w-full p-2 bg-background border border-surfaceBorder rounded-xl text-textPrimary focus:border-accent focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-surfaceBorder">
+                  <button
+                    onClick={() => setEditingModule(null)}
+                    className="px-4 py-2 bg-background hover:bg-surface border border-surfaceBorder text-textSecondary rounded-xl font-semibold"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSaveSingleModule}
+                    className="px-4 py-2 bg-accent hover:bg-accentMuted text-background font-bold rounded-xl shadow-md transition"
+                  >
+                    Update Module
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* MODAL 4: INTERACTIVE 5-QUESTION MCQ ASSESSMENT BUILDER */}
+        {quizModule && (
+          <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-surface rounded-2xl shadow-2xl max-w-3xl w-full border border-surfaceBorder p-6 space-y-4 max-h-[90vh] flex flex-col">
+              <div className="flex items-center justify-between pb-3 border-b border-surfaceBorder">
+                <div>
+                  <span className="text-[10px] font-mono text-accent font-bold uppercase">Assessment Authoring</span>
+                  <h3 className="text-base font-bold text-textPrimary">
+                    5-Question MCQ Quiz: {quizModule.title}
+                  </h3>
+                </div>
+                <button
+                  onClick={() => setQuizModule(null)}
+                  className="p-1.5 text-textSecondary hover:text-textPrimary rounded-lg"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+
+              {loadingQuiz ? (
+                <div className="py-16 text-center text-xs text-textSecondary">
+                  <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                  Loading questions...
+                </div>
+              ) : (
+                <div className="flex-1 overflow-y-auto space-y-5 pr-1 text-xs">
+                  <div className="bg-background p-3 rounded-xl border border-surfaceBorder flex items-center justify-between">
+                    <span className="text-textSecondary font-semibold">Passing Threshold (%):</span>
+                    <input
+                      type="number"
+                      min={10}
+                      max={100}
+                      value={quizPassThreshold}
+                      onChange={(e) => setQuizPassThreshold(Number(e.target.value))}
+                      className="w-20 p-1.5 bg-surface border border-surfaceBorder rounded-lg text-textPrimary font-mono font-bold text-center"
+                    />
+                  </div>
+
+                  {/* 5 Questions */}
+                  {quizQuestions.map((q, qIndex) => (
+                    <div
+                      key={q.id || qIndex}
+                      className="bg-background p-4 rounded-xl border border-surfaceBorder space-y-3"
+                    >
+                      <div className="flex items-center justify-between">
+                        <span className="text-[10px] font-mono font-bold text-accent uppercase">
+                          Question {qIndex + 1}
+                        </span>
+                        <span className="text-[10px] text-textSecondary font-mono">
+                          Select the radio button next to the correct answer
+                        </span>
+                      </div>
+
+                      <div>
+                        <input
+                          type="text"
+                          value={q.question}
+                          onChange={(e) => {
+                            const updated = [...quizQuestions];
+                            updated[qIndex].question = e.target.value;
+                            setQuizQuestions(updated);
+                          }}
+                          placeholder={`Enter question ${qIndex + 1}...`}
+                          className="w-full p-2 bg-surface border border-surfaceBorder rounded-xl text-textPrimary font-medium focus:border-accent focus:outline-none"
+                        />
+                      </div>
+
+                      {/* 4 Options */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        {q.options.map((opt, optIndex) => (
+                          <div
+                            key={optIndex}
+                            className={`flex items-center gap-2 p-2 rounded-xl border ${
+                              q.correctIndex === optIndex
+                                ? 'bg-accent/10 border-accent/40'
+                                : 'bg-surface border-surfaceBorder'
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name={`correct-${qIndex}`}
+                              checked={q.correctIndex === optIndex}
+                              onChange={() => {
+                                const updated = [...quizQuestions];
+                                updated[qIndex].correctIndex = optIndex;
+                                setQuizQuestions(updated);
+                              }}
+                              className="accent-accent"
+                            />
+                            <span className="text-[10px] font-mono text-accent font-bold">
+                              {String.fromCharCode(65 + optIndex)}.
+                            </span>
+                            <input
+                              type="text"
+                              value={opt}
+                              onChange={(e) => {
+                                const updated = [...quizQuestions];
+                                updated[qIndex].options[optIndex] = e.target.value;
+                                setQuizQuestions(updated);
+                              }}
+                              className="w-full bg-transparent text-textPrimary focus:outline-none text-xs"
+                            />
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Explanation */}
+                      <div>
+                        <input
+                          type="text"
+                          value={q.explanation || ''}
+                          onChange={(e) => {
+                            const updated = [...quizQuestions];
+                            updated[qIndex].explanation = e.target.value;
+                            setQuizQuestions(updated);
+                          }}
+                          placeholder="Answer explanation shown to learner upon passing..."
+                          className="w-full p-1.5 bg-surface border border-surfaceBorder rounded-lg text-textSecondary text-[11px] focus:outline-none focus:border-accent"
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-surfaceBorder">
+                <button
+                  onClick={() => setQuizModule(null)}
+                  className="px-4 py-2 bg-background hover:bg-surface border border-surfaceBorder text-textSecondary rounded-xl font-semibold text-xs"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleSaveQuiz}
+                  disabled={savingQuiz}
+                  className="px-5 py-2 bg-accent hover:bg-accentMuted text-background font-bold rounded-xl text-xs shadow-md shadow-accent/20 transition flex items-center gap-1.5 disabled:opacity-50"
+                >
+                  <Save className="w-3.5 h-3.5" /> {savingQuiz ? 'Saving Assessment...' : 'Save 5-Question Quiz'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

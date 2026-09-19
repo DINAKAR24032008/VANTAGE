@@ -3,13 +3,12 @@ import {
   GapAnalysisItem,
   GapAnalysisResult,
   CourseRecommendation,
-  RoleCompetencyRequirementItem,
   SkillRating,
 } from '../types';
 
 export class GapAnalysisService {
   /**
-   * Compute gap analysis and course recommendations for a learner
+   * Compute course recommendation and progress metrics for a learner
    */
   static async computeGapAnalysis(userId: string): Promise<GapAnalysisResult> {
     const user = await prisma.user.findUnique({
@@ -28,31 +27,14 @@ export class GapAnalysisService {
       throw new Error(`Learner with ID ${userId} not found`);
     }
 
-    // 1. Fetch Role Competency Requirements
-    let roleMatrix = await prisma.roleCompetencyRequirement.findUnique({
-      where: { jobRole: user.jobRole },
-    });
-
-    // Fallback matrix if specific role is not configured
-    let requiredSkills: RoleCompetencyRequirementItem[] = [];
-    if (roleMatrix) {
-      try {
-        requiredSkills = JSON.parse(roleMatrix.requirements);
-      } catch (e) {
-        requiredSkills = [];
-      }
-    }
-
-    // If no specific role matrix exists, generate a baseline from all competencies
-    if (requiredSkills.length === 0) {
-      const allCompetencies = await prisma.competency.findMany();
-      requiredSkills = allCompetencies.slice(0, 5).map((comp) => ({
-        competencyId: comp.id,
-        competencyName: comp.name,
-        requiredLevel: 3,
-        weight: 1.0,
-      }));
-    }
+    // 1. Fetch Platform Competencies
+    const allCompetencies = await prisma.competency.findMany();
+    const requiredSkills = allCompetencies.map((comp) => ({
+      competencyId: comp.id,
+      competencyName: comp.name,
+      requiredLevel: 3,
+      weight: 1.0,
+    }));
 
     // 2. Parse Learner's Current Skills
     const learnerSkillsMap = new Map<string, number>();
@@ -121,30 +103,11 @@ export class GapAnalysisService {
     const recommendedCourses: CourseRecommendation[] = [];
 
     for (const course of allCourses) {
-      let relevanceScore = 0;
+      let relevanceScore = 100; // Primary course matches core track
       const matchedCompetencies: string[] = [];
 
       for (const tag of course.competencyTags) {
         matchedCompetencies.push(tag.competency.name);
-
-        if (gapCompetencyIds.has(tag.competencyId)) {
-          const gapItem = competencyBreakdown.find((b) => b.competencyId === tag.competencyId);
-          if (gapItem) {
-            // Higher score if course directly bridges the specific gap level
-            const gapMagnitude = gapItem.gap;
-            relevanceScore += gapMagnitude * 25 * gapItem.weight;
-
-            // Bonus for matching level
-            if (tag.targetLevel >= gapItem.requiredLevel) {
-              relevanceScore += 15;
-            }
-          }
-        }
-      }
-
-      // If course matches general domain even if gap is small, give baseline score
-      if (relevanceScore === 0 && matchedCompetencies.length > 0) {
-        relevanceScore = 10;
       }
 
       const isEnrolled = enrolledCourseMap.has(course.id);
@@ -169,44 +132,12 @@ export class GapAnalysisService {
     return {
       learnerId: user.id,
       learnerName: user.name,
-      jobRole: user.jobRole,
-      department: user.department,
+      jobRole: user.jobRole || 'Learner',
+      department: user.department || 'General',
       overallGapScore,
       readinessPercentage,
       competencyBreakdown,
       recommendedCourses,
-    };
-  }
-
-  /**
-   * Feedback Loop (Stretch Goal)
-   * Recompute recommendations for all learners with an updated job role
-   */
-  static async recomputeAllLearnersForRole(jobRole: string) {
-    const learners = await prisma.user.findMany({
-      where: {
-        role: 'learner',
-        jobRole,
-      },
-    });
-
-    const recomputedSummary = [];
-
-    for (const learner of learners) {
-      const analysis = await this.computeGapAnalysis(learner.id);
-      recomputedSummary.push({
-        learnerId: learner.id,
-        name: learner.name,
-        overallGapScore: analysis.overallGapScore,
-        readinessPercentage: analysis.readinessPercentage,
-        recommendedCount: analysis.recommendedCourses.length,
-      });
-    }
-
-    return {
-      jobRole,
-      totalLearnersUpdated: learners.length,
-      learners: recomputedSummary,
     };
   }
 }
