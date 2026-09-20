@@ -65,6 +65,8 @@ export class AuthController {
           role: user.role,
           department: user.department,
           jobRole: user.jobRole,
+          gender: user.gender,
+          avatar: user.avatar,
         },
       });
     } catch (err: any) {
@@ -104,6 +106,8 @@ export class AuthController {
           role: user.role,
           department: user.department,
           jobRole: user.jobRole,
+          gender: user.gender,
+          avatar: user.avatar,
         },
       });
     } catch (err: any) {
@@ -139,6 +143,8 @@ export class AuthController {
         role: user.role,
         department: user.department,
         jobRole: user.jobRole,
+        gender: user.gender,
+        avatar: user.avatar,
         profile: user.profile,
         certificates: user.certificates,
       });
@@ -162,6 +168,8 @@ export class AuthController {
           role: result.user.role,
           department: result.user.department,
           jobRole: result.user.jobRole,
+          gender: result.user.gender,
+          avatar: result.user.avatar,
         },
       });
     } catch (err: any) {

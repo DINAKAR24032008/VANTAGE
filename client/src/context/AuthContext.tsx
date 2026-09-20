@@ -10,6 +10,8 @@ interface AuthContextType {
   logout: () => void;
   switchDemoUser: (role: UserRole) => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateUser: (patch: Partial<User>) => void;
+  updateUserAvatar: (gender: string, avatar: object) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -81,6 +83,26 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
+  const updateUser = (patch: Partial<User>) => {
+    setUser((prev) => {
+      if (!prev) return prev;
+      const updated = { ...prev, ...patch };
+      localStorage.setItem('user', JSON.stringify(updated));
+      return updated;
+    });
+  };
+
+  const updateUserAvatar = async (gender: string, avatar: object) => {
+    if (!user) return;
+    try {
+      const res = await api.put(`/users/${user.id}/avatar`, { gender, avatar });
+      updateUser({ gender: res.data.gender, avatar: res.data.avatar });
+    } catch (err) {
+      console.error('Avatar update failed:', err);
+      throw err;
+    }
+  };
+
   useEffect(() => {
     if (token) {
       refreshUser().finally(() => setIsLoading(false));
@@ -99,6 +121,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         switchDemoUser,
         refreshUser,
+        updateUser,
+        updateUserAvatar,
       }}
     >
       {children}

@@ -41,6 +41,8 @@ async function main() {
       role: 'admin',
       department: 'Administration',
       jobRole: 'Platform Administrator',
+      gender: 'male',
+      avatar: JSON.stringify({ type: 'preset', presetId: 'm3', bgColor: '#312E81' }),
     },
   });
 
@@ -52,6 +54,8 @@ async function main() {
       role: 'trainer',
       department: 'Computer Science',
       jobRole: 'Lead Instructor',
+      gender: 'female',
+      avatar: JSON.stringify({ type: 'preset', presetId: 'f3', bgColor: '#1E293B' }),
     },
   });
 
@@ -64,6 +68,8 @@ async function main() {
       role: 'trainer',
       department: 'Computer Science',
       jobRole: 'Senior Instructor',
+      gender: 'female',
+      avatar: JSON.stringify({ type: 'preset', presetId: 'f2', bgColor: '#1E293B' }),
     },
   });
 
@@ -75,6 +81,8 @@ async function main() {
       role: 'learner',
       department: 'General',
       jobRole: 'Software Learner',
+      gender: 'other',
+      avatar: JSON.stringify({ type: 'preset', presetId: 'm1', bgColor: '#163016' }),
     },
   });
 
@@ -86,6 +94,8 @@ async function main() {
       role: 'learner',
       department: 'General',
       jobRole: 'Student',
+      gender: 'female',
+      avatar: JSON.stringify({ type: 'preset', presetId: 'f1', bgColor: '#163016' }),
     },
   });
 

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { Course, CourseModule, Certificate } from '../types';
 import { AssessmentModal } from '../components/AssessmentModal';
 import { CertificateModal } from '../components/CertificateModal';
+import { HeadingEmoji } from '../components/HeadingEmoji';
 import {
   BookOpen,
   CheckCircle,
@@ -59,47 +60,67 @@ export const CourseDetailPage: React.FC = () => {
   const [enrolling, setEnrolling] = useState<boolean>(false);
   const [showAssessment, setShowAssessment] = useState<boolean>(false);
   const [activeQuizModule, setActiveQuizModule] = useState<{ id: string; title: string } | null>(null);
-  const [showCertificate, setShowCertificate] = useState<boolean>(false);
   const [certificate, setCertificate] = useState<Certificate | null>(null);
+  const [showCertificate, setShowCertificate] = useState<boolean>(false);
 
   useEffect(() => {
     if (id) {
-      loadCourseDetails();
+      fetchCourseDetails();
     }
-  }, [id]);
+  }, [id, user]);
 
-  const loadCourseDetails = async () => {
+  const fetchCourseDetails = async () => {
     try {
       setLoading(true);
       const res = await api.get(`/courses/${id}`);
       setCourse(res.data);
 
-      if (res.data.userEnrollment) {
-        setIsEnrolled(true);
-        setCompletedModules(new Set(res.data.userEnrollment.completedModules || []));
-      }
-
-      // Check if user already holds a certificate for this course
       if (user) {
-        const certRes = await api.get('/certificates/my');
-        const existingCert = certRes.data.find((c: Certificate) => c.courseId === id);
-        if (existingCert) {
-          setCertificate(existingCert);
+        try {
+          const enrollRes = await api.get('/enrollments/my');
+          const myEnrollment = enrollRes.data.find((e: any) => e.courseId === id);
+          if (myEnrollment) {
+            setIsEnrolled(true);
+            let compMods: string[] = [];
+            if (Array.isArray(myEnrollment.completedModules)) {
+              compMods = myEnrollment.completedModules;
+            } else if (typeof myEnrollment.completedModules === 'string') {
+              try {
+                compMods = JSON.parse(myEnrollment.completedModules);
+              } catch (e) {
+                compMods = [];
+              }
+            }
+            setCompletedModules(new Set(compMods));
+          }
+        } catch (err) {
+          console.error('Failed to load enrollments:', err);
+        }
+
+        try {
+          const certRes = await api.get('/certificates/my');
+          const myCert = certRes.data.find((c: any) => c.courseId === id);
+          if (myCert) {
+            setCertificate(myCert);
+          }
+        } catch (err) {
+          console.error('Failed to load certificate:', err);
         }
       }
     } catch (err) {
-      console.error('Failed to fetch course details:', err);
+      console.error('Failed to load course details:', err);
     } finally {
       setLoading(false);
     }
   };
 
   const handleEnroll = async () => {
+    if (!id || !user) return;
     try {
       setEnrolling(true);
       await api.post('/enrollments', { courseId: id });
       setIsEnrolled(true);
-      await loadCourseDetails();
+      fetchCourseDetails();
     } catch (err) {
       console.error('Enrollment error:', err);
     } finally {
@@ -108,28 +129,52 @@ export const CourseDetailPage: React.FC = () => {
   };
 
   const handleToggleModuleComplete = async (moduleId: string) => {
-    if (!isEnrolled || !id) return;
-
-    const isDone = completedModules.has(moduleId);
+    if (!id || !isEnrolled) return;
     try {
-      const res = await api.put(`/enrollments/${id}/progress`, {
-        moduleId,
-        markCompleted: !isDone,
-      });
-
-      setCompletedModules(new Set(res.data.enrollment.completedModules));
-      if (course && course.userEnrollment) {
-        course.userEnrollment.progressPercent = res.data.enrollment.progressPercent;
+      const nextSet = new Set(completedModules);
+      if (nextSet.has(moduleId)) {
+        nextSet.delete(moduleId);
+      } else {
+        nextSet.add(moduleId);
       }
+      setCompletedModules(nextSet);
+
+      await api.put(`/enrollments/course/${id}/progress`, {
+        completedModules: Array.from(nextSet),
+      });
     } catch (err) {
-      console.error('Progress update error:', err);
+      console.error('Failed to update progress:', err);
     }
   };
 
-  if (loading || !course) {
+  const handleAssessmentPassed = (cert: any, _attemptResult?: any) => {
+    if (cert) {
+      setCertificate(cert);
+      setShowAssessment(false);
+      setShowCertificate(true);
+    } else if (activeQuizModule) {
+      // Per-module quiz passed
+      handleToggleModuleComplete(activeQuizModule.id);
+      setShowAssessment(false);
+    }
+    fetchCourseDetails();
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin"></div>
+        <div className="text-center">
+          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+          <p className="text-xs font-semibold text-textSecondary">Loading course syllabus...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!course) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background text-textSecondary text-xs">
+        Course not found.
       </div>
     );
   }
@@ -139,28 +184,28 @@ export const CourseDetailPage: React.FC = () => {
     ? Math.round((completedModules.size / course.modules.length) * 100)
     : 0;
 
-  const hasModuleAssessments = Boolean(course.assessments && course.assessments.some((a) => a.moduleId));
-  const activeModuleAssessment = course.assessments?.find((a) => a.moduleId === activeModule?.id);
-  const hasActiveModuleQuiz = Boolean(activeModuleAssessment);
+  const activeModuleEmbedUrl = getYouTubeEmbedUrl(activeModule?.videoUrl);
+  const hasModuleAssessments = Boolean(course.assessments && course.assessments.length > 0);
+  const activeModuleQuiz = activeModule ? course.assessments?.find((a) => a.moduleId === activeModule.id) : undefined;
+  const hasActiveModuleQuiz = Boolean(activeModuleQuiz);
   const isActiveModuleCompleted = activeModule ? completedModules.has(activeModule.id) : false;
-  const activeModuleEmbedUrl = activeModule ? getYouTubeEmbedUrl(activeModule.videoUrl) : null;
 
   return (
-    <div className="min-h-screen bg-background text-textPrimary py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         {/* Navigation Breadcrumb */}
         <div className="flex items-center gap-2 text-xs font-semibold text-textSecondary">
-          <Link to="/catalog" className="hover:text-accent flex items-center gap-1 transition">
+          <Link to="/catalog" className="hover:text-primary flex items-center gap-1 transition">
             <ArrowLeft className="w-3.5 h-3.5" /> Back to Curriculum Catalog
           </Link>
         </div>
 
         {/* Course Header Banner */}
-        <div className="bg-surface text-textPrimary rounded-3xl p-6 sm:p-8 shadow-xl border border-surfaceBorder">
+        <div className="bg-surface text-textPrimary rounded-3xl p-6 sm:p-8 shadow-paper-sm border border-border">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
             <div className="space-y-2 max-w-3xl">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded bg-background text-accent border border-surfaceBorder">
+                <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-primarySoft text-primary border border-primary/30">
                   {course.difficultyLevel} Specialization
                 </span>
                 <span className="text-xs text-textSecondary flex items-center gap-1">
@@ -168,8 +213,8 @@ export const CourseDetailPage: React.FC = () => {
                 </span>
               </div>
 
-              <h1 className="text-3xl sm:text-4xl font-display italic text-textPrimary tracking-tight">
-                {course.title}
+              <h1 className="text-3xl sm:text-4xl font-bold text-textPrimary tracking-tight">
+                <HeadingEmoji emoji="📖" />{course.title}
               </h1>
               <p className="text-xs sm:text-sm text-textSecondary leading-relaxed">
                 {course.description}
@@ -179,7 +224,7 @@ export const CourseDetailPage: React.FC = () => {
                 {course.competencyTags.map((tag) => (
                   <span
                     key={tag.id}
-                    className="text-[11px] bg-background text-textSecondary px-2.5 py-1 rounded-lg border border-border font-medium"
+                    className="text-[11px] bg-surface2 text-textSecondary px-2.5 py-1 rounded-lg border border-border font-medium"
                   >
                     Target: <strong className="text-textPrimary">{tag.competency.name}</strong> (Level {tag.targetLevel})
                   </span>
@@ -188,17 +233,17 @@ export const CourseDetailPage: React.FC = () => {
             </div>
 
             {/* Action Card */}
-            <div className="bg-background/90 p-5 rounded-2xl border border-surfaceBorder text-center min-w-[240px] space-y-3">
+            <div className="bg-surface2 p-5 rounded-2xl border border-border text-center min-w-[240px] space-y-3">
               {certificate ? (
                 <div>
-                  <div className="w-12 h-12 rounded-full bg-accent/15 border border-accent/40 text-accent mx-auto flex items-center justify-center mb-2 shadow-[0_0_10px_rgba(57,255,20,0.3)]">
+                  <div className="w-12 h-12 rounded-full bg-primarySoft border border-primary/30 text-primary mx-auto flex items-center justify-center mb-2">
                     <Award className="w-6 h-6" />
                   </div>
-                  <div className="text-xs font-bold text-accent">Course Passed</div>
+                  <div className="text-xs font-bold text-primary">Course Passed</div>
                   <p className="text-[10px] text-textSecondary">Certificate Issued</p>
                   <button
                     onClick={() => setShowCertificate(true)}
-                    className="mt-3 w-full py-2 bg-accent hover:bg-accentMuted text-background font-bold text-xs rounded-xl transition shadow-[0_0_10px_rgba(57,255,20,0.3)]"
+                    className="mt-3 w-full py-2 bg-primary hover:bg-primaryHover text-primaryContrast font-bold text-xs rounded-xl transition shadow-paper-sm"
                   >
                     View Official Certificate
                   </button>
@@ -206,10 +251,10 @@ export const CourseDetailPage: React.FC = () => {
               ) : isEnrolled ? (
                 <div>
                   <div className="text-xs text-textSecondary mb-1">Your Progress</div>
-                  <div className="text-3xl font-black text-accent">{progressPercent}%</div>
+                  <div className="text-3xl font-black text-primary">{progressPercent}%</div>
                   <div className="w-full bg-border rounded-full h-2 my-2 overflow-hidden">
                     <div
-                      className="bg-accent h-full transition-all duration-300 shadow-[0_0_6px_rgba(57,255,20,0.5)]"
+                      className="bg-primary h-full transition-all duration-300"
                       style={{ width: `${progressPercent}%` }}
                     />
                   </div>
@@ -218,8 +263,8 @@ export const CourseDetailPage: React.FC = () => {
                   </p>
 
                   {hasModuleAssessments ? (
-                    <div className="mt-3 text-[11px] text-accent bg-surface border border-accent/40 rounded-xl p-2 font-medium">
-                      Pass each module quiz (≥70%) to progress & earn certification.
+                    <div className="mt-3 text-[11px] text-primary bg-primarySoft border border-primary/30 rounded-xl p-2 font-medium">
+                      Pass each module quiz (≥70%) to progress &amp; earn certification.
                     </div>
                   ) : (
                     <button
@@ -227,7 +272,7 @@ export const CourseDetailPage: React.FC = () => {
                         setActiveQuizModule(null);
                         setShowAssessment(true);
                       }}
-                      className="mt-3 w-full py-2 bg-accent hover:bg-accentMuted text-background font-bold text-xs rounded-xl transition shadow-[0_0_10px_rgba(57,255,20,0.3)] flex items-center justify-center gap-1.5"
+                      className="mt-3 w-full py-2 bg-primary hover:bg-primaryHover text-primaryContrast font-bold text-xs rounded-xl transition shadow-paper-sm flex items-center justify-center gap-1.5"
                     >
                       <Award className="w-4 h-4" /> Take Competency Quiz
                     </button>
@@ -239,13 +284,13 @@ export const CourseDetailPage: React.FC = () => {
                   <button
                     onClick={handleEnroll}
                     disabled={enrolling}
-                    className="w-full py-3 bg-accent hover:bg-accentMuted text-background font-bold text-xs rounded-xl transition shadow-[0_0_12px_rgba(57,255,20,0.3)] flex items-center justify-center gap-1.5 disabled:opacity-50"
+                    className="w-full py-3 bg-primary hover:bg-primaryHover text-primaryContrast font-bold text-xs rounded-xl transition shadow-paper-sm flex items-center justify-center gap-1.5 disabled:opacity-50"
                   >
                     {enrolling ? 'Enrolling...' : 'Enroll in Course'}
                     <ChevronRight className="w-4 h-4" />
                   </button>
                   <p className="text-[10px] text-textSecondary mt-2">
-                    Includes practical assignments & verified certification
+                    Includes practical assignments &amp; verified certification
                   </p>
                 </div>
               )}
@@ -256,7 +301,7 @@ export const CourseDetailPage: React.FC = () => {
         {/* Course Modules & Lesson Viewer */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Module List Sidebar */}
-          <div className="lg:col-span-1 bg-surface p-5 rounded-2xl border border-surfaceBorder shadow-sm space-y-4">
+          <div className="lg:col-span-1 bg-surface p-5 rounded-2xl border border-border shadow-paper-sm space-y-4">
             <h3 className="font-bold text-sm text-textPrimary flex items-center gap-2">
               <BookOpen className="w-4 h-4 text-accent" />
               Instructional Modules ({course.modules.length})
@@ -274,18 +319,18 @@ export const CourseDetailPage: React.FC = () => {
                     onClick={() => setActiveModuleIndex(idx)}
                     className={`p-3.5 rounded-xl border text-xs cursor-pointer transition flex items-start justify-between gap-3 ${
                       isSelected
-                        ? 'bg-background border-accent/60 shadow-[0_0_8px_rgba(57,255,20,0.15)]'
-                        : 'bg-surface border-surfaceBorder hover:border-accent/30 hover:bg-background/40'
+                        ? 'bg-primarySoft border-primary text-primary font-bold shadow-paper-sm'
+                        : 'bg-surface border-border hover:border-primary/30 hover:bg-surface2'
                     }`}
                   >
                     <div className="flex-1">
-                      <div className="flex items-center gap-1.5 text-[10px] text-textSecondary font-mono mb-0.5">
+                      <div className="flex items-center gap-1.5 text-[10px] text-textSecondary mb-0.5 font-medium">
                         <span>Module {idx + 1}</span>
                         <span>•</span>
                         <Clock className="w-3 h-3" />
                         <span>{module.durationMinutes} mins</span>
                       </div>
-                      <p className={`font-semibold ${isSelected ? 'text-accent' : 'text-textPrimary'}`}>
+                      <p className={`font-semibold ${isSelected ? 'text-primary' : 'text-textPrimary'}`}>
                         {module.title}
                       </p>
                     </div>
@@ -304,9 +349,9 @@ export const CourseDetailPage: React.FC = () => {
                         }}
                         className={`p-1 rounded-md transition ${
                           isCompleted
-                            ? 'text-accent hover:text-accentMuted'
+                            ? 'text-primary'
                             : hasQuiz
-                            ? 'text-amber-400 hover:text-amber-300'
+                            ? 'text-accent'
                             : 'text-textSecondary/40 hover:text-textSecondary'
                         }`}
                         title={
@@ -317,7 +362,7 @@ export const CourseDetailPage: React.FC = () => {
                             : 'Mark completed'
                         }
                       >
-                        <CheckCircle className={`w-5 h-5 ${isCompleted ? 'fill-accent/20' : ''}`} />
+                        <CheckCircle className={`w-5 h-5 ${isCompleted ? 'fill-primarySoft' : ''}`} />
                       </button>
                     )}
                   </div>
@@ -327,12 +372,12 @@ export const CourseDetailPage: React.FC = () => {
           </div>
 
           {/* Module Reader / Content Player */}
-          <div className="lg:col-span-2 bg-surface p-6 sm:p-8 rounded-2xl border border-surfaceBorder shadow-sm space-y-6">
+          <div className="lg:col-span-2 bg-surface p-6 sm:p-8 rounded-2xl border border-border shadow-paper-sm space-y-6">
             {activeModule ? (
               <>
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-surfaceBorder gap-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-border gap-2">
                   <div>
-                    <span className="text-[10px] font-mono text-accent font-bold uppercase">
+                    <span className="text-[10px] text-accent font-bold uppercase">
                       Module {activeModuleIndex + 1}
                     </span>
                     <h2 className="text-xl font-bold text-textPrimary mt-0.5">{activeModule.title}</h2>
@@ -342,7 +387,7 @@ export const CourseDetailPage: React.FC = () => {
                     hasActiveModuleQuiz ? (
                       isActiveModuleCompleted ? (
                         <div className="flex items-center gap-2">
-                          <span className="px-3.5 py-2 rounded-xl text-xs font-bold bg-background text-accent border border-accent/40 flex items-center gap-1.5 shadow-[0_0_6px_rgba(57,255,20,0.2)]">
+                          <span className="px-3.5 py-2 rounded-xl text-xs font-bold bg-primarySoft text-primary border border-primary/30 flex items-center gap-1.5 shadow-paper-sm">
                             <CheckCircle className="w-4 h-4" /> Quiz Passed (Complete)
                           </span>
                           <button
@@ -350,7 +395,7 @@ export const CourseDetailPage: React.FC = () => {
                               setActiveQuizModule({ id: activeModule.id, title: activeModule.title });
                               setShowAssessment(true);
                             }}
-                            className="px-3 py-2 text-xs text-textSecondary hover:text-textPrimary border border-border rounded-xl hover:bg-surfaceBorder/30 transition font-semibold"
+                            className="px-3 py-2 text-xs text-textSecondary hover:text-textPrimary border border-border rounded-xl hover:bg-surface2 transition font-semibold"
                           >
                             Retake Quiz
                           </button>
@@ -361,7 +406,7 @@ export const CourseDetailPage: React.FC = () => {
                             setActiveQuizModule({ id: activeModule.id, title: activeModule.title });
                             setShowAssessment(true);
                           }}
-                          className="px-4 py-2 bg-accent hover:bg-accentMuted text-background rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-[0_0_10px_rgba(57,255,20,0.3)]"
+                          className="px-4 py-2 bg-primary hover:bg-primaryHover text-primaryContrast rounded-xl text-xs font-bold transition flex items-center gap-1.5 shadow-paper-sm"
                         >
                           <Award className="w-4 h-4" /> Take Module Quiz (5 Questions)
                         </button>
@@ -371,8 +416,8 @@ export const CourseDetailPage: React.FC = () => {
                         onClick={() => handleToggleModuleComplete(activeModule.id)}
                         className={`px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
                           isActiveModuleCompleted
-                            ? 'bg-background text-accent border border-accent/40'
-                            : 'bg-accent hover:bg-accentMuted text-background shadow-[0_0_10px_rgba(57,255,20,0.3)]'
+                            ? 'bg-primarySoft text-primary border border-primary/30'
+                            : 'bg-primary hover:bg-primaryHover text-primaryContrast shadow-paper-sm'
                         }`}
                       >
                         <CheckCircle className="w-4 h-4" />
@@ -385,7 +430,7 @@ export const CourseDetailPage: React.FC = () => {
                 {/* Module Video Player if videoUrl exists */}
                 {activeModuleEmbedUrl && (
                   <div className="space-y-2">
-                    <div className="w-full aspect-video rounded-2xl overflow-hidden bg-black shadow-md border border-surfaceBorder">
+                    <div className="w-full aspect-video rounded-2xl overflow-hidden bg-surface2 shadow-paper-sm border border-border">
                       <iframe
                         src={activeModuleEmbedUrl}
                         title={activeModule.title}
@@ -404,11 +449,11 @@ export const CourseDetailPage: React.FC = () => {
                 )}
 
                 {/* Lesson Notes & Technical Specs */}
-                <div className="prose prose-invert max-w-none text-xs sm:text-sm leading-relaxed text-textPrimary bg-background p-6 rounded-2xl border border-border whitespace-pre-wrap">
+                <div className="prose max-w-none text-xs sm:text-sm leading-relaxed text-textPrimary bg-surface2 p-6 rounded-2xl border border-border whitespace-pre-wrap">
                   {activeModule.contentMarkdown || (
                     <div>
                       <p className="font-semibold text-textPrimary">Module Overview:</p>
-                      <p className="text-textSecondary">
+                      <p className="text-textSecondary mt-1">
                         This module covers key principles, syntax, operational workflows, and data structures
                         utilized across scientific workflows. Please review the video lecture and technical
                         notes before attempting the evaluation quiz.
@@ -418,11 +463,11 @@ export const CourseDetailPage: React.FC = () => {
                 </div>
 
                 {/* Quick Next Module CTA */}
-                <div className="flex items-center justify-between pt-4 border-t border-surfaceBorder">
+                <div className="flex items-center justify-between pt-4 border-t border-border">
                   <button
                     disabled={activeModuleIndex === 0}
                     onClick={() => setActiveModuleIndex((prev) => prev - 1)}
-                    className="px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-textSecondary hover:text-textPrimary hover:bg-surfaceBorder/30 disabled:opacity-30"
+                    className="px-3 py-1.5 rounded-lg border border-border text-xs font-semibold text-textSecondary hover:text-textPrimary hover:bg-surface2 disabled:opacity-30"
                   >
                     Previous Module
                   </button>
@@ -430,7 +475,7 @@ export const CourseDetailPage: React.FC = () => {
                   {activeModuleIndex < course.modules.length - 1 ? (
                     <button
                       onClick={() => setActiveModuleIndex((prev) => prev + 1)}
-                      className="px-4 py-1.5 bg-accent hover:bg-accentMuted text-background rounded-lg text-xs font-bold flex items-center gap-1 transition shadow-[0_0_10px_rgba(57,255,20,0.2)]"
+                      className="px-4 py-1.5 bg-primary hover:bg-primaryHover text-primaryContrast rounded-lg text-xs font-bold flex items-center gap-1 transition shadow-paper-sm"
                     >
                       Next Module <ChevronRight className="w-3.5 h-3.5" />
                     </button>
@@ -438,7 +483,7 @@ export const CourseDetailPage: React.FC = () => {
                     certificate ? (
                       <button
                         onClick={() => setShowCertificate(true)}
-                        className="px-4 py-2 bg-accent hover:bg-accentMuted text-background rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-[0_0_10px_rgba(57,255,20,0.3)]"
+                        className="px-4 py-2 bg-primary hover:bg-primaryHover text-primaryContrast rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-paper-sm"
                       >
                         <Award className="w-4 h-4" /> View Course Certificate
                       </button>
@@ -451,7 +496,7 @@ export const CourseDetailPage: React.FC = () => {
                             setShowAssessment(true);
                           }
                         }}
-                        className="px-4 py-2 bg-accent hover:bg-accentMuted text-background rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-[0_0_10px_rgba(57,255,20,0.3)] disabled:opacity-50"
+                        className="px-4 py-2 bg-primary hover:bg-primaryHover text-primaryContrast rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-paper-sm disabled:opacity-50"
                       >
                         <Award className="w-4 h-4" /> Final Module Quiz
                       </button>
@@ -462,7 +507,7 @@ export const CourseDetailPage: React.FC = () => {
                         setActiveQuizModule(null);
                         setShowAssessment(true);
                       }}
-                      className="px-4 py-2 bg-accent hover:bg-accentMuted text-background rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-[0_0_10px_rgba(57,255,20,0.3)]"
+                      className="px-4 py-2 bg-primary hover:bg-primaryHover text-primaryContrast rounded-xl text-xs font-bold flex items-center gap-1.5 shadow-paper-sm"
                     >
                       <Award className="w-4 h-4" /> Take Final Assessment
                     </button>
@@ -470,43 +515,33 @@ export const CourseDetailPage: React.FC = () => {
                 </div>
               </>
             ) : (
-              <div className="py-20 text-center text-textSecondary text-xs">
-                Select a module from the syllabus on the left.
+              <div className="py-12 text-center text-textSecondary text-xs">
+                Select a module from the list to view lessons and video content.
               </div>
             )}
           </div>
         </div>
       </div>
 
-      {/* Assessment Quiz Modal */}
+      {/* Assessment Evaluation Modal */}
       {showAssessment && (
         <AssessmentModal
           courseId={course.id}
           courseTitle={course.title}
           moduleId={activeQuizModule?.id}
           moduleTitle={activeQuizModule?.title}
-          onClose={() => {
-            setShowAssessment(false);
-            setActiveQuizModule(null);
-          }}
-          onAssessmentPassed={(newCert) => {
-            if (activeQuizModule) {
-              setCompletedModules((prev) => new Set([...prev, activeQuizModule.id]));
-            }
-            if (newCert) {
-              setCertificate(newCert);
-              setShowCertificate(true);
-            }
-            loadCourseDetails();
-          }}
+          onClose={() => setShowAssessment(false)}
+          onAssessmentPassed={handleAssessmentPassed}
         />
       )}
 
-      {/* Certificate Viewer Modal */}
-      <CertificateModal
-        certificate={certificate}
-        onClose={() => setShowCertificate(false)}
-      />
+      {/* Certificate Display Modal */}
+      {showCertificate && (
+        <CertificateModal
+          certificate={certificate}
+          onClose={() => setShowCertificate(false)}
+        />
+      )}
     </div>
   );
 };

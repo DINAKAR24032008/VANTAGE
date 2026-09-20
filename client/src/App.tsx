@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { Navbar } from './components/Navbar';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
@@ -25,81 +26,83 @@ const RootRedirect: React.FC = () => {
 export const App: React.FC = () => {
   return (
     <BrowserRouter>
-      <AuthProvider>
-        <div className="min-h-screen flex flex-col bg-background text-textPrimary font-sans">
-          <Navbar />
-          <main className="flex-1">
-            <Routes>
-              {/* Public Routes */}
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/register" element={<RegisterPage />} />
+      <ThemeProvider>
+        <AuthProvider>
+          <div className="min-h-screen flex flex-col bg-background text-textPrimary font-sans transition-colors duration-150">
+            <Navbar />
+            <main className="flex-1">
+              <Routes>
+                {/* Public Routes */}
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/register" element={<RegisterPage />} />
 
-              {/* Learner Flow */}
-              <Route
-                path="/dashboard"
-                element={
-                  <ProtectedRoute allowedRoles={['learner']}>
-                    <LearnerDashboard />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/onboarding"
-                element={
-                  <ProtectedRoute allowedRoles={['learner']}>
-                    <OnboardingCompetencyPage />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Learner Flow */}
+                <Route
+                  path="/dashboard"
+                  element={
+                    <ProtectedRoute allowedRoles={['learner']}>
+                      <LearnerDashboard />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/onboarding"
+                  element={
+                    <ProtectedRoute allowedRoles={['learner']}>
+                      <OnboardingCompetencyPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Course Catalog & Detailed Player (Accessible to all authenticated) */}
-              <Route
-                path="/catalog"
-                element={
-                  <ProtectedRoute>
-                    <CourseCatalogPage />
-                  </ProtectedRoute>
-                }
-              />
-              <Route
-                path="/courses/:id"
-                element={
-                  <ProtectedRoute>
-                    <CourseDetailPage />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Course Catalog & Detailed Player (Accessible to all authenticated) */}
+                <Route
+                  path="/catalog"
+                  element={
+                    <ProtectedRoute>
+                      <CourseCatalogPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/courses/:id"
+                  element={
+                    <ProtectedRoute>
+                      <CourseDetailPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Trainer / Admin Curriculum Portal */}
-              <Route
-                path="/trainer"
-                element={
-                  <ProtectedRoute allowedRoles={['trainer', 'admin']}>
-                    <TrainerManagePage />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Trainer / Admin Curriculum Portal */}
+                <Route
+                  path="/trainer"
+                  element={
+                    <ProtectedRoute allowedRoles={['trainer', 'admin']}>
+                      <TrainerManagePage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Discussion Forum */}
-              <Route
-                path="/forum"
-                element={
-                  <ProtectedRoute>
-                    <ForumPage />
-                  </ProtectedRoute>
-                }
-              />
+                {/* Discussion Forum */}
+                <Route
+                  path="/forum"
+                  element={
+                    <ProtectedRoute>
+                      <ForumPage />
+                    </ProtectedRoute>
+                  }
+                />
 
-              {/* Legacy / Admin Redirect */}
-              <Route path="/admin" element={<Navigate to="/catalog" replace />} />
+                {/* Legacy / Admin Redirect */}
+                <Route path="/admin" element={<Navigate to="/catalog" replace />} />
 
-              {/* Root */}
-              <Route path="/" element={<RootRedirect />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
-        </div>
-      </AuthProvider>
+                {/* Root */}
+                <Route path="/" element={<RootRedirect />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </main>
+          </div>
+        </AuthProvider>
+      </ThemeProvider>
     </BrowserRouter>
   );
 };

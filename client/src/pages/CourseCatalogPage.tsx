@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { Course } from '../types';
 import { Search, BookOpen, Users, Award, Filter, Sparkles, Layers } from 'lucide-react';
+import { HeadingEmoji } from '../components/HeadingEmoji';
 
 export const CourseCatalogPage: React.FC = () => {
   const [courses, setCourses] = useState<Course[]>([]);
@@ -48,11 +49,11 @@ export const CourseCatalogPage: React.FC = () => {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
         {/* Header */}
         <div>
-          <span className="text-[10px] font-mono text-accent font-bold uppercase tracking-wider">
-            Curriculum & Programs
+          <span className="text-[10px] text-accent font-bold uppercase tracking-wider">
+            <HeadingEmoji emoji="🎓" />Curriculum &amp; Programs
           </span>
-          <h1 className="text-3xl sm:text-4xl font-display italic text-textPrimary mt-1 tracking-tight">
-            Course Catalog
+          <h1 className="text-3xl sm:text-4xl font-bold text-textPrimary mt-1 tracking-tight">
+            <HeadingEmoji emoji="📚" />Course Catalog
           </h1>
           <p className="text-xs sm:text-sm text-textSecondary mt-1">
             Self-paced courses with structured video lessons, hands-on modules, and verified assessments.
@@ -60,7 +61,7 @@ export const CourseCatalogPage: React.FC = () => {
         </div>
 
         {/* Filter & Search Bar */}
-        <div className="bg-surface p-4 rounded-2xl border border-surfaceBorder shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
+        <div className="bg-surface p-4 rounded-2xl border border-border shadow-paper-sm flex flex-col md:flex-row gap-3 items-center justify-between">
           <form onSubmit={handleSearchSubmit} className="relative w-full md:w-80">
             <Search className="w-4 h-4 text-textSecondary absolute left-3 top-2.5 pointer-events-none" />
             <input
@@ -68,7 +69,7 @@ export const CourseCatalogPage: React.FC = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search courses, topics, or modules..."
-              className="w-full pl-9 pr-4 py-2 bg-background border border-border rounded-xl text-xs text-textPrimary placeholder:text-textSecondary focus:outline-none focus:ring-1 focus:ring-accent focus:border-accent"
+              className="w-full pl-9 pr-4 py-2 bg-surface2 border border-border rounded-xl text-xs text-textPrimary placeholder:text-textSecondary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             />
           </form>
 
@@ -77,23 +78,23 @@ export const CourseCatalogPage: React.FC = () => {
             <select
               value={selectedCategory}
               onChange={(e) => setSelectedCategory(e.target.value)}
-              className="px-3 py-2 bg-background border border-border rounded-xl text-xs font-semibold text-textPrimary focus:ring-1 focus:ring-accent focus:border-accent"
+              className="px-3 py-2 bg-surface2 border border-border rounded-xl text-xs font-semibold text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             >
-              <option value="all" className="bg-background text-textPrimary">All Categories</option>
-              <option value="Software Development" className="bg-background text-textPrimary">Software Development</option>
-              <option value="Programming" className="bg-background text-textPrimary">Programming</option>
+              <option value="all">All Categories</option>
+              <option value="Software Development">Software Development</option>
+              <option value="Programming">Programming</option>
             </select>
 
             {/* Difficulty Filter */}
             <select
               value={selectedDifficulty}
               onChange={(e) => setSelectedDifficulty(e.target.value)}
-              className="px-3 py-2 bg-background border border-border rounded-xl text-xs font-semibold text-textPrimary focus:ring-1 focus:ring-accent focus:border-accent"
+              className="px-3 py-2 bg-surface2 border border-border rounded-xl text-xs font-semibold text-textPrimary focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary"
             >
-              <option value="all" className="bg-background text-textPrimary">All Difficulty Levels</option>
-              <option value="Beginner" className="bg-background text-textPrimary">Beginner</option>
-              <option value="Intermediate" className="bg-background text-textPrimary">Intermediate</option>
-              <option value="Advanced" className="bg-background text-textPrimary">Advanced</option>
+              <option value="all">All Difficulty Levels</option>
+              <option value="Beginner">Beginner</option>
+              <option value="Intermediate">Intermediate</option>
+              <option value="Advanced">Advanced</option>
             </select>
           </div>
         </div>
@@ -101,11 +102,11 @@ export const CourseCatalogPage: React.FC = () => {
         {/* Course Cards Grid */}
         {loading ? (
           <div className="py-20 text-center">
-            <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+            <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
             <p className="text-xs text-textSecondary">Loading courses...</p>
           </div>
         ) : filteredCourses.length === 0 ? (
-          <div className="py-20 text-center bg-surface rounded-2xl border border-surfaceBorder text-textSecondary text-xs">
+          <div className="py-20 text-center bg-surface rounded-2xl border border-border text-textSecondary text-xs">
             No courses match the specified filters.
           </div>
         ) : (
@@ -113,15 +114,15 @@ export const CourseCatalogPage: React.FC = () => {
             {filteredCourses.map((course) => (
               <div
                 key={course.id}
-                className="bg-surface rounded-2xl border border-surfaceBorder shadow-sm hover:border-accent/40 transition flex flex-col justify-between overflow-hidden group"
+                className="bg-surface rounded-2xl border border-border shadow-paper-sm hover:border-primary/40 transition flex flex-col justify-between overflow-hidden group"
               >
                 {/* Course Header Banner */}
-                <div className="h-32 bg-background relative overflow-hidden border-b border-surfaceBorder">
+                <div className="h-32 bg-surface2 relative overflow-hidden border-b border-border">
                   {course.thumbnailUrl ? (
                     <img
                       src={course.thumbnailUrl}
                       alt={course.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300 opacity-90"
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
                     />
                   ) : (
                     <div className="w-full h-full flex items-center justify-center text-textSecondary">
@@ -130,12 +131,12 @@ export const CourseCatalogPage: React.FC = () => {
                   )}
                   <div className="absolute top-3 right-3">
                     <span
-                      className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded shadow border ${
+                      className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded shadow-paper-sm border ${
                         course.difficultyLevel === 'Advanced'
-                          ? 'bg-rose-500/20 text-rose-400 border-rose-500/40'
+                          ? 'bg-dangerSoft text-danger border-danger/30'
                           : course.difficultyLevel === 'Intermediate'
-                          ? 'bg-amber-500/20 text-amber-400 border-amber-500/40'
-                          : 'bg-accent/20 text-accent border-accent/40 shadow-[0_0_6px_rgba(57,255,20,0.3)]'
+                          ? 'bg-accentSoft text-accent border-accent/30'
+                          : 'bg-surface text-primary border-primary/30 font-bold'
                       }`}
                     >
                       {course.difficultyLevel}
@@ -146,7 +147,7 @@ export const CourseCatalogPage: React.FC = () => {
                 {/* Course Content */}
                 <div className="p-5 flex-1 flex flex-col justify-between">
                   <div>
-                    <h3 className="font-bold text-sm text-textPrimary leading-snug group-hover:text-accent transition line-clamp-2">
+                    <h3 className="font-bold text-sm text-textPrimary leading-snug group-hover:text-primary transition line-clamp-2">
                       {course.title}
                     </h3>
                     <p className="text-xs text-textSecondary mt-2 line-clamp-3 leading-relaxed">
@@ -158,7 +159,7 @@ export const CourseCatalogPage: React.FC = () => {
                       {course.competencyTags.map((tag) => (
                         <span
                           key={tag.id}
-                          className="text-[10px] bg-background text-textSecondary px-2 py-0.5 rounded font-medium border border-border"
+                          className="text-[10px] bg-surface2 text-textSecondary px-2 py-0.5 rounded font-medium border border-border"
                         >
                           {tag.competency.name} (L{tag.targetLevel})
                         </span>
@@ -166,16 +167,16 @@ export const CourseCatalogPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t border-surfaceBorder flex items-center justify-between text-xs text-textSecondary">
+                  <div className="mt-6 pt-4 border-t border-border flex items-center justify-between text-xs text-textSecondary">
                     <span className="flex items-center gap-1 text-[11px]">
                       <Users className="w-3.5 h-3.5 text-textSecondary" />
                       {course.enrollmentCount || 0} Enrolled
                     </span>
                     <Link
                       to={`/courses/${course.id}`}
-                      className="px-4 py-1.5 bg-accent hover:bg-accentMuted text-background rounded-xl font-bold text-xs shadow-[0_0_10px_rgba(57,255,20,0.3)] transition"
+                      className="px-4 py-1.5 bg-primary hover:bg-primaryHover text-primaryContrast rounded-xl font-bold text-xs shadow-paper-sm transition"
                     >
-                      View Syllabus & Enroll
+                      View Syllabus &amp; Enroll
                     </Link>
                   </div>
                 </div>

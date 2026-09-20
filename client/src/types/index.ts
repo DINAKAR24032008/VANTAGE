@@ -1,5 +1,12 @@
 export type UserRole = 'admin' | 'trainer' | 'learner';
 
+export interface AvatarData {
+  type: 'preset' | 'upload' | 'initials';
+  presetId?: string;
+  url?: string;
+  bgColor?: string;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -7,6 +14,8 @@ export interface User {
   role: UserRole;
   department: string;
   jobRole: string;
+  gender?: 'male' | 'female' | 'other';
+  avatar?: AvatarData | string;
   profile?: {
     id: string;
     skills: string;

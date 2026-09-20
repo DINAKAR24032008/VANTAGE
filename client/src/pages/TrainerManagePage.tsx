@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
+import { HeadingEmoji } from '../components/HeadingEmoji';
+import { Avatar } from '../components/Avatar';
 import {
   Course,
   CourseModule,
@@ -387,13 +389,13 @@ export const TrainerManagePage: React.FC = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono text-accent font-bold uppercase tracking-wider">
-                Instructor Studio
+              <span className="text-[10px] text-accent font-bold uppercase tracking-wider">
+                <HeadingEmoji emoji="🧑‍🏫" />Instructor Studio
               </span>
               <span className="text-xs text-textSecondary">• Role: {user?.role}</span>
             </div>
-            <h1 className="text-3xl sm:text-4xl font-display italic text-textPrimary mt-1 tracking-tight">
-              Course & Curriculum Management
+            <h1 className="text-3xl sm:text-4xl font-bold text-textPrimary mt-1 tracking-tight">
+              <HeadingEmoji emoji="📚" />Course &amp; Curriculum Management
             </h1>
             <p className="text-xs text-textSecondary mt-0.5">
               Author programs, publish drafts, inspect learner velocity, and diagnose quiz quality.
@@ -402,40 +404,40 @@ export const TrainerManagePage: React.FC = () => {
 
           <button
             onClick={() => setIsCreateModalOpen(true)}
-            className="px-4 py-2.5 bg-accent hover:bg-accentMuted text-background rounded-xl text-xs font-bold shadow-lg shadow-accent/20 transition flex items-center gap-1.5 self-start"
+            className="px-4 py-2.5 bg-primary hover:bg-primaryHover text-primaryContrast rounded-xl text-xs font-bold shadow-paper-sm transition flex items-center gap-1.5 self-start"
           >
             <Plus className="w-4 h-4" /> Create New Course
           </button>
         </div>
 
         {/* Tab Navigation */}
-        <div className="flex items-center gap-2 bg-surface p-1.5 rounded-2xl border border-surfaceBorder text-xs font-semibold">
+        <div className="flex items-center gap-2 bg-surface p-1.5 rounded-2xl border border-border text-xs font-semibold shadow-paper-sm">
           <button
             onClick={() => setActiveTab('courses')}
             className={`px-4 py-2 rounded-xl transition flex items-center gap-1.5 ${
               activeTab === 'courses'
-                ? 'bg-accent text-background font-bold shadow-md shadow-accent/20'
-                : 'text-textSecondary hover:text-textPrimary hover:bg-surfaceBorder/40'
+                ? 'bg-primary text-primaryContrast font-bold shadow-paper-sm'
+                : 'text-textSecondary hover:text-textPrimary hover:bg-surface2'
             }`}
           >
-            <BookOpen className="w-4 h-4" /> My Courses & Curriculum ({courses.length})
+            <BookOpen className="w-4 h-4" /> My Courses &amp; Curriculum ({courses.length})
           </button>
           <button
             onClick={() => setActiveTab('learners')}
             className={`px-4 py-2 rounded-xl transition flex items-center gap-1.5 ${
               activeTab === 'learners'
-                ? 'bg-accent text-background font-bold shadow-md shadow-accent/20'
-                : 'text-textSecondary hover:text-textPrimary hover:bg-surfaceBorder/40'
+                ? 'bg-primary text-primaryContrast font-bold shadow-paper-sm'
+                : 'text-textSecondary hover:text-textPrimary hover:bg-surface2'
             }`}
           >
-            <Users className="w-4 h-4" /> Learner Progress & Roster
+            <Users className="w-4 h-4" /> Learner Progress &amp; Roster
           </button>
           <button
             onClick={() => setActiveTab('insights')}
             className={`px-4 py-2 rounded-xl transition flex items-center gap-1.5 ${
               activeTab === 'insights'
-                ? 'bg-accent text-background font-bold shadow-md shadow-accent/20'
-                : 'text-textSecondary hover:text-textPrimary hover:bg-surfaceBorder/40'
+                ? 'bg-primary text-primaryContrast font-bold shadow-paper-sm'
+                : 'text-textSecondary hover:text-textPrimary hover:bg-surface2'
             }`}
           >
             <BarChart2 className="w-4 h-4" /> Quiz Quality Insights
@@ -447,11 +449,11 @@ export const TrainerManagePage: React.FC = () => {
           <div className="space-y-4">
             {loading ? (
               <div className="py-20 text-center text-xs text-textSecondary">
-                <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
                 Loading instructor courses...
               </div>
             ) : courses.length === 0 ? (
-              <div className="p-12 text-center bg-surface rounded-2xl border border-surfaceBorder text-xs text-textSecondary">
+              <div className="p-12 text-center bg-surface rounded-2xl border border-border text-xs text-textSecondary shadow-paper-sm">
                 You have not created any courses yet. Click "Create New Course" above to begin.
               </div>
             ) : (
@@ -463,18 +465,18 @@ export const TrainerManagePage: React.FC = () => {
                   return (
                     <div
                       key={course.id}
-                      className="bg-surface rounded-2xl border border-surfaceBorder shadow-sm p-5 flex flex-col justify-between hover:border-accent/40 transition"
+                      className="bg-surface rounded-2xl border border-border shadow-paper-sm p-5 flex flex-col justify-between hover:border-primary/40 transition"
                     >
                       <div className="space-y-3">
                         <div className="flex items-center justify-between gap-2">
-                          <span className="text-[10px] font-mono uppercase font-bold px-2 py-0.5 rounded bg-background text-accent border border-surfaceBorder">
+                          <span className="text-[10px] uppercase font-bold px-2 py-0.5 rounded bg-primarySoft text-primary border border-primary/30">
                             {course.difficultyLevel}
                           </span>
                           <span
-                            className={`text-[10px] font-mono font-bold px-2.5 py-0.5 rounded-full uppercase flex items-center gap-1 border ${
+                            className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase flex items-center gap-1 border ${
                               isPublished
-                                ? 'bg-accent/10 text-accent border-accent/30'
-                                : 'bg-amber-500/10 text-amber-400 border-amber-500/30'
+                                ? 'bg-primarySoft text-primary border-primary/30'
+                                : 'bg-accentSoft text-accent border-accent/30'
                             }`}
                           >
                             {isPublished ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
@@ -489,26 +491,26 @@ export const TrainerManagePage: React.FC = () => {
                           {course.description}
                         </p>
 
-                        <div className="flex items-center gap-3 text-xs text-textSecondary pt-1 border-t border-surfaceBorder">
+                        <div className="flex items-center gap-3 text-xs text-textSecondary pt-1 border-t border-border">
                           <span className="flex items-center gap-1">
-                            <Video className="w-3.5 h-3.5 text-accent" /> {course.modules?.length || 0} Modules
+                            <Video className="w-3.5 h-3.5 text-primary" /> {course.modules?.length || 0} Modules
                           </span>
                           <span className="flex items-center gap-1">
-                            <Users className="w-3.5 h-3.5 text-accent" /> {course.enrollmentCount || 0} Learners
+                            <Users className="w-3.5 h-3.5 text-primary" /> {course.enrollmentCount || 0} Learners
                           </span>
                         </div>
                       </div>
 
                       {/* Card Action Buttons */}
-                      <div className="mt-5 pt-3 border-t border-surfaceBorder space-y-2">
+                      <div className="mt-5 pt-3 border-t border-border space-y-2">
                         <div className="flex items-center justify-between gap-2">
                           <button
                             onClick={() => handleToggleStatus(course)}
                             disabled={!isAuthor}
                             className={`flex-1 py-1.5 px-2 rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 border disabled:opacity-40 ${
                               isPublished
-                                ? 'bg-background hover:bg-surface border-surfaceBorder text-textSecondary hover:text-amber-400'
-                                : 'bg-accent/15 hover:bg-accent/25 border-accent/40 text-accent'
+                                ? 'bg-surface2 hover:bg-border border-border text-textSecondary hover:text-accent'
+                                : 'bg-primarySoft hover:bg-primary/20 border-primary/40 text-primary'
                             }`}
                             title={isPublished ? 'Unpublish course (make draft)' : 'Publish to public catalog'}
                           >
@@ -518,9 +520,9 @@ export const TrainerManagePage: React.FC = () => {
                           <button
                             onClick={() => openCurriculumEditor(course)}
                             disabled={!isAuthor}
-                            className="flex-1 py-1.5 px-2 bg-background hover:bg-surface border border-surfaceBorder hover:border-accent/40 text-textPrimary text-xs font-bold rounded-lg transition flex items-center justify-center gap-1 disabled:opacity-40"
+                            className="flex-1 py-1.5 px-2 bg-primary hover:bg-primaryHover text-primaryContrast rounded-lg text-xs font-bold transition flex items-center justify-center gap-1 shadow-paper-sm disabled:opacity-40"
                           >
-                            <Edit3 className="w-3.5 h-3.5 text-accent" /> Edit Curriculum
+                            <Edit3 className="w-3.5 h-3.5 text-white" /> Edit Curriculum
                           </button>
                         </div>
 
@@ -530,7 +532,7 @@ export const TrainerManagePage: React.FC = () => {
                               setSelectedCourseId(course.id);
                               setActiveTab('learners');
                             }}
-                            className="text-textSecondary hover:text-accent font-semibold flex items-center gap-1"
+                            className="text-textSecondary hover:text-primary font-semibold flex items-center gap-1"
                           >
                             <Users className="w-3 h-3" /> View Learners
                           </button>
@@ -539,14 +541,14 @@ export const TrainerManagePage: React.FC = () => {
                               setSelectedCourseId(course.id);
                               setActiveTab('insights');
                             }}
-                            className="text-textSecondary hover:text-accent font-semibold flex items-center gap-1"
+                            className="text-textSecondary hover:text-primary font-semibold flex items-center gap-1"
                           >
                             <BarChart2 className="w-3 h-3" /> Quiz Insights
                           </button>
                           {isAuthor && (
                             <button
                               onClick={() => handleDeleteCourse(course.id)}
-                              className="text-rose-400 hover:text-rose-300 font-semibold flex items-center gap-1 ml-auto"
+                              className="text-danger hover:text-dangerHover font-semibold flex items-center gap-1 ml-auto"
                             >
                               <Trash2 className="w-3 h-3" /> Delete
                             </button>
@@ -565,13 +567,13 @@ export const TrainerManagePage: React.FC = () => {
         {activeTab === 'learners' && (
           <div className="space-y-6">
             {/* Course Selector Bar & Export Button */}
-            <div className="bg-surface p-4 rounded-2xl border border-surfaceBorder shadow-sm flex flex-col md:flex-row gap-3 items-center justify-between">
+            <div className="bg-surface p-4 rounded-2xl border border-border shadow-paper-sm flex flex-col md:flex-row gap-3 items-center justify-between">
               <div className="flex items-center gap-2 w-full md:w-auto">
-                <span className="text-xs font-bold text-textSecondary uppercase font-mono">Select Course:</span>
+                <span className="text-xs font-bold text-textSecondary uppercase">Select Course:</span>
                 <select
                   value={selectedCourseId}
                   onChange={(e) => setSelectedCourseId(e.target.value)}
-                  className="px-3 py-2 bg-background border border-surfaceBorder rounded-xl text-xs font-medium text-textPrimary focus:outline-none focus:border-accent"
+                  className="px-3 py-2 bg-surface2 border border-border rounded-xl text-xs font-medium text-textPrimary focus:outline-none focus:border-primary"
                 >
                   {courses.map((c) => (
                     <option key={c.id} value={c.id}>
@@ -583,7 +585,7 @@ export const TrainerManagePage: React.FC = () => {
 
               <button
                 onClick={handleDownloadCSV}
-                className="px-4 py-2 bg-background hover:bg-surface border border-surfaceBorder hover:border-accent/50 text-accent text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-sm"
+                className="px-4 py-2 bg-surface2 hover:bg-border border border-border text-primary text-xs font-bold rounded-xl transition flex items-center gap-1.5 shadow-paper-sm"
               >
                 <Download className="w-3.5 h-3.5" /> Export Roster (CSV)
               </button>
@@ -592,20 +594,20 @@ export const TrainerManagePage: React.FC = () => {
             {/* Roster Table */}
             {loadingRoster ? (
               <div className="py-20 text-center text-xs text-textSecondary">
-                <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
                 Loading enrolled learners...
               </div>
             ) : roster.length === 0 ? (
-              <div className="p-12 text-center bg-surface rounded-2xl border border-surfaceBorder text-xs text-textSecondary">
+              <div className="p-12 text-center bg-surface rounded-2xl border border-border text-xs text-textSecondary shadow-paper-sm">
                 No learners have enrolled in this course yet.
               </div>
             ) : (
-              <div className="bg-surface rounded-2xl border border-surfaceBorder overflow-hidden shadow-sm">
+              <div className="bg-surface rounded-2xl border border-border overflow-hidden shadow-paper-sm">
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
-                    <thead className="bg-background/80 text-textSecondary uppercase font-mono text-[10px] border-b border-surfaceBorder">
+                    <thead className="bg-surface2 text-textSecondary uppercase text-[10px] border-b border-border">
                       <tr>
-                        <th className="p-4">Learner Name & Email</th>
+                        <th className="p-4">Learner Name &amp; Email</th>
                         <th className="p-4">Status</th>
                         <th className="p-4">Modules Completed</th>
                         <th className="p-4">Overall Progress</th>
@@ -614,46 +616,61 @@ export const TrainerManagePage: React.FC = () => {
                         <th className="p-4">Pacing Diagnostic</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-surfaceBorder">
+                    <tbody className="divide-y divide-border">
                       {roster.map((learner) => (
-                        <tr key={learner.id} className="hover:bg-background/30 transition">
+                        <tr key={learner.id} className="hover:bg-surface2 transition">
                           <td className="p-4">
-                            <div className="font-bold text-textPrimary">{learner.name}</div>
-                            <div className="text-[11px] text-textSecondary font-mono">{learner.email}</div>
+                            <div className="flex items-center gap-2.5">
+                              <Avatar
+                                user={{
+                                  id: learner.userId,
+                                  name: learner.name,
+                                  email: learner.email,
+                                  role: 'learner',
+                                  department: '',
+                                  jobRole: '',
+                                }}
+                                size="sm"
+                              />
+                              <div>
+                                <div className="font-bold text-textPrimary">{learner.name}</div>
+                                <div className="text-[11px] text-textSecondary">{learner.email}</div>
+                              </div>
+                            </div>
                           </td>
                           <td className="p-4">
                             <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-mono font-bold uppercase border ${
+                              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
                                 learner.status === 'completed'
-                                  ? 'bg-accent/15 text-accent border-accent/40'
+                                  ? 'bg-primarySoft text-primary border-primary/30'
                                   : learner.status === 'in_progress'
-                                  ? 'bg-blue-500/15 text-blue-400 border-blue-500/40'
-                                  : 'bg-surfaceBorder text-textSecondary border-border'
+                                  ? 'bg-accentSoft text-accent border-accent/30'
+                                  : 'bg-surface2 text-textSecondary border-border'
                               }`}
                             >
                               {learner.status}
                             </span>
                           </td>
-                          <td className="p-4 font-mono font-semibold">
+                          <td className="p-4 font-semibold">
                             {learner.completedModulesCount} / {learner.totalModulesCount} Modules
                           </td>
                           <td className="p-4">
                             <div className="flex items-center gap-2">
-                              <div className="w-24 h-2 bg-background rounded-full overflow-hidden border border-surfaceBorder">
+                              <div className="w-24 h-2 bg-border rounded-full overflow-hidden border border-borderStrong">
                                 <div
-                                  className="h-full bg-accent rounded-full"
+                                  className="h-full bg-primary rounded-full"
                                   style={{ width: `${learner.progressPercent}%` }}
                                 />
                               </div>
-                              <span className="font-mono text-accent font-bold">
+                              <span className="text-primary font-bold">
                                 {learner.progressPercent}%
                               </span>
                             </div>
                           </td>
-                          <td className="p-4 font-mono font-bold">
+                          <td className="p-4 font-bold">
                             {learner.latestQuizScore !== null ? (
                               <span
-                                className={learner.latestQuizScore >= 70 ? 'text-accent' : 'text-rose-400'}
+                                className={learner.latestQuizScore >= 70 ? 'text-primary' : 'text-danger'}
                               >
                                 {learner.latestQuizScore}%
                               </span>
@@ -661,20 +678,20 @@ export const TrainerManagePage: React.FC = () => {
                               <span className="text-textSecondary font-normal">None</span>
                             )}
                           </td>
-                          <td className="p-4 text-textSecondary text-[11px] font-mono">
+                          <td className="p-4 text-textSecondary text-[11px]">
                             {new Date(learner.lastActiveAt).toLocaleDateString()}
                           </td>
                           <td className="p-4">
                             {learner.isStuck ? (
-                              <span className="px-2 py-1 rounded bg-amber-950/80 text-amber-400 border border-amber-800 text-[10px] font-bold flex items-center gap-1 w-fit">
-                                <AlertTriangle className="w-3 h-3 text-amber-400" /> Stuck (&gt;7d Inactive)
+                              <span className="px-2 py-1 rounded bg-accentSoft text-accent border border-accent/30 text-[10px] font-bold flex items-center gap-1 w-fit">
+                                <AlertTriangle className="w-3 h-3 text-accent" /> Stuck (&gt;7d Inactive)
                               </span>
                             ) : learner.status === 'completed' ? (
-                              <span className="text-accent text-[10px] font-semibold flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3 text-accent" /> Completed Track
+                              <span className="text-primary text-[10px] font-semibold flex items-center gap-1">
+                                <CheckCircle2 className="w-3 h-3 text-primary" /> Completed Track
                               </span>
                             ) : (
-                              <span className="text-textSecondary text-[10px] font-mono">On Track</span>
+                              <span className="text-textSecondary text-[10px]">On Track</span>
                             )}
                           </td>
                         </tr>
@@ -691,12 +708,12 @@ export const TrainerManagePage: React.FC = () => {
         {activeTab === 'insights' && (
           <div className="space-y-6">
             {/* Course Selector Bar */}
-            <div className="bg-surface p-4 rounded-2xl border border-surfaceBorder shadow-sm flex items-center gap-2">
-              <span className="text-xs font-bold text-textSecondary uppercase font-mono">Select Course:</span>
+            <div className="bg-surface p-4 rounded-2xl border border-border shadow-paper-sm flex items-center gap-2">
+              <span className="text-xs font-bold text-textSecondary uppercase">Select Course:</span>
               <select
                 value={selectedCourseId}
                 onChange={(e) => setSelectedCourseId(e.target.value)}
-                className="px-3 py-2 bg-background border border-surfaceBorder rounded-xl text-xs font-medium text-textPrimary focus:outline-none focus:border-accent"
+                className="px-3 py-2 bg-surface2 border border-border rounded-xl text-xs font-medium text-textPrimary focus:outline-none focus:border-primary"
               >
                 {courses.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -708,11 +725,11 @@ export const TrainerManagePage: React.FC = () => {
 
             {loadingInsights ? (
               <div className="py-20 text-center text-xs text-textSecondary">
-                <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
-                Computing quiz failure rates & quality metrics...
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                Computing quiz failure rates &amp; quality metrics...
               </div>
             ) : !insights || insights.moduleInsights.length === 0 ? (
-              <div className="p-12 text-center bg-surface rounded-2xl border border-surfaceBorder text-xs text-textSecondary">
+              <div className="p-12 text-center bg-surface rounded-2xl border border-border text-xs text-textSecondary shadow-paper-sm">
                 No quiz assessments configured for this course yet. Add module quizzes in the Curriculum Editor.
               </div>
             ) : (
@@ -720,18 +737,18 @@ export const TrainerManagePage: React.FC = () => {
                 {insights.moduleInsights.map((mInsight, idx) => (
                   <div
                     key={mInsight.assessmentId}
-                    className="bg-surface rounded-2xl border border-surfaceBorder shadow-sm p-6 space-y-4"
+                    className="bg-surface rounded-2xl border border-border shadow-paper-sm p-6 space-y-4"
                   >
                     {/* Module Assessment Header */}
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-surfaceBorder gap-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between pb-3 border-b border-border gap-2">
                       <div>
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-mono text-accent font-bold uppercase">
+                          <span className="text-[10px] text-accent font-bold uppercase">
                             Quiz Assessment #{idx + 1}
                           </span>
                           {mInsight.needsReviewCount > 0 && (
-                            <span className="px-2 py-0.5 rounded bg-amber-950/80 text-amber-400 border border-amber-800 text-[10px] font-bold flex items-center gap-1">
-                              <AlertTriangle className="w-3 h-3 text-amber-400" /> {mInsight.needsReviewCount} Question(s) Need Review
+                            <span className="px-2 py-0.5 rounded bg-accentSoft text-accent border border-accent/30 text-[10px] font-bold flex items-center gap-1">
+                              <AlertTriangle className="w-3 h-3 text-accent" /> {mInsight.needsReviewCount} Question(s) Need Review
                             </span>
                           )}
                         </div>
@@ -740,7 +757,7 @@ export const TrainerManagePage: React.FC = () => {
                         </h3>
                       </div>
 
-                      <div className="flex items-center gap-4 text-xs font-mono">
+                      <div className="flex items-center gap-4 text-xs">
                         <div className="text-right">
                           <div className="text-textSecondary text-[10px]">TOTAL ATTEMPTS</div>
                           <div className="font-bold text-textPrimary">{mInsight.totalAttempts}</div>
@@ -763,18 +780,18 @@ export const TrainerManagePage: React.FC = () => {
                           key={q.id}
                           className={`p-4 rounded-xl border transition ${
                             q.needsReview
-                              ? 'bg-amber-950/15 border-amber-500/40'
-                              : 'bg-background/60 border-surfaceBorder'
+                              ? 'bg-accentSoft border-accent/40'
+                              : 'bg-surface2 border-border'
                           }`}
                         >
                           <div className="flex items-start justify-between gap-3">
                             <div className="space-y-1">
                               <div className="flex items-center gap-2">
-                                <span className="text-[10px] font-mono text-accent font-bold">
+                                <span className="text-[10px] text-primary font-bold">
                                   Q{qIndex + 1}
                                 </span>
                                 {q.needsReview && (
-                                  <span className="px-2 py-0.5 rounded bg-amber-500/20 text-amber-400 border border-amber-500/40 text-[9px] font-mono font-bold uppercase">
+                                  <span className="px-2 py-0.5 rounded bg-accentSoft text-accent border border-accent/40 text-[9px] font-bold uppercase">
                                     ⚠️ Needs Review (&gt;40% Failure Rate)
                                   </span>
                                 )}
@@ -785,10 +802,10 @@ export const TrainerManagePage: React.FC = () => {
                             </div>
 
                             <div className="text-right flex-shrink-0">
-                              <div className="text-[10px] font-mono text-textSecondary uppercase">Failure Rate</div>
+                              <div className="text-[10px] text-textSecondary uppercase">Failure Rate</div>
                               <div
-                                className={`text-sm font-mono font-extrabold ${
-                                  q.needsReview ? 'text-amber-400' : 'text-accent'
+                                className={`text-sm font-extrabold ${
+                                  q.needsReview ? 'text-accent font-bold' : 'text-primary'
                                 }`}
                               >
                                 {q.failureRate}%
@@ -797,7 +814,7 @@ export const TrainerManagePage: React.FC = () => {
                           </div>
 
                           {/* Options Breakdown & Chosen Distribution */}
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 pt-2 border-t border-surfaceBorder/60">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3 pt-2 border-t border-border/60">
                             {q.options.map((opt, optIdx) => {
                               const isCorrect = optIdx === q.correctIndex;
                               const chosenCount = q.optionDistribution[optIdx] || 0;
@@ -816,17 +833,17 @@ export const TrainerManagePage: React.FC = () => {
                                   }`}
                                 >
                                   <span className="flex items-center gap-1.5 truncate mr-2">
-                                    <span className="font-mono font-bold text-[10px] text-accent">
+                                    <span className="font-bold text-[10px] text-accent">
                                       {String.fromCharCode(65 + optIdx)}.
                                     </span>
                                     <span className="truncate">{opt}</span>
                                     {isCorrect && (
-                                      <span className="text-[9px] font-bold text-accent ml-1 font-mono uppercase">
+                                      <span className="text-[9px] font-bold text-accent ml-1 uppercase">
                                         (Correct)
                                       </span>
                                     )}
                                   </span>
-                                  <span className="text-[10px] font-mono text-textSecondary flex-shrink-0">
+                                  <span className="text-[10px] text-textSecondary flex-shrink-0">
                                     {chosenCount} ({pct}%)
                                   </span>
                                 </div>
@@ -845,13 +862,13 @@ export const TrainerManagePage: React.FC = () => {
 
         {/* MODAL 1: CREATE COURSE */}
         {isCreateModalOpen && (
-          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-surface rounded-2xl shadow-2xl max-w-xl w-full border border-surfaceBorder p-6 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-surfaceBorder">
+          <div className="fixed inset-0 z-50 bg-textPrimary/45 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-surface rounded-2xl shadow-paper-lg max-w-xl w-full border border-border p-6 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-border">
                 <h3 className="text-base font-bold text-textPrimary">Create New Course</h3>
                 <button
                   onClick={() => setIsCreateModalOpen(false)}
-                  className="p-1.5 text-textSecondary hover:text-textPrimary rounded-lg hover:bg-surfaceBorder/40 transition"
+                  className="p-1.5 text-textSecondary hover:text-textPrimary rounded-lg hover:bg-border/50 transition"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -866,7 +883,7 @@ export const TrainerManagePage: React.FC = () => {
                     value={newTitle}
                     onChange={(e) => setNewTitle(e.target.value)}
                     placeholder="e.g. Advanced Python for Data Science"
-                    className="w-full p-2 bg-background border border-surfaceBorder rounded-xl text-textPrimary focus:border-accent focus:outline-none"
+                    className="w-full p-2 bg-surface2 border border-border rounded-xl text-textPrimary focus:border-primary focus:outline-none"
                   />
                 </div>
 
@@ -878,7 +895,7 @@ export const TrainerManagePage: React.FC = () => {
                     value={newDescription}
                     onChange={(e) => setNewDescription(e.target.value)}
                     placeholder="Explain course objectives, prerequisites, and learning outcomes..."
-                    className="w-full p-2 bg-background border border-surfaceBorder rounded-xl text-textPrimary focus:border-accent focus:outline-none"
+                    className="w-full p-2 bg-surface2 border border-border rounded-xl text-textPrimary focus:border-primary focus:outline-none"
                   />
                 </div>
 
@@ -888,7 +905,7 @@ export const TrainerManagePage: React.FC = () => {
                     <select
                       value={newDifficulty}
                       onChange={(e) => setNewDifficulty(e.target.value)}
-                      className="w-full p-2 bg-background border border-surfaceBorder rounded-xl text-textPrimary focus:border-accent focus:outline-none"
+                      className="w-full p-2 bg-surface2 border border-border rounded-xl text-textPrimary focus:border-primary focus:outline-none"
                     >
                       <option value="Beginner">Beginner</option>
                       <option value="Intermediate">Intermediate</option>
@@ -901,7 +918,7 @@ export const TrainerManagePage: React.FC = () => {
                     <select
                       value={newStatus}
                       onChange={(e) => setNewStatus(e.target.value as 'draft' | 'published')}
-                      className="w-full p-2 bg-background border border-surfaceBorder rounded-xl text-textPrimary focus:border-accent focus:outline-none"
+                      className="w-full p-2 bg-surface2 border border-border rounded-xl text-textPrimary focus:border-primary focus:outline-none"
                     >
                       <option value="draft">Draft (Visible only to you)</option>
                       <option value="published">Published (Catalog visible)</option>
@@ -914,7 +931,7 @@ export const TrainerManagePage: React.FC = () => {
                   <select
                     value={selectedCompetencyId}
                     onChange={(e) => setSelectedCompetencyId(e.target.value)}
-                    className="w-full p-2 bg-background border border-surfaceBorder rounded-xl text-textPrimary focus:border-accent focus:outline-none"
+                    className="w-full p-2 bg-surface2 border border-border rounded-xl text-textPrimary focus:border-primary focus:outline-none"
                   >
                     {competencies.map((comp) => (
                       <option key={comp.id} value={comp.id}>
@@ -924,18 +941,18 @@ export const TrainerManagePage: React.FC = () => {
                   </select>
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-3 border-t border-surfaceBorder">
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
                   <button
                     type="button"
                     onClick={() => setIsCreateModalOpen(false)}
-                    className="px-4 py-2 bg-background hover:bg-surface border border-surfaceBorder text-textSecondary rounded-xl font-semibold"
+                    className="px-4 py-2 bg-surface2 hover:bg-border border border-border text-textSecondary rounded-xl font-semibold"
                   >
                     Cancel
                   </button>
                   <button
                     type="submit"
                     disabled={savingCourse}
-                    className="px-4 py-2 bg-accent hover:bg-accentMuted text-background font-bold rounded-xl shadow-md shadow-accent/20 transition disabled:opacity-50"
+                    className="px-4 py-2 bg-primary hover:bg-primaryHover text-primaryContrast font-bold rounded-xl shadow-paper-sm transition disabled:opacity-50"
                   >
                     {savingCourse ? 'Creating...' : 'Create Course'}
                   </button>
@@ -947,16 +964,16 @@ export const TrainerManagePage: React.FC = () => {
 
         {/* MODAL 2: CURRICULUM & MODULE EDITOR */}
         {editingCourse && (
-          <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-surface rounded-2xl shadow-2xl max-w-4xl w-full border border-surfaceBorder p-6 space-y-5 max-h-[90vh] flex flex-col">
-              <div className="flex items-center justify-between pb-3 border-b border-surfaceBorder">
+          <div className="fixed inset-0 z-50 bg-textPrimary/45 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-surface rounded-2xl shadow-paper-lg max-w-4xl w-full border border-border p-6 space-y-5 max-h-[90vh] flex flex-col">
+              <div className="flex items-center justify-between pb-3 border-b border-border">
                 <div>
-                  <span className="text-[10px] font-mono text-accent font-bold uppercase">Curriculum Studio</span>
+                  <span className="text-[10px] text-accent font-bold uppercase">Curriculum Studio</span>
                   <h3 className="text-base font-bold text-textPrimary">{editingCourse.title}</h3>
                 </div>
                 <button
                   onClick={() => setEditingCourse(null)}
-                  className="p-1.5 text-textSecondary hover:text-textPrimary rounded-lg hover:bg-surfaceBorder/40 transition"
+                  className="p-1.5 text-textSecondary hover:text-textPrimary rounded-lg hover:bg-border/50 transition"
                 >
                   <X className="w-5 h-5" />
                 </button>
@@ -964,14 +981,14 @@ export const TrainerManagePage: React.FC = () => {
 
               <div className="flex-1 overflow-y-auto space-y-4 pr-1 text-xs">
                 {/* Basic Details */}
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-background p-3 rounded-xl border border-surfaceBorder">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 bg-surface2 p-3 rounded-xl border border-border">
                   <div className="sm:col-span-2">
                     <label className="block text-textSecondary font-semibold mb-1">Course Title</label>
                     <input
                       type="text"
                       value={editTitle}
                       onChange={(e) => setEditTitle(e.target.value)}
-                      className="w-full p-2 bg-surface border border-surfaceBorder rounded-lg text-textPrimary focus:border-accent focus:outline-none"
+                      className="w-full p-2 bg-surface border border-border rounded-lg text-textPrimary focus:border-primary focus:outline-none"
                     />
                   </div>
                   <div>
@@ -979,7 +996,7 @@ export const TrainerManagePage: React.FC = () => {
                     <select
                       value={editStatus}
                       onChange={(e) => setEditStatus(e.target.value as 'draft' | 'published')}
-                      className="w-full p-2 bg-surface border border-surfaceBorder rounded-lg text-textPrimary focus:border-accent focus:outline-none"
+                      className="w-full p-2 bg-surface border border-border rounded-lg text-textPrimary focus:border-primary focus:outline-none"
                     >
                       <option value="draft">Draft</option>
                       <option value="published">Published</option>
@@ -990,12 +1007,12 @@ export const TrainerManagePage: React.FC = () => {
                 {/* Modules List */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="font-bold text-textPrimary text-xs uppercase font-mono">
+                    <h4 className="font-bold text-textPrimary text-xs uppercase">
                       Curriculum Modules ({editModules.length})
                     </h4>
                     <button
                       onClick={handleAddNewModule}
-                      className="px-3 py-1 bg-accent/15 hover:bg-accent/25 text-accent border border-accent/40 rounded-lg text-xs font-bold transition flex items-center gap-1"
+                      className="px-3 py-1 bg-primarySoft hover:bg-primary/20 text-primary border border-primary/40 rounded-lg text-xs font-bold transition flex items-center gap-1"
                     >
                       <Plus className="w-3.5 h-3.5" /> Add Module
                     </button>
@@ -1005,22 +1022,22 @@ export const TrainerManagePage: React.FC = () => {
                     {editModules.map((mod, index) => (
                       <div
                         key={mod.id}
-                        className="bg-background p-3.5 rounded-xl border border-surfaceBorder flex flex-col sm:flex-row sm:items-center justify-between gap-3"
+                        className="bg-surface2 p-3.5 rounded-xl border border-border flex flex-col sm:flex-row sm:items-center justify-between gap-3"
                       >
                         <div className="space-y-0.5">
                           <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-mono text-accent font-bold">
+                            <span className="text-[10px] text-primary font-bold">
                               #{index + 1}
                             </span>
                             <span className="font-bold text-textPrimary text-xs">{mod.title}</span>
                           </div>
                           <div className="flex items-center gap-3 text-[11px] text-textSecondary">
                             <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3 text-accent" /> {mod.durationMinutes} min
+                              <Clock className="w-3 h-3 text-primary" /> {mod.durationMinutes} min
                             </span>
                             {mod.videoUrl && (
-                              <span className="flex items-center gap-1 truncate max-w-xs text-textSecondary font-mono">
-                                <Video className="w-3 h-3 text-accent" /> {mod.videoUrl}
+                              <span className="flex items-center gap-1 truncate max-w-xs text-textSecondary">
+                                <Video className="w-3 h-3 text-primary" /> {mod.videoUrl}
                               </span>
                             )}
                           </div>
@@ -1032,7 +1049,7 @@ export const TrainerManagePage: React.FC = () => {
                           <button
                             onClick={() => moveModule(index, 'up')}
                             disabled={index === 0}
-                            className="p-1 text-textSecondary hover:text-accent disabled:opacity-20"
+                            className="p-1 text-textSecondary hover:text-primary disabled:opacity-20"
                             title="Move Up"
                           >
                             <ChevronUp className="w-4 h-4" />
@@ -1040,7 +1057,7 @@ export const TrainerManagePage: React.FC = () => {
                           <button
                             onClick={() => moveModule(index, 'down')}
                             disabled={index === editModules.length - 1}
-                            className="p-1 text-textSecondary hover:text-accent disabled:opacity-20"
+                            className="p-1 text-textSecondary hover:text-primary disabled:opacity-20"
                             title="Move Down"
                           >
                             <ChevronDown className="w-4 h-4" />
@@ -1049,7 +1066,7 @@ export const TrainerManagePage: React.FC = () => {
                           {/* Edit Module Info */}
                           <button
                             onClick={() => openModuleEditor(mod)}
-                            className="px-2.5 py-1 bg-surface hover:bg-surfaceBorder text-textPrimary border border-surfaceBorder rounded-lg text-xs font-semibold"
+                            className="px-2.5 py-1 bg-surface hover:bg-border text-textPrimary border border-border rounded-lg text-xs font-semibold"
                           >
                             Edit Lesson
                           </button>
@@ -1057,7 +1074,7 @@ export const TrainerManagePage: React.FC = () => {
                           {/* 5-Question MCQ Quiz Button */}
                           <button
                             onClick={() => openQuizBuilder(editingCourse.id, mod)}
-                            className="px-2.5 py-1 bg-accent/15 hover:bg-accent/25 text-accent border border-accent/40 rounded-lg text-xs font-bold flex items-center gap-1"
+                            className="px-2.5 py-1 bg-primarySoft hover:bg-primary/20 text-primary border border-primary/40 rounded-lg text-xs font-bold flex items-center gap-1"
                           >
                             <FileCheck className="w-3.5 h-3.5" /> MCQ Quiz
                           </button>
@@ -1065,7 +1082,7 @@ export const TrainerManagePage: React.FC = () => {
                           {/* Delete Module */}
                           <button
                             onClick={() => handleDeleteModule(mod.id)}
-                            className="p-1.5 text-rose-400 hover:text-rose-300"
+                            className="p-1.5 text-danger hover:text-dangerHover"
                             title="Delete Module"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
@@ -1078,17 +1095,17 @@ export const TrainerManagePage: React.FC = () => {
               </div>
 
               {/* Bottom Save Bar */}
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-surfaceBorder">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
                 <button
                   onClick={() => setEditingCourse(null)}
-                  className="px-4 py-2 bg-background hover:bg-surface border border-surfaceBorder text-textSecondary rounded-xl font-semibold text-xs"
+                  className="px-4 py-2 bg-surface2 hover:bg-border border border-border text-textSecondary rounded-xl font-semibold text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveCurriculum}
                   disabled={savingCurriculum}
-                  className="px-5 py-2 bg-accent hover:bg-accentMuted text-background font-bold rounded-xl text-xs shadow-md shadow-accent/20 transition flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-5 py-2 bg-primary hover:bg-primaryHover text-primaryContrast font-bold rounded-xl text-xs shadow-paper-sm transition flex items-center gap-1.5 disabled:opacity-50"
                 >
                   <Save className="w-3.5 h-3.5" /> {savingCurriculum ? 'Saving...' : 'Save Curriculum'}
                 </button>
@@ -1099,9 +1116,9 @@ export const TrainerManagePage: React.FC = () => {
 
         {/* MODAL 3: EDIT SINGLE MODULE DETAILS */}
         {editingModule && (
-          <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-surface rounded-2xl shadow-2xl max-w-lg w-full border border-surfaceBorder p-6 space-y-4">
-              <div className="flex items-center justify-between pb-3 border-b border-surfaceBorder">
+          <div className="fixed inset-0 z-50 bg-textPrimary/45 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-surface rounded-2xl shadow-paper-lg max-w-lg w-full border border-border p-6 space-y-4">
+              <div className="flex items-center justify-between pb-3 border-b border-border">
                 <h3 className="text-base font-bold text-textPrimary">Edit Module Details</h3>
                 <button
                   onClick={() => setEditingModule(null)}
@@ -1118,7 +1135,7 @@ export const TrainerManagePage: React.FC = () => {
                     type="text"
                     value={moduleTitle}
                     onChange={(e) => setModuleTitle(e.target.value)}
-                    className="w-full p-2 bg-background border border-surfaceBorder rounded-xl text-textPrimary focus:border-accent focus:outline-none"
+                    className="w-full p-2 bg-surface2 border border-border rounded-xl text-textPrimary focus:border-primary focus:outline-none"
                   />
                 </div>
 
@@ -1131,7 +1148,7 @@ export const TrainerManagePage: React.FC = () => {
                     value={moduleVideoUrl}
                     onChange={(e) => setModuleVideoUrl(e.target.value)}
                     placeholder="https://www.youtube.com/watch?v=..."
-                    className="w-full p-2 bg-background border border-surfaceBorder rounded-xl text-textPrimary focus:border-accent focus:outline-none"
+                    className="w-full p-2 bg-surface2 border border-border rounded-xl text-textPrimary focus:border-primary focus:outline-none"
                   />
                 </div>
 
@@ -1141,7 +1158,7 @@ export const TrainerManagePage: React.FC = () => {
                     type="number"
                     value={moduleDuration}
                     onChange={(e) => setModuleDuration(Number(e.target.value))}
-                    className="w-full p-2 bg-background border border-surfaceBorder rounded-xl text-textPrimary focus:border-accent focus:outline-none"
+                    className="w-full p-2 bg-surface2 border border-border rounded-xl text-textPrimary focus:border-primary focus:outline-none"
                   />
                 </div>
 
@@ -1152,20 +1169,20 @@ export const TrainerManagePage: React.FC = () => {
                     value={moduleMarkdown}
                     onChange={(e) => setModuleMarkdown(e.target.value)}
                     placeholder="# Lesson Notes..."
-                    className="w-full p-2 bg-background border border-surfaceBorder rounded-xl text-textPrimary focus:border-accent focus:outline-none"
+                    className="w-full p-2 bg-surface2 border border-border rounded-xl text-textPrimary focus:border-primary focus:outline-none"
                   />
                 </div>
 
-                <div className="flex items-center justify-end gap-2 pt-3 border-t border-surfaceBorder">
+                <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
                   <button
                     onClick={() => setEditingModule(null)}
-                    className="px-4 py-2 bg-background hover:bg-surface border border-surfaceBorder text-textSecondary rounded-xl font-semibold"
+                    className="px-4 py-2 bg-surface2 hover:bg-border border border-border text-textSecondary rounded-xl font-semibold"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={handleSaveSingleModule}
-                    className="px-4 py-2 bg-accent hover:bg-accentMuted text-background font-bold rounded-xl shadow-md transition"
+                    className="px-4 py-2 bg-primary hover:bg-primaryHover text-primaryContrast font-bold rounded-xl shadow-paper-sm transition"
                   >
                     Update Module
                   </button>
@@ -1177,11 +1194,11 @@ export const TrainerManagePage: React.FC = () => {
 
         {/* MODAL 4: INTERACTIVE 5-QUESTION MCQ ASSESSMENT BUILDER */}
         {quizModule && (
-          <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-            <div className="bg-surface rounded-2xl shadow-2xl max-w-3xl w-full border border-surfaceBorder p-6 space-y-4 max-h-[90vh] flex flex-col">
-              <div className="flex items-center justify-between pb-3 border-b border-surfaceBorder">
+          <div className="fixed inset-0 z-50 bg-textPrimary/45 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+            <div className="bg-surface rounded-2xl shadow-paper-lg max-w-3xl w-full border border-border p-6 space-y-4 max-h-[90vh] flex flex-col">
+              <div className="flex items-center justify-between pb-3 border-b border-border">
                 <div>
-                  <span className="text-[10px] font-mono text-accent font-bold uppercase">Assessment Authoring</span>
+                  <span className="text-[10px] text-accent font-bold uppercase">Assessment Authoring</span>
                   <h3 className="text-base font-bold text-textPrimary">
                     5-Question MCQ Quiz: {quizModule.title}
                   </h3>
@@ -1196,12 +1213,12 @@ export const TrainerManagePage: React.FC = () => {
 
               {loadingQuiz ? (
                 <div className="py-16 text-center text-xs text-textSecondary">
-                  <div className="w-8 h-8 border-4 border-accent border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+                  <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
                   Loading questions...
                 </div>
               ) : (
                 <div className="flex-1 overflow-y-auto space-y-5 pr-1 text-xs">
-                  <div className="bg-background p-3 rounded-xl border border-surfaceBorder flex items-center justify-between">
+                  <div className="bg-surface2 p-3 rounded-xl border border-border flex items-center justify-between">
                     <span className="text-textSecondary font-semibold">Passing Threshold (%):</span>
                     <input
                       type="number"
@@ -1209,7 +1226,7 @@ export const TrainerManagePage: React.FC = () => {
                       max={100}
                       value={quizPassThreshold}
                       onChange={(e) => setQuizPassThreshold(Number(e.target.value))}
-                      className="w-20 p-1.5 bg-surface border border-surfaceBorder rounded-lg text-textPrimary font-mono font-bold text-center"
+                      className="w-20 p-1.5 bg-surface border border-border rounded-lg text-textPrimary font-bold text-center"
                     />
                   </div>
 
@@ -1217,13 +1234,13 @@ export const TrainerManagePage: React.FC = () => {
                   {quizQuestions.map((q, qIndex) => (
                     <div
                       key={q.id || qIndex}
-                      className="bg-background p-4 rounded-xl border border-surfaceBorder space-y-3"
+                      className="bg-surface2 p-4 rounded-xl border border-border space-y-3"
                     >
                       <div className="flex items-center justify-between">
-                        <span className="text-[10px] font-mono font-bold text-accent uppercase">
+                        <span className="text-[10px] text-primary font-bold uppercase">
                           Question {qIndex + 1}
                         </span>
-                        <span className="text-[10px] text-textSecondary font-mono">
+                        <span className="text-[10px] text-textSecondary">
                           Select the radio button next to the correct answer
                         </span>
                       </div>
@@ -1238,7 +1255,7 @@ export const TrainerManagePage: React.FC = () => {
                             setQuizQuestions(updated);
                           }}
                           placeholder={`Enter question ${qIndex + 1}...`}
-                          className="w-full p-2 bg-surface border border-surfaceBorder rounded-xl text-textPrimary font-medium focus:border-accent focus:outline-none"
+                          className="w-full p-2 bg-surface border border-border rounded-xl text-textPrimary font-medium focus:border-primary focus:outline-none"
                         />
                       </div>
 
@@ -1249,8 +1266,8 @@ export const TrainerManagePage: React.FC = () => {
                             key={optIndex}
                             className={`flex items-center gap-2 p-2 rounded-xl border ${
                               q.correctIndex === optIndex
-                                ? 'bg-accent/10 border-accent/40'
-                                : 'bg-surface border-surfaceBorder'
+                                ? 'bg-primarySoft border-primary'
+                                : 'bg-surface border-border'
                             }`}
                           >
                             <input
@@ -1262,9 +1279,9 @@ export const TrainerManagePage: React.FC = () => {
                                 updated[qIndex].correctIndex = optIndex;
                                 setQuizQuestions(updated);
                               }}
-                              className="accent-accent"
+                              className="accent-primary"
                             />
-                            <span className="text-[10px] font-mono text-accent font-bold">
+                            <span className="text-[10px] text-primary font-bold">
                               {String.fromCharCode(65 + optIndex)}.
                             </span>
                             <input
@@ -1292,7 +1309,7 @@ export const TrainerManagePage: React.FC = () => {
                             setQuizQuestions(updated);
                           }}
                           placeholder="Answer explanation shown to learner upon passing..."
-                          className="w-full p-1.5 bg-surface border border-surfaceBorder rounded-lg text-textSecondary text-[11px] focus:outline-none focus:border-accent"
+                          className="w-full p-1.5 bg-surface border border-border rounded-lg text-textSecondary text-[11px] focus:outline-none focus:border-primary"
                         />
                       </div>
                     </div>
@@ -1300,17 +1317,17 @@ export const TrainerManagePage: React.FC = () => {
                 </div>
               )}
 
-              <div className="flex items-center justify-end gap-2 pt-3 border-t border-surfaceBorder">
+              <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
                 <button
                   onClick={() => setQuizModule(null)}
-                  className="px-4 py-2 bg-background hover:bg-surface border border-surfaceBorder text-textSecondary rounded-xl font-semibold text-xs"
+                  className="px-4 py-2 bg-surface2 hover:bg-border border border-border text-textSecondary rounded-xl font-semibold text-xs"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSaveQuiz}
                   disabled={savingQuiz}
-                  className="px-5 py-2 bg-accent hover:bg-accentMuted text-background font-bold rounded-xl text-xs shadow-md shadow-accent/20 transition flex items-center gap-1.5 disabled:opacity-50"
+                  className="px-5 py-2 bg-primary hover:bg-primaryHover text-primaryContrast font-bold rounded-xl text-xs shadow-paper-sm transition flex items-center gap-1.5 disabled:opacity-50"
                 >
                   <Save className="w-3.5 h-3.5" /> {savingQuiz ? 'Saving Assessment...' : 'Save 5-Question Quiz'}
                 </button>

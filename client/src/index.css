@@ -2,24 +2,81 @@
 @tailwind components;
 @tailwind utilities;
 
+:root,
+html[data-theme="light"],
+[data-theme="light"] {
+  --bg: 250 247 242;
+  --surface: 255 255 255;
+  --surface-2: 243 238 230;
+  --border: 232 224 212;
+  --border-strong: 214 203 185;
+  --primary: 22 101 52;
+  --primary-hover: 20 83 45;
+  --primary-soft: 231 241 234;
+  --primary-contrast: 255 255 255;
+  --accent: 180 83 9;
+  --accent-soft: 251 239 221;
+  --text: 28 25 23;
+  --text-muted: 120 113 108;
+  --danger: 185 28 28;
+  --danger-soft: 252 232 232;
+  --success: 22 101 52;
+  --warning: 180 83 9;
+  --admin-ring: 159 18 57;
+  color-scheme: light;
+}
+
+html[data-theme="dark"],
+html.dark,
+[data-theme="dark"],
+.dark {
+  --bg: 20 18 16;
+  --surface: 30 27 24;
+  --surface-2: 39 35 31;
+  --border: 58 52 45;
+  --border-strong: 77 69 59;
+  --primary: 74 222 128;
+  --primary-hover: 134 239 172;
+  --primary-soft: 22 40 29;
+  --primary-contrast: 5 46 22;
+  --accent: 245 158 11;
+  --accent-soft: 46 36 19;
+  --text: 245 240 232;
+  --text-muted: 168 160 149;
+  --danger: 248 113 113;
+  --danger-soft: 58 28 28;
+  --success: 74 222 128;
+  --warning: 245 158 11;
+  --admin-ring: 251 113 133;
+  color-scheme: dark;
+}
+
 @layer base {
+  html {
+    background-color: rgb(var(--bg));
+    color: rgb(var(--text));
+  }
   body {
-    @apply bg-background text-textPrimary min-h-screen font-sans;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+    @apply bg-background text-textPrimary min-h-screen font-sans antialiased;
+    background-color: rgb(var(--bg));
+    color: rgb(var(--text));
+    transition: background-color 200ms ease, color 200ms ease;
   }
 }
 
-/* Custom scrollbars */
+/* Custom scrollbars driven by theme tokens */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 ::-webkit-scrollbar-track {
-  background: #050805;
+  background: rgb(var(--bg));
 }
 ::-webkit-scrollbar-thumb {
-  background: #1E3A1E;
+  background: rgb(var(--border-strong));
   border-radius: 4px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #39FF14;
+  background: rgb(var(--primary));
 }

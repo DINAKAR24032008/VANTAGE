@@ -15,6 +15,8 @@ model User {
   role         String             @default("learner") // admin, trainer, learner
   department   String             @default("General")
   jobRole      String             @default("Learner")
+  gender       String             @default("other") // male, female, other
+  avatar       String             @default("{\"type\":\"initials\",\"bgColor\":\"#163016\"}") // JSON string
   createdAt    DateTime           @default(now())
   profile      CompetencyProfile?
   enrollments  Enrollment[]

@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
 import { User, Mail, Lock, Briefcase, ArrowRight, ShieldAlert } from 'lucide-react';
+import { HeadingEmoji } from '../components/HeadingEmoji';
 
 export const RegisterPage: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -36,17 +37,17 @@ export const RegisterPage: React.FC = () => {
   return (
     <div className="min-h-screen flex flex-col justify-center py-12 sm:px-6 lg:px-8 bg-background text-textPrimary">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <h2 className="text-3xl sm:text-4xl font-display italic text-accent tracking-normal">Create Learner Account</h2>
+        <h2 className="text-3xl sm:text-4xl font-bold text-primary tracking-normal"><HeadingEmoji emoji="✨" />Create Learner Account</h2>
         <p className="mt-1 text-xs text-textSecondary font-semibold uppercase tracking-wider">
           Vantage • Course Learning Platform
         </p>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-surface py-8 px-6 shadow-2xl rounded-2xl sm:px-10 border border-surfaceBorder backdrop-blur-md">
+        <div className="bg-surface py-8 px-6 shadow-paper-lg rounded-2xl sm:px-10 border border-border">
           {error && (
-            <div className="mb-4 p-3 bg-rose-950/80 border border-rose-800 text-rose-300 text-xs rounded-xl flex items-center gap-2">
-              <ShieldAlert className="w-4 h-4 flex-shrink-0 text-rose-400" />
+            <div className="mb-4 p-3 bg-dangerSoft border border-danger/30 text-danger text-xs rounded-xl flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 flex-shrink-0 text-danger" />
               <span>{error}</span>
             </div>
           )}
@@ -64,7 +65,7 @@ export const RegisterPage: React.FC = () => {
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="e.g. Alex Morgan"
-                  className="w-full pl-9 pr-3 py-2 bg-background border border-surfaceBorder rounded-xl text-xs text-textPrimary placeholder-textSecondary/50 focus:outline-none focus:border-accent"
+                  className="w-full pl-9 pr-3 py-2 bg-surface2 border border-border rounded-xl text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-primary"
                 />
               </div>
             </div>
@@ -81,7 +82,7 @@ export const RegisterPage: React.FC = () => {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   placeholder="learner@example.com"
-                  className="w-full pl-9 pr-3 py-2 bg-background border border-surfaceBorder rounded-xl text-xs text-textPrimary placeholder-textSecondary/50 focus:outline-none focus:border-accent"
+                  className="w-full pl-9 pr-3 py-2 bg-surface2 border border-border rounded-xl text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-primary"
                 />
               </div>
             </div>
@@ -98,7 +99,7 @@ export const RegisterPage: React.FC = () => {
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                   placeholder="••••••••••••"
-                  className="w-full pl-9 pr-3 py-2 bg-background border border-surfaceBorder rounded-xl text-xs text-textPrimary placeholder-textSecondary/50 focus:outline-none focus:border-accent"
+                  className="w-full pl-9 pr-3 py-2 bg-surface2 border border-border rounded-xl text-xs text-textPrimary placeholder:text-textSecondary/50 focus:outline-none focus:border-primary"
                 />
               </div>
             </div>
@@ -112,7 +113,7 @@ export const RegisterPage: React.FC = () => {
                 <select
                   value={formData.jobRole}
                   onChange={(e) => setFormData({ ...formData, jobRole: e.target.value })}
-                  className="w-full pl-9 pr-3 py-2 bg-background border border-surfaceBorder rounded-xl text-xs text-textPrimary focus:outline-none focus:border-accent"
+                  className="w-full pl-9 pr-3 py-2 bg-surface2 border border-border rounded-xl text-xs text-textPrimary focus:outline-none focus:border-primary"
                 >
                   <option>Student / Beginner Programmer</option>
                   <option>Software Developer</option>
@@ -125,7 +126,7 @@ export const RegisterPage: React.FC = () => {
             <button
               type="submit"
               disabled={loading}
-              className="w-full mt-2 py-2.5 px-4 rounded-xl bg-accent hover:bg-accent/90 text-background font-bold text-xs shadow-lg shadow-accent/20 transition flex items-center justify-center gap-1.5 disabled:opacity-50"
+              className="w-full mt-2 py-2.5 px-4 rounded-xl bg-primary hover:bg-primaryHover text-primaryContrast font-bold text-xs shadow-paper-sm transition flex items-center justify-center gap-1.5 disabled:opacity-50"
             >
               {loading ? 'Creating Account...' : 'Register & Start Learning'}
               <ArrowRight className="w-3.5 h-3.5" />
@@ -134,7 +135,7 @@ export const RegisterPage: React.FC = () => {
 
           <div className="mt-6 text-center text-xs text-textSecondary">
             Already registered?{' '}
-            <Link to="/login" className="text-accent font-semibold hover:underline">
+            <Link to="/login" className="text-primary font-semibold hover:underline">
               Sign in here
             </Link>
           </div>

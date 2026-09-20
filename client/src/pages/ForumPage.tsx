@@ -18,6 +18,8 @@ import {
   Edit3,
   Check,
 } from 'lucide-react';
+import { HeadingEmoji } from '../components/HeadingEmoji';
+import { Avatar } from '../components/Avatar';
 
 export const ForumPage: React.FC = () => {
   const { user } = useAuth();
@@ -69,12 +71,10 @@ export const ForumPage: React.FC = () => {
 
   const handleCreateThread = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newBody.trim()) return;
-
     try {
       setSubmittingThread(true);
-      await api.post('/forum', {
-        title: newTitle || 'Discussion',
+      await api.post('/forum/posts', {
+        title: newTitle,
         body: newBody,
         courseId: newCourseId || null,
       });
@@ -84,42 +84,38 @@ export const ForumPage: React.FC = () => {
       setNewCourseId('');
       setShowNewThreadModal(false);
       await loadForumData();
-    } catch (err) {
-      console.error('Error creating thread:', err);
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to create discussion thread');
     } finally {
       setSubmittingThread(false);
     }
   };
 
-  const handleSendReply = async (parentPostId: string) => {
-    const text = replyTexts[parentPostId];
+  const handleSendReply = async (postId: string) => {
+    const text = replyTexts[postId];
     if (!text || !text.trim()) return;
 
     try {
-      await api.post('/forum', {
-        body: text,
-        parentPostId,
-      });
-
-      setReplyTexts((prev) => ({ ...prev, [parentPostId]: '' }));
+      await api.post(`/forum/posts/${postId}/replies`, { body: text });
+      setReplyTexts({ ...replyTexts, [postId]: '' });
       setReplyingTo(null);
       await loadForumData();
-    } catch (err) {
-      console.error('Error sending reply:', err);
+    } catch (err: any) {
+      alert(err.response?.data?.error || 'Failed to send reply');
     }
   };
 
   const handleTogglePin = async (postId: string) => {
     try {
-      await api.put(`/forum/posts/${postId}/pin`);
+      await api.patch(`/forum/posts/${postId}/pin`);
       await loadForumData();
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to toggle pin status');
+      alert(err.response?.data?.error || 'Failed to toggle pin');
     }
   };
 
   const handleDeletePost = async (postId: string) => {
-    if (!window.confirm('Are you sure you want to delete this post?')) return;
+    if (!window.confirm('Are you sure you want to delete this post/reply?')) return;
     try {
       await api.delete(`/forum/posts/${postId}`);
       await loadForumData();
@@ -149,11 +145,11 @@ export const ForumPage: React.FC = () => {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <span className="text-[10px] font-mono text-accent font-bold uppercase tracking-wider">
-              Community Knowledge Sharing & Discussions
+            <span className="text-[10px] text-accent font-bold uppercase tracking-wider">
+              <HeadingEmoji emoji="💬" />Community Knowledge Sharing &amp; Discussions
             </span>
-            <h1 className="text-3xl sm:text-4xl font-display italic text-textPrimary mt-1 tracking-tight">
-              Discussion Forum
+            <h1 className="text-3xl sm:text-4xl font-bold text-textPrimary mt-1 tracking-tight">
+              <HeadingEmoji emoji="💬" />Discussion Forum
             </h1>
             <p className="text-xs text-textSecondary">
               Collaborative discussions, questions, and insights between learners and instructors.
@@ -162,18 +158,18 @@ export const ForumPage: React.FC = () => {
 
           <button
             onClick={() => setShowNewThreadModal(true)}
-            className="px-4 py-2.5 bg-accent hover:bg-accent/90 text-background rounded-xl text-xs font-bold shadow-lg shadow-accent/20 transition flex items-center gap-1.5 self-start"
+            className="px-4 py-2.5 bg-primary hover:bg-primaryHover text-primaryContrast rounded-xl text-xs font-bold shadow-paper-sm transition flex items-center gap-1.5 self-start"
           >
             <Plus className="w-4 h-4" /> Start Discussion Thread
           </button>
         </div>
 
         {/* Filter Navigation */}
-        <div className="flex flex-wrap items-center gap-2 bg-surface p-2.5 rounded-2xl border border-surfaceBorder shadow-sm text-xs font-semibold">
+        <div className="flex flex-wrap items-center gap-2 bg-surface p-2.5 rounded-2xl border border-border shadow-paper-sm text-xs font-semibold">
           <button
             onClick={() => setFilter('all')}
             className={`px-3 py-1.5 rounded-xl transition ${
-              filter === 'all' ? 'bg-accent text-background font-bold' : 'text-textSecondary hover:bg-surfaceBorder/40 hover:text-textPrimary'
+              filter === 'all' ? 'bg-primary text-primaryContrast font-bold' : 'text-textSecondary hover:bg-surface2 hover:text-textPrimary'
             }`}
           >
             All Threads
@@ -181,7 +177,7 @@ export const ForumPage: React.FC = () => {
           <button
             onClick={() => setFilter('general')}
             className={`px-3 py-1.5 rounded-xl transition flex items-center gap-1 ${
-              filter === 'general' ? 'bg-accent text-background font-bold' : 'text-textSecondary hover:bg-surfaceBorder/40 hover:text-textPrimary'
+              filter === 'general' ? 'bg-primary text-primaryContrast font-bold' : 'text-textSecondary hover:bg-surface2 hover:text-textPrimary'
             }`}
           >
             <Globe className="w-3.5 h-3.5" /> General Discussions
@@ -190,7 +186,7 @@ export const ForumPage: React.FC = () => {
           <select
             value={filter.startsWith('all') || filter.startsWith('general') ? '' : filter}
             onChange={(e) => setFilter(e.target.value || 'all')}
-            className="px-3 py-1.5 bg-background border border-surfaceBorder rounded-xl text-xs font-medium text-textPrimary ml-auto focus:border-accent focus:outline-none"
+            className="px-3 py-1.5 bg-surface2 border border-border rounded-xl text-xs font-medium text-textPrimary ml-auto focus:border-primary focus:outline-none"
           >
             <option value="">Filter by Specific Course...</option>
             {courses.map((c) => (
@@ -203,7 +199,7 @@ export const ForumPage: React.FC = () => {
         {loading ? (
           <div className="py-16 text-center text-xs text-textSecondary">Loading discussions...</div>
         ) : posts.length === 0 ? (
-          <div className="p-12 text-center bg-surface rounded-2xl border border-surfaceBorder text-xs text-textSecondary">
+          <div className="p-12 text-center bg-surface rounded-2xl border border-border text-xs text-textSecondary">
             No discussion threads found in this category. Be the first to start a conversation!
           </div>
         ) : (
@@ -224,8 +220,8 @@ export const ForumPage: React.FC = () => {
               return (
                 <div
                   key={post.id}
-                  className={`bg-surface rounded-2xl border shadow-sm p-6 space-y-4 transition ${
-                    post.isPinned ? 'border-accent/60 bg-surface/90 shadow-accent/5 ring-1 ring-accent/30' : 'border-surfaceBorder'
+                  className={`bg-surface rounded-2xl border shadow-paper-sm p-6 space-y-4 transition ${
+                    post.isPinned ? 'border-primary bg-primarySoft/30' : 'border-border'
                   }`}
                 >
                   {/* Thread Header */}
@@ -233,37 +229,39 @@ export const ForumPage: React.FC = () => {
                     <div className="space-y-1">
                       <div className="flex flex-wrap items-center gap-2">
                         {post.isPinned && (
-                          <span className="inline-flex items-center gap-1 text-[10px] font-mono font-bold uppercase bg-accent text-background px-2 py-0.5 rounded shadow-sm">
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase bg-primary text-white px-2 py-0.5 rounded shadow-paper-sm">
                             <Pin className="w-3 h-3 fill-current" /> Pinned Thread
                           </span>
                         )}
                         {post.course ? (
-                          <span className="text-[10px] font-mono font-bold uppercase bg-accent/10 text-accent px-2 py-0.5 rounded border border-accent/20">
+                          <span className="text-[10px] font-bold uppercase bg-primarySoft text-primary px-2 py-0.5 rounded border border-primary/30">
                             Course: {post.course.title}
                           </span>
                         ) : (
-                          <span className="text-[10px] font-mono font-bold uppercase bg-accentMuted/10 text-accentMuted px-2 py-0.5 rounded border border-accentMuted/20">
+                          <span className="text-[10px] font-bold uppercase bg-accentSoft text-accent px-2 py-0.5 rounded border border-accent/30">
                             General Discourse
                           </span>
                         )}
                       </div>
-                      <h3 className="text-base font-bold text-textPrimary mt-1.5">{post.title || 'Discussion'}</h3>
+                      <h2 className="text-base font-bold text-textPrimary leading-snug">
+                        {post.title || 'Discussion Thread'}
+                      </h2>
                     </div>
 
-                    {/* Thread Actions */}
-                    <div className="flex items-center gap-2">
+                    {/* Controls */}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
                       {canPin && (
                         <button
                           onClick={() => handleTogglePin(post.id)}
                           title={post.isPinned ? 'Unpin thread' : 'Pin thread to top'}
                           className={`p-1.5 rounded-lg border text-xs transition flex items-center gap-1 ${
                             post.isPinned
-                              ? 'bg-accent/20 border-accent text-accent'
-                              : 'bg-background border-surfaceBorder text-textSecondary hover:text-accent hover:border-accent'
+                              ? 'bg-primarySoft border-primary text-primary font-bold'
+                              : 'bg-surface2 border-border text-textSecondary hover:text-primary hover:border-primary'
                           }`}
                         >
                           <Pin className="w-3.5 h-3.5" />
-                          <span className="hidden sm:inline text-[10px] font-mono font-bold">
+                          <span className="hidden sm:inline text-[10px] font-bold">
                             {post.isPinned ? 'Unpin' : 'Pin'}
                           </span>
                         </button>
@@ -276,20 +274,20 @@ export const ForumPage: React.FC = () => {
                               setEditingText(post.body);
                             }}
                             title="Edit Post"
-                            className="p-1.5 bg-background border border-surfaceBorder rounded-lg text-xs text-textSecondary hover:text-accent hover:border-accent transition"
+                            className="p-1.5 bg-surface2 border border-border rounded-lg text-xs text-textSecondary hover:text-primary hover:border-primary transition"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => handleDeletePost(post.id)}
                             title="Delete Post"
-                            className="p-1.5 bg-background border border-surfaceBorder rounded-lg text-xs text-textSecondary hover:text-red-400 hover:border-red-500 transition"
+                            className="p-1.5 bg-surface2 border border-border rounded-lg text-xs text-textSecondary hover:text-danger hover:border-danger transition"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </>
                       )}
-                      <div className="text-right text-[11px] text-textSecondary flex items-center gap-1 ml-2">
+                      <div className="text-right text-[11px] text-textSecondary flex items-center gap-1 ml-2 font-medium">
                         <Clock className="w-3.5 h-3.5" />
                         <span>{new Date(post.createdAt).toLocaleDateString()}</span>
                       </div>
@@ -298,17 +296,18 @@ export const ForumPage: React.FC = () => {
 
                   {/* Author Info */}
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full bg-surfaceBorder text-accent flex items-center justify-center text-[10px] font-bold border border-surfaceBorder">
-                      {post.author?.name?.charAt(0) || 'U'}
-                    </div>
+                    <Avatar
+                      user={{ id: post.author?.id || '', name: post.author?.name || 'U', role: (post.author?.role as any) || 'learner' }}
+                      size="sm"
+                    />
                     <div className="flex items-center gap-1.5">
                       <span className="text-xs font-semibold text-textPrimary">{post.author?.name}</span>
                       {isCourseInstructor ? (
-                        <span className="text-[9px] font-mono font-bold uppercase bg-accent text-background px-1.5 py-0.5 rounded shadow-sm">
+                        <span className="text-[9px] font-bold uppercase bg-accent text-white px-1.5 py-0.5 rounded shadow-paper-sm">
                           Instructor
                         </span>
                       ) : (
-                        <span className="text-[10px] text-textSecondary font-mono capitalize">
+                        <span className="text-[10px] text-textSecondary capitalize">
                           ({post.author?.role})
                         </span>
                       )}
@@ -322,34 +321,34 @@ export const ForumPage: React.FC = () => {
                         rows={4}
                         value={editingText}
                         onChange={(e) => setEditingText(e.target.value)}
-                        className="w-full p-2.5 bg-background border border-accent rounded-xl text-xs text-textPrimary focus:outline-none"
+                        className="w-full p-2.5 bg-surface2 border border-primary rounded-xl text-xs text-textPrimary focus:outline-none"
                       />
                       <div className="flex justify-end gap-2">
                         <button
                           onClick={() => setEditingPostId(null)}
-                          className="px-3 py-1 bg-surface border border-surfaceBorder rounded-lg text-xs text-textSecondary hover:text-textPrimary"
+                          className="px-3 py-1 bg-surface2 border border-border rounded-lg text-xs text-textSecondary hover:text-textPrimary"
                         >
                           Cancel
                         </button>
                         <button
                           disabled={savingEdit}
                           onClick={() => handleSaveEdit(post.id)}
-                          className="px-3 py-1 bg-accent text-background rounded-lg text-xs font-bold hover:bg-accent/90 flex items-center gap-1"
+                          className="px-3 py-1 bg-primary text-white rounded-lg text-xs font-bold hover:bg-primaryHover flex items-center gap-1"
                         >
-                          <Check className="w-3.5 h-3.5" /> Save
+                          Save
                         </button>
                       </div>
                     </div>
                   ) : (
-                    <p className="text-xs sm:text-sm text-textPrimary leading-relaxed whitespace-pre-wrap">
+                    <p className="text-xs sm:text-sm text-textPrimary leading-relaxed whitespace-pre-wrap border-t border-border/60 pt-3">
                       {post.body}
                     </p>
                   )}
 
-                  {/* Nested Replies Section */}
-                  <div className="pt-3 border-t border-surfaceBorder space-y-3">
+                  {/* Replies List */}
+                  <div className="border-t border-border pt-3 space-y-3">
                     {post.replies && post.replies.length > 0 && (
-                      <div className="space-y-2.5 pl-4 border-l-2 border-accent/40 my-3">
+                      <div className="space-y-2.5 pl-4 border-l-2 border-primary/40 my-3">
                         {post.replies.map((reply) => {
                           const isReplyInstructor = Boolean(
                             post.course?.trainerId &&
@@ -363,12 +362,16 @@ export const ForumPage: React.FC = () => {
                           );
 
                           return (
-                            <div key={reply.id} className="p-3 bg-background rounded-xl border border-surfaceBorder text-xs space-y-1.5">
+                            <div key={reply.id} className="p-3 bg-surface2 rounded-xl border border-border text-xs space-y-1.5">
                               <div className="flex items-center justify-between text-[10px] text-textSecondary">
                                 <div className="flex items-center gap-1.5">
+                                  <Avatar
+                                    user={{ id: reply.author?.id || '', name: reply.author?.name || 'U', role: (reply.author?.role as any) || 'learner' }}
+                                    size="sm"
+                                  />
                                   <span className="font-bold text-textPrimary">{reply.author?.name}</span>
                                   {isReplyInstructor ? (
-                                    <span className="text-[9px] font-mono font-bold uppercase bg-accent text-background px-1.5 py-0.2 rounded">
+                                    <span className="text-[9px] font-bold uppercase bg-accent text-white px-1.5 py-0.2 rounded">
                                       Instructor
                                     </span>
                                   ) : (
@@ -385,14 +388,14 @@ export const ForumPage: React.FC = () => {
                                           setEditingText(reply.body);
                                         }}
                                         title="Edit reply"
-                                        className="text-textSecondary hover:text-accent"
+                                        className="text-textSecondary hover:text-primary"
                                       >
                                         <Edit3 className="w-3 h-3" />
                                       </button>
                                       <button
                                         onClick={() => handleDeletePost(reply.id)}
                                         title="Delete reply"
-                                        className="text-textSecondary hover:text-red-400"
+                                        className="text-textSecondary hover:text-danger"
                                       >
                                         <Trash2 className="w-3 h-3" />
                                       </button>
@@ -407,19 +410,19 @@ export const ForumPage: React.FC = () => {
                                     rows={2}
                                     value={editingText}
                                     onChange={(e) => setEditingText(e.target.value)}
-                                    className="w-full p-2 bg-surface border border-accent rounded-lg text-xs text-textPrimary focus:outline-none"
+                                    className="w-full p-2 bg-surface border border-primary rounded-lg text-xs text-textPrimary focus:outline-none"
                                   />
                                   <div className="flex justify-end gap-1.5">
                                     <button
                                       onClick={() => setEditingPostId(null)}
-                                      className="px-2 py-0.5 bg-surface border border-surfaceBorder rounded text-[11px] text-textSecondary hover:text-textPrimary"
+                                      className="px-2 py-0.5 bg-surface border border-border rounded text-[11px] text-textSecondary hover:text-textPrimary"
                                     >
                                       Cancel
                                     </button>
                                     <button
                                       disabled={savingEdit}
                                       onClick={() => handleSaveEdit(reply.id)}
-                                      className="px-2 py-0.5 bg-accent text-background rounded text-[11px] font-bold hover:bg-accent/90"
+                                      className="px-2 py-0.5 bg-primary text-white rounded text-[11px] font-bold hover:bg-primaryHover"
                                     >
                                       Save
                                     </button>
@@ -445,14 +448,14 @@ export const ForumPage: React.FC = () => {
                               setReplyTexts({ ...replyTexts, [post.id]: e.target.value })
                             }
                             placeholder="Write a constructive response..."
-                            className="flex-1 p-2 bg-background border border-surfaceBorder rounded-xl text-xs text-textPrimary placeholder-textSecondary/50 focus:outline-none focus:border-accent"
+                            className="flex-1 p-2 bg-surface2 border border-border rounded-xl text-xs text-textPrimary placeholder-textSecondary focus:outline-none focus:border-primary"
                             onKeyDown={(e) => {
                               if (e.key === 'Enter') handleSendReply(post.id);
                             }}
                           />
                           <button
                             onClick={() => handleSendReply(post.id)}
-                            className="p-2 bg-accent hover:bg-accent/90 text-background rounded-xl transition"
+                            className="p-2 bg-primary hover:bg-primaryHover text-primaryContrast rounded-xl transition"
                             title="Send Reply"
                           >
                             <Send className="w-4 h-4" />
@@ -467,9 +470,9 @@ export const ForumPage: React.FC = () => {
                       ) : (
                         <button
                           onClick={() => setReplyingTo(post.id)}
-                          className="text-xs font-bold text-textSecondary hover:text-accent flex items-center gap-1.5 transition"
+                          className="text-xs font-bold text-textSecondary hover:text-primary flex items-center gap-1.5 transition"
                         >
-                          <CornerDownRight className="w-3.5 h-3.5 text-accent" />
+                          <CornerDownRight className="w-3.5 h-3.5 text-primary" />
                           Reply to Thread ({post.replies?.length || 0} replies)
                         </button>
                       )}
@@ -484,13 +487,13 @@ export const ForumPage: React.FC = () => {
 
       {/* New Thread Modal */}
       {showNewThreadModal && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-          <div className="bg-surface rounded-2xl shadow-2xl max-w-xl w-full border border-surfaceBorder overflow-hidden">
-            <div className="bg-surface text-textPrimary p-5 flex items-center justify-between border-b border-surfaceBorder">
+        <div className="fixed inset-0 z-50 bg-textPrimary/45 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-surface rounded-2xl shadow-paper-lg max-w-xl w-full border border-border overflow-hidden">
+            <div className="bg-surface2 text-textPrimary p-5 flex items-center justify-between border-b border-border">
               <h3 className="text-base font-bold text-textPrimary">Start New Knowledge Thread</h3>
               <button
                 onClick={() => setShowNewThreadModal(false)}
-                className="p-1 text-textSecondary hover:text-textPrimary rounded-lg hover:bg-surfaceBorder/40 transition"
+                className="p-1 text-textSecondary hover:text-textPrimary rounded-lg hover:bg-border/50 transition"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -505,7 +508,7 @@ export const ForumPage: React.FC = () => {
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
                   placeholder="e.g. Tips for mastering Python list comprehensions and generators"
-                  className="w-full p-2.5 bg-background border border-surfaceBorder rounded-xl text-xs text-textPrimary placeholder-textSecondary/50 focus:outline-none focus:border-accent"
+                  className="w-full p-2.5 bg-surface2 border border-border rounded-xl text-xs text-textPrimary placeholder-textSecondary focus:outline-none focus:border-primary"
                 />
               </div>
 
@@ -514,7 +517,7 @@ export const ForumPage: React.FC = () => {
                 <select
                   value={newCourseId}
                   onChange={(e) => setNewCourseId(e.target.value)}
-                  className="w-full p-2.5 bg-background border border-surfaceBorder rounded-xl text-xs font-medium text-textPrimary focus:outline-none focus:border-accent"
+                  className="w-full p-2.5 bg-surface2 border border-border rounded-xl text-xs font-medium text-textPrimary focus:outline-none focus:border-primary"
                 >
                   <option value="">General Discussion (Platform-wide)</option>
                   {courses.map((c) => (
@@ -531,7 +534,7 @@ export const ForumPage: React.FC = () => {
                   value={newBody}
                   onChange={(e) => setNewBody(e.target.value)}
                   placeholder="Elaborate on your question, share code snippets, or start a discussion..."
-                  className="w-full p-2.5 bg-background border border-surfaceBorder rounded-xl text-xs text-textPrimary placeholder-textSecondary/50 focus:outline-none focus:border-accent"
+                  className="w-full p-2.5 bg-surface2 border border-border rounded-xl text-xs text-textPrimary placeholder-textSecondary focus:outline-none focus:border-primary"
                 />
               </div>
 
@@ -539,14 +542,14 @@ export const ForumPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => setShowNewThreadModal(false)}
-                  className="px-4 py-2 text-xs font-semibold text-textSecondary hover:text-textPrimary hover:bg-surfaceBorder/40 rounded-xl transition"
+                  className="px-4 py-2 text-xs font-semibold text-textSecondary hover:text-textPrimary hover:bg-surface2 rounded-xl transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={submittingThread}
-                  className="px-5 py-2.5 bg-accent hover:bg-accent/90 text-background rounded-xl text-xs font-bold shadow-lg shadow-accent/20 transition disabled:opacity-50"
+                  className="px-5 py-2.5 bg-primary hover:bg-primaryHover text-primaryContrast rounded-xl text-xs font-bold shadow-paper-sm transition disabled:opacity-50"
                 >
                   {submittingThread ? 'Posting...' : 'Publish Thread'}
                 </button>
