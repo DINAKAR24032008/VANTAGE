@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { ForumPost, Course } from '../types';
@@ -296,12 +297,19 @@ export const ForumPage: React.FC = () => {
 
                   {/* Author Info */}
                   <div className="flex items-center gap-2">
-                    <Avatar
-                      user={{ id: post.author?.id || '', name: post.author?.name || 'U', role: (post.author?.role as any) || 'learner' }}
-                      size="sm"
-                    />
+                    <Link to={`/profile/${post.author?.id}`} title="View learner profile">
+                      <Avatar
+                        user={{ id: post.author?.id || '', name: post.author?.name || 'U', role: (post.author?.role as any) || 'learner' }}
+                        size="sm"
+                      />
+                    </Link>
                     <div className="flex items-center gap-1.5">
-                      <span className="text-xs font-semibold text-textPrimary">{post.author?.name}</span>
+                      <Link
+                        to={`/profile/${post.author?.id}`}
+                        className="text-xs font-semibold text-textPrimary hover:text-primary hover:underline"
+                      >
+                        {post.author?.name}
+                      </Link>
                       {isCourseInstructor ? (
                         <span className="text-[9px] font-bold uppercase bg-accent text-white px-1.5 py-0.5 rounded shadow-paper-sm">
                           Instructor

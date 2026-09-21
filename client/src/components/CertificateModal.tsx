@@ -93,12 +93,26 @@ export const CertificateModal: React.FC<Props> = ({ certificate, onClose }) => {
         </div>
 
         {/* Modal Actions */}
-        <div className="bg-surface px-8 py-4 flex items-center justify-between border-t border-border print:hidden">
+        <div className="bg-surface px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-border print:hidden">
           <span className="text-xs text-textSecondary flex items-center gap-1.5">
             <CheckCircle className="w-4 h-4 text-primary" />
             Verified by Vantage • Learning & Certification Platform
           </span>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
+            <a
+              href={`https://www.linkedin.com/profile/add?startTask=CERTIFICATION_NAME&name=${encodeURIComponent(
+                certificate.course?.title || 'Vantage Course Certificate'
+              )}&organizationName=Vantage&issueMonth=${new Date(certificate.issuedAt).getMonth() + 1}&issueYear=${new Date(
+                certificate.issuedAt
+              ).getFullYear()}&certId=${certificate.certificateNumber}&certUrl=${encodeURIComponent(
+                `${window.location.origin}${certificate.certificateUrl || ''}`
+              )}`}
+              target="_blank"
+              rel="noopener noreferrer nofollow"
+              className="px-3.5 py-2 bg-[#0A66C2] hover:bg-[#084e96] text-white text-xs font-bold rounded-xl flex items-center gap-1.5 transition shadow-paper-sm"
+            >
+              Add to LinkedIn
+            </a>
             <button
               onClick={handlePrint}
               className="px-4 py-2 bg-primary hover:bg-primaryHover text-primaryContrast text-xs font-bold rounded-xl flex items-center gap-1.5 transition shadow-paper-sm"

@@ -209,7 +209,13 @@ export const CourseDetailPage: React.FC = () => {
                   {course.difficultyLevel} Specialization
                 </span>
                 <span className="text-xs text-textSecondary flex items-center gap-1">
-                  <User className="w-3.5 h-3.5 text-textSecondary" /> Instructor: {course.trainer?.name}
+                  <User className="w-3.5 h-3.5 text-textSecondary" /> Instructor:{' '}
+                  <Link
+                    to={`/profile/${course.trainerId}`}
+                    className="text-textPrimary hover:text-primary hover:underline font-bold"
+                  >
+                    {course.trainer?.name}
+                  </Link>
                 </span>
               </div>
 

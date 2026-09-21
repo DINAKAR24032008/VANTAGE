@@ -459,6 +459,30 @@ export class AssessmentController {
               skills: JSON.stringify(newSkills),
             },
           });
+
+          // Also grant Verified UserSkills (VANTAGE source)
+          for (const tag of assessment.course.competencyTags) {
+            const skillName = tag.competency.name;
+            const existingSkill = await prisma.userSkill.findFirst({
+              where: { userId: req.user.userId, name: skillName },
+            });
+            const levelStr = (tag.targetLevel || 3) >= 4 ? 'ADVANCED' : (tag.targetLevel || 3) >= 2 ? 'INTERMEDIATE' : 'BEGINNER';
+            if (!existingSkill) {
+              await prisma.userSkill.create({
+                data: {
+                  userId: req.user.userId,
+                  name: skillName,
+                  level: levelStr,
+                  source: 'VANTAGE',
+                },
+              });
+            } else {
+              await prisma.userSkill.update({
+                where: { id: existingSkill.id },
+                data: { source: 'VANTAGE' },
+              });
+            }
+          }
           profileUpdated = true;
 
           // Issue Certificate

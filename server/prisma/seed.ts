@@ -17,6 +17,13 @@ async function main() {
   await prisma.course.deleteMany();
   await prisma.competencyProfile.deleteMany();
   await prisma.competency.deleteMany();
+  await prisma.experience.deleteMany();
+  await prisma.achievement.deleteMany();
+  await prisma.userSkill.deleteMany();
+  await prisma.userProfile.deleteMany();
+  await prisma.notificationPreference.deleteMany();
+  await prisma.notification.deleteMany();
+  await prisma.otpCode.deleteMany();
   await prisma.user.deleteMany();
 
   const passwordHash = await bcrypt.hash('Password@123', 10);
@@ -43,6 +50,24 @@ async function main() {
       jobRole: 'Platform Administrator',
       gender: 'male',
       avatar: JSON.stringify({ type: 'preset', presetId: 'm3', bgColor: '#312E81' }),
+      phone: '+919999900000',
+      phoneVerified: true,
+    },
+  });
+
+  await prisma.userProfile.create({
+    data: {
+      userId: admin.id,
+      fullName: admin.name,
+      country: 'India',
+      city: 'New Delhi',
+      profession: 'WORKING_PROFESSIONAL',
+      jobTitle: 'Platform Administrator',
+      company: 'Vantage HQ',
+      showcaseVisible: true,
+      linkedinVisible: true,
+      profileCompleted: true,
+      profileCompletedAt: new Date(),
     },
   });
 
@@ -56,6 +81,31 @@ async function main() {
       jobRole: 'Lead Instructor',
       gender: 'female',
       avatar: JSON.stringify({ type: 'preset', presetId: 'f3', bgColor: '#1E293B' }),
+      phone: '+919999900003',
+      phoneVerified: true,
+    },
+  });
+
+  await prisma.userProfile.create({
+    data: {
+      userId: trainer.id,
+      fullName: trainer.name,
+      country: 'India',
+      state: 'Karnataka',
+      city: 'Bengaluru',
+      profession: 'WORKING_PROFESSIONAL',
+      highestDegree: 'MASTERS',
+      fieldOfStudy: 'Computer Science & Engineering',
+      institution: 'IISc Bengaluru',
+      jobTitle: 'Lead Instructor',
+      company: 'Vantage Academy',
+      yearsOfExperience: '8',
+      bio: 'Senior Software Instructor & Curriculum Author. Passionate about teaching modern Python, web architecture, and clean coding practices.',
+      linkedinUrl: 'https://www.linkedin.com/in/sarah-jenkins-vantage',
+      showcaseVisible: true,
+      linkedinVisible: true,
+      profileCompleted: true,
+      profileCompletedAt: new Date(),
     },
   });
 
@@ -73,6 +123,22 @@ async function main() {
     },
   });
 
+  await prisma.userProfile.create({
+    data: {
+      userId: trainerMet.id,
+      fullName: trainerMet.name,
+      country: 'India',
+      city: 'Kolkata',
+      profession: 'WORKING_PROFESSIONAL',
+      jobTitle: 'Senior Instructor',
+      company: 'Vantage Academy',
+      showcaseVisible: true,
+      linkedinVisible: true,
+      profileCompleted: true,
+      profileCompletedAt: new Date(),
+    },
+  });
+
   const learner1 = await prisma.user.create({
     data: {
       name: 'Alex Morgan',
@@ -83,9 +149,77 @@ async function main() {
       jobRole: 'Software Learner',
       gender: 'other',
       avatar: JSON.stringify({ type: 'preset', presetId: 'm1', bgColor: '#163016' }),
+      phone: '+919999900001',
+      phoneVerified: true,
     },
   });
 
+  await prisma.userProfile.create({
+    data: {
+      userId: learner1.id,
+      fullName: learner1.name,
+      country: 'India',
+      state: 'Tamil Nadu',
+      city: 'Erode',
+      profession: 'STUDENT',
+      highestDegree: 'BACHELORS',
+      fieldOfStudy: 'Computer Science & Engineering',
+      institution: 'Anna University',
+      graduationYear: 2026,
+      bio: 'Passionate Computer Science student building full-stack applications and mastering Python on Vantage.',
+      linkedinUrl: 'https://www.linkedin.com/in/alex-morgan-vantage',
+      showcaseVisible: true,
+      linkedinVisible: true,
+      profileCompleted: true,
+      profileCompletedAt: new Date(),
+    },
+  });
+
+  await prisma.userSkill.createMany({
+    data: [
+      { userId: learner1.id, name: 'Python Programming', level: 'ADVANCED', source: 'VANTAGE' },
+      { userId: learner1.id, name: 'React.js', level: 'INTERMEDIATE', source: 'SELF' },
+      { userId: learner1.id, name: 'TypeScript', level: 'INTERMEDIATE', source: 'SELF' },
+      { userId: learner1.id, name: 'SQL Databases', level: 'BEGINNER', source: 'SELF' },
+    ],
+  });
+
+  await prisma.achievement.createMany({
+    data: [
+      {
+        userId: learner1.id,
+        title: 'National Hackathon Finalist',
+        organization: 'Tech-Fest 2025',
+        type: 'HACKATHON',
+        description: 'Built a real-time smart queue management system for campus services using Python and React.',
+        date: new Date('2025-11-15'),
+      },
+      {
+        userId: learner1.id,
+        title: 'Vantage Certified Python Developer',
+        organization: 'Vantage Platform',
+        type: 'CERTIFICATION',
+        description: 'Successfully completed the comprehensive Introduction to Python course with 100% progress.',
+        date: new Date('2026-02-10'),
+      },
+    ],
+  });
+
+  await prisma.experience.createMany({
+    data: [
+      {
+        userId: learner1.id,
+        jobTitle: 'Web Developer Intern',
+        company: 'InnovateTech Solutions',
+        employmentType: 'Internship',
+        startDate: new Date('2025-06-01'),
+        endDate: new Date('2025-08-31'),
+        description: 'Assisted in building responsive frontend components in React and optimizing API endpoints.',
+      },
+    ],
+  });
+
+  // Learner 2: INCOMPLETE PROFILE (For testing onboarding)
   const learner2 = await prisma.user.create({
     data: {
       name: 'Priya Sharma',
@@ -96,6 +230,19 @@ async function main() {
       jobRole: 'Student',
       gender: 'female',
       avatar: JSON.stringify({ type: 'preset', presetId: 'f1', bgColor: '#163016' }),
+      phone: '+919999900002',
+      phoneVerified: false,
+    },
+  });
+
+  await prisma.userProfile.create({
+    data: {
+      userId: learner2.id,
+      fullName: learner2.name,
+      country: 'India',
+      city: '',
+      profession: 'OTHER',
+      profileCompleted: false,
     },
   });
 

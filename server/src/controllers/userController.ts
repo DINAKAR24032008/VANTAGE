@@ -10,12 +10,124 @@ const AvatarSchema = z.object({
   avatar: z.union([z.string(), z.object({}).passthrough()]),
 });
 
+// Helper: Escape formula injection for CSV cells
+const escapeCsvCell = (val: any): string => {
+  if (val === null || val === undefined) return '""';
+  let str = String(val);
+  if (/^[=+\-@]/.test(str)) {
+    str = "'" + str;
+  }
+  return `"${str.replace(/"/g, '""')}"`;
+};
+
 export class UserController {
+  /** GET /api/users – list users for admin & trainer roster */
+  static async getAllUsers(req: AuthenticatedRequest, res: Response) {
+    try {
+      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+
+      const users = await prisma.user.findMany({
+        include: {
+          userProfile: true,
+          enrollments: {
+            include: { course: { select: { id: true, title: true, trainerId: true } } },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      const formatted = users.map((u) => ({
+        id: u.id,
+        name: u.name,
+        email: u.email,
+        role: u.role,
+        department: u.department,
+        jobRole: u.jobRole,
+        avatar: u.avatar,
+        phone: u.phone,
+        phoneVerified: u.phoneVerified,
+        createdAt: u.createdAt,
+        userProfile: u.userProfile,
+        enrollments: u.enrollments,
+      }));
+
+      return res.json(formatted);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
+  /** GET /api/users/export-csv – export users CSV for Admin with formula sanitization */
+  static async exportUsersCsv(req: AuthenticatedRequest, res: Response) {
+    try {
+      if (req.user?.role !== 'admin') {
+        return res.status(403).json({ error: 'Forbidden: Admin access required' });
+      }
+
+      const includePii = req.query.includePii === 'true';
+
+      const users = await prisma.user.findMany({
+        include: { userProfile: true },
+        orderBy: { createdAt: 'desc' },
+      });
+
+      const headers = [
+        'ID',
+        'Full Name',
+        'Role',
+        'Department',
+        'Profession',
+        'Country',
+        'City',
+        'Highest Degree',
+        'Company/Institution',
+        'Profile Completed',
+      ];
+
+      if (includePii) {
+        headers.push('Email', 'Phone', 'Date of Birth');
+      }
+
+      const rows = users.map((u) => {
+        const p = u.userProfile;
+        const row = [
+          escapeCsvCell(u.id),
+          escapeCsvCell(p?.fullName || u.name),
+          escapeCsvCell(u.role),
+          escapeCsvCell(u.department),
+          escapeCsvCell(p?.profession || 'OTHER'),
+          escapeCsvCell(p?.country || 'India'),
+          escapeCsvCell(p?.city || ''),
+          escapeCsvCell(p?.highestDegree || 'NONE'),
+          escapeCsvCell(p?.company || p?.institution || ''),
+          escapeCsvCell(p?.profileCompleted ? 'Yes' : 'No'),
+        ];
+
+        if (includePii) {
+          row.push(
+            escapeCsvCell(u.email),
+            escapeCsvCell(u.phone || ''),
+            escapeCsvCell(p?.dateOfBirth ? p.dateOfBirth.toISOString().split('T')[0] : '')
+          );
+        }
+
+        return row.join(',');
+      });
+
+      const csvContent = [headers.join(','), ...rows].join('\n');
+
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename=vantage-users-${Date.now()}.csv`);
+      return res.send(csvContent);
+    } catch (err: any) {
+      return res.status(500).json({ error: err.message });
+    }
+  }
+
   /** PUT /api/users/:id/avatar – save gender + avatar JSON */
   static async updateAvatar(req: AuthenticatedRequest, res: Response) {
     try {
       const userId = Array.isArray(req.params.id) ? req.params.id[0] : String(req.params.id);
-      // Only the owner can update their avatar
       if (req.user?.userId !== userId && req.user?.role !== 'admin') {
         return res.status(403).json({ error: 'Forbidden' });
       }
@@ -76,7 +188,6 @@ export class UserController {
       if (!fs.existsSync(destDir)) fs.mkdirSync(destDir, { recursive: true });
 
       const destPath = path.join(destDir, filename);
-      // Remove old avatar file for this user if different extension
       ['jpg', 'jpeg', 'png', 'webp'].forEach((e) => {
         const p = path.join(destDir, `${userId}.${e}`);
         if (p !== destPath && fs.existsSync(p)) fs.unlinkSync(p);

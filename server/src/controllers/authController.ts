@@ -43,6 +43,20 @@ export class AuthController {
         },
       });
 
+      // Initialize userProfile for all new users
+      const userProfile = await prisma.userProfile.create({
+        data: {
+          userId: user.id,
+          fullName: user.name,
+          country: 'India',
+          city: '',
+          profession: user.role === 'trainer' ? 'WORKING_PROFESSIONAL' : 'STUDENT',
+          showcaseVisible: user.role === 'trainer',
+          linkedinVisible: user.role === 'trainer',
+          profileCompleted: false,
+        },
+      });
+
       // Initialize empty competency profile for learners
       if (user.role === 'learner') {
         await prisma.competencyProfile.create({
@@ -67,6 +81,10 @@ export class AuthController {
           jobRole: user.jobRole,
           gender: user.gender,
           avatar: user.avatar,
+          phone: user.phone,
+          phoneVerified: user.phoneVerified,
+          timezone: user.timezone,
+          profileCompleted: userProfile.profileCompleted,
         },
       });
     } catch (err: any) {
@@ -83,6 +101,7 @@ export class AuthController {
 
       const user = await prisma.user.findUnique({
         where: { email },
+        include: { userProfile: true },
       });
 
       if (!user) {
@@ -92,6 +111,23 @@ export class AuthController {
       const isPasswordValid = await AuthService.verifyPassword(password, user.passwordHash);
       if (!isPasswordValid) {
         return res.status(401).json({ error: 'Invalid email or password' });
+      }
+
+      let profileCompleted = user.userProfile ? user.userProfile.profileCompleted : false;
+      if (!user.userProfile) {
+        const up = await prisma.userProfile.create({
+          data: {
+            userId: user.id,
+            fullName: user.name,
+            country: 'India',
+            city: '',
+            profession: user.role === 'trainer' ? 'WORKING_PROFESSIONAL' : 'STUDENT',
+            showcaseVisible: user.role === 'trainer',
+            linkedinVisible: user.role === 'trainer',
+            profileCompleted: false,
+          },
+        });
+        profileCompleted = up.profileCompleted;
       }
 
       const token = AuthService.generateToken(user);
@@ -108,6 +144,10 @@ export class AuthController {
           jobRole: user.jobRole,
           gender: user.gender,
           avatar: user.avatar,
+          phone: user.phone,
+          phoneVerified: user.phoneVerified,
+          timezone: user.timezone,
+          profileCompleted,
         },
       });
     } catch (err: any) {
@@ -128,12 +168,29 @@ export class AuthController {
         where: { id: req.user.userId },
         include: {
           profile: true,
+          userProfile: true,
           certificates: true,
         },
       });
 
       if (!user) {
         return res.status(404).json({ error: 'User not found' });
+      }
+
+      let userProf = user.userProfile;
+      if (!userProf) {
+        userProf = await prisma.userProfile.create({
+          data: {
+            userId: user.id,
+            fullName: user.name,
+            country: 'India',
+            city: '',
+            profession: user.role === 'trainer' ? 'WORKING_PROFESSIONAL' : 'STUDENT',
+            showcaseVisible: user.role === 'trainer',
+            linkedinVisible: user.role === 'trainer',
+            profileCompleted: false,
+          },
+        });
       }
 
       return res.json({
@@ -145,7 +202,12 @@ export class AuthController {
         jobRole: user.jobRole,
         gender: user.gender,
         avatar: user.avatar,
+        phone: user.phone,
+        phoneVerified: user.phoneVerified,
+        timezone: user.timezone,
+        profileCompleted: userProf.profileCompleted,
         profile: user.profile,
+        userProfile: userProf,
         certificates: user.certificates,
       });
     } catch (err: any) {
@@ -157,6 +219,8 @@ export class AuthController {
     try {
       const { provider = 'iGOT_Karmayogi', email = 'officer.sso@gov.in' } = req.body;
       const result = await AuthService.authenticateWithSSOStub(provider, email);
+
+      const userProf = await prisma.userProfile.findUnique({ where: { userId: result.user.id } });
 
       return res.json({
         message: `Successfully authenticated via ${provider} (SSO Stub)`,
@@ -170,6 +234,10 @@ export class AuthController {
           jobRole: result.user.jobRole,
           gender: result.user.gender,
           avatar: result.user.avatar,
+          phone: result.user.phone,
+          phoneVerified: result.user.phoneVerified,
+          timezone: result.user.timezone,
+          profileCompleted: userProf ? userProf.profileCompleted : false,
         },
       });
     } catch (err: any) {

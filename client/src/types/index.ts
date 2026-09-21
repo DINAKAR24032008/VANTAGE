@@ -7,6 +7,60 @@ export interface AvatarData {
   bgColor?: string;
 }
 
+export interface UserProfileData {
+  id?: string;
+  userId?: string;
+  fullName: string;
+  dateOfBirth?: string | null;
+  country: string;
+  state?: string | null;
+  city: string;
+  profession: 'STUDENT' | 'WORKING_PROFESSIONAL' | 'FREELANCER' | 'JOB_SEEKER' | 'ENTREPRENEUR' | 'OTHER';
+  highestDegree: 'HIGH_SCHOOL' | 'DIPLOMA' | 'BACHELORS' | 'MASTERS' | 'DOCTORATE' | 'OTHER' | 'NONE';
+  fieldOfStudy?: string | null;
+  institution?: string | null;
+  graduationYear?: number | null;
+  company?: string | null;
+  jobTitle?: string | null;
+  yearsOfExperience?: string | null;
+  bio?: string | null;
+  linkedinUrl?: string | null;
+  showcaseVisible: boolean;
+  linkedinVisible: boolean;
+  locationVisible: boolean;
+  educationVisible: boolean;
+  profileCompleted: boolean;
+  profileCompletedAt?: string | null;
+}
+
+export interface UserSkillData {
+  id?: string;
+  name: string;
+  level: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED';
+  source: 'SELF' | 'VANTAGE';
+  hidden?: boolean;
+}
+
+export interface AchievementData {
+  id?: string;
+  title: string;
+  organization: string;
+  type: 'AWARD' | 'PROJECT' | 'PUBLICATION' | 'HACKATHON' | 'CERTIFICATION' | 'OTHER';
+  description?: string | null;
+  date?: string | null;
+  link?: string | null;
+}
+
+export interface ExperienceData {
+  id?: string;
+  jobTitle: string;
+  company: string;
+  employmentType: string;
+  startDate: string;
+  endDate?: string | null;
+  description?: string | null;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -16,6 +70,11 @@ export interface User {
   jobRole: string;
   gender?: 'male' | 'female' | 'other';
   avatar?: AvatarData | string;
+  phone?: string;
+  phoneVerified?: boolean;
+  timezone?: string;
+  profileCompleted?: boolean;
+  userProfile?: UserProfileData;
   profile?: {
     id: string;
     skills: string;

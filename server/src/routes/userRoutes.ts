@@ -22,6 +22,12 @@ const upload = multer({
   },
 });
 
+// GET /api/users (list all users for roster/admin)
+router.get('/', authenticateToken, UserController.getAllUsers);
+
+// GET /api/users/export-csv (admin CSV download)
+router.get('/export-csv', authenticateToken, UserController.exportUsersCsv);
+
 // PUT /api/users/:id/avatar
 router.put('/:id/avatar', authenticateToken, UserController.updateAvatar);
 
