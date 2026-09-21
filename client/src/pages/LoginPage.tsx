@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth, DEMO_CREDENTIALS } from '../context/AuthContext';
 import api from '../services/api';
 import { Lock, Mail, ShieldAlert, ArrowRight, Sparkles, Building2 } from 'lucide-react';
@@ -10,6 +10,8 @@ export const LoginPage: React.FC = () => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [searchParams] = useSearchParams();
+  const isExpired = searchParams.get('expired') === 'true';
   const { login } = useAuth();
   const navigate = useNavigate();
 
@@ -81,6 +83,13 @@ export const LoginPage: React.FC = () => {
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-surface py-8 px-6 shadow-paper-lg rounded-2xl sm:px-10 border border-border">
+          {isExpired && !error && (
+            <div className="mb-4 p-3 bg-dangerSoft border border-danger/30 text-danger text-xs rounded-xl flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 flex-shrink-0 text-danger" />
+              <span>Your session expired. Please log in again.</span>
+            </div>
+          )}
+
           {error && (
             <div className="mb-4 p-3 bg-dangerSoft border border-danger/30 text-danger text-xs rounded-xl flex items-center gap-2">
               <ShieldAlert className="w-4 h-4 flex-shrink-0 text-danger" />

@@ -33,6 +33,8 @@ export const ProfilePage: React.FC = () => {
   // Edit Modals
   const [isHeaderModalOpen, setIsHeaderModalOpen] = useState(false);
   const [isEducationModalOpen, setIsEducationModalOpen] = useState(false);
+  const [headerError, setHeaderError] = useState<string | null>(null);
+  const [eduError, setEduError] = useState<string | null>(null);
   const [headerFormData, setHeaderFormData] = useState({
     fullName: '',
     country: 'India',
@@ -90,17 +92,19 @@ export const ProfilePage: React.FC = () => {
 
   const handleSaveHeader = async (e: React.FormEvent) => {
     e.preventDefault();
+    setHeaderError(null);
     try {
       await api.put('/profile/me', headerFormData);
       setIsHeaderModalOpen(false);
       fetchProfileData();
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to update header profile info');
+      setHeaderError(err.response?.data?.error || 'Failed to update header profile info');
     }
   };
 
   const handleSaveEducation = async (e: React.FormEvent) => {
     e.preventDefault();
+    setEduError(null);
     try {
       await api.put('/profile/me', {
         ...eduFormData,
@@ -109,7 +113,7 @@ export const ProfilePage: React.FC = () => {
       setIsEducationModalOpen(false);
       fetchProfileData();
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to update education details');
+      setEduError(err.response?.data?.error || 'Failed to update education details');
     }
   };
 
@@ -452,6 +456,12 @@ export const ProfilePage: React.FC = () => {
               </button>
             </div>
 
+            {headerError && (
+              <div className="mb-4 p-3 bg-dangerSoft border border-danger/30 text-danger text-xs rounded-xl">
+                {headerError}
+              </div>
+            )}
+
             <form onSubmit={handleSaveHeader} className="space-y-3">
               <div>
                 <label className="block text-xs font-medium text-textSecondary mb-1">Full Name</label>
@@ -556,6 +566,12 @@ export const ProfilePage: React.FC = () => {
                 <X className="w-5 h-5" />
               </button>
             </div>
+
+            {eduError && (
+              <div className="mb-4 p-3 bg-dangerSoft border border-danger/30 text-danger text-xs rounded-xl">
+                {eduError}
+              </div>
+            )}
 
             <form onSubmit={handleSaveEducation} className="space-y-3">
               <div>

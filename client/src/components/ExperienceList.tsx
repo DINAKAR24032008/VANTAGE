@@ -55,9 +55,10 @@ export const ExperienceList: React.FC<ExperienceListProps> = ({ experiences, isO
     if (!window.confirm('Delete this experience record?')) return;
     try {
       await api.delete(`/profile/me/experience/${id}`);
+      setError(null);
       if (onUpdate) onUpdate();
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to delete experience record');
+      setError(err.response?.data?.error || 'Failed to delete experience record');
     }
   };
 
@@ -105,6 +106,12 @@ export const ExperienceList: React.FC<ExperienceListProps> = ({ experiences, isO
           </button>
         )}
       </div>
+
+      {error && !isModalOpen && (
+        <div className="mb-4 p-3 bg-dangerSoft border border-danger/30 text-danger text-xs rounded-xl">
+          {error}
+        </div>
+      )}
 
       {experiences && experiences.length > 0 ? (
         <div className="space-y-3">

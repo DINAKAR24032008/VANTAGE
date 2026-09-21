@@ -76,9 +76,10 @@ export const AchievementTimeline: React.FC<AchievementTimelineProps> = ({
     if (!window.confirm('Delete this achievement?')) return;
     try {
       await api.delete(`/profile/me/achievements/${id}`);
+      setError(null);
       if (onUpdate) onUpdate();
     } catch (err: any) {
-      alert(err.response?.data?.error || 'Failed to delete achievement');
+      setError(err.response?.data?.error || 'Failed to delete achievement');
     }
   };
 
@@ -126,6 +127,12 @@ export const AchievementTimeline: React.FC<AchievementTimelineProps> = ({
           </button>
         )}
       </div>
+
+      {error && !isModalOpen && (
+        <div className="mb-4 p-3 bg-dangerSoft border border-danger/30 text-danger text-xs rounded-xl">
+          {error}
+        </div>
+      )}
 
       {achievements && achievements.length > 0 ? (
         <div className="relative pl-6 space-y-4 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-border">

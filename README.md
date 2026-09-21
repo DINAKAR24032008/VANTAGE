@@ -51,6 +51,7 @@ npx prisma db push
 npx ts-node prisma/seed.ts
 cd ..
 ```
+> **Note:** After reseeding the database, log out and log in again so your browser updates its session token.
 
 ### 3. Launch Development Server
 ```bash

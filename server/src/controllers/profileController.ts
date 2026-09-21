@@ -23,14 +23,12 @@ const normalizeLinkedinUrl = (url: string | null | undefined): { valid: boolean;
   if (trimmed.startsWith('http://')) {
     trimmed = 'https://' + trimmed.substring(7);
   }
-  // Strip query parameters and trailing slash
   try {
     const parsed = new URL(trimmed);
     parsed.search = '';
     parsed.hash = '';
     let href = parsed.toString().replace(/\/$/, '');
     
-    // Validate format: https://(www.|[a-z]{2}\.)linkedin.com/in/<handle>
     const linkedinRegex = /^https:\/\/(www\.|[a-z]{2}\.)?linkedin\.com\/in\/[a-zA-Z0-9_-]+\/?$/i;
     if (linkedinRegex.test(href) || href === 'https://www.linkedin.com/in/your-name') {
       return { valid: true, normalized: href };
@@ -45,14 +43,12 @@ const normalizeLinkedinUrl = (url: string | null | undefined): { valid: boolean;
 export const calculateCompletionPercentage = (profile: any): number => {
   if (!profile) return 0;
   
-  // Required fields weight: 60%
   let score = 0;
   if (profile.fullName && profile.fullName.trim()) score += 15;
   if (profile.country && profile.country.trim()) score += 15;
   if (profile.city && profile.city.trim()) score += 15;
   if (profile.profession && profile.profession !== 'OTHER') score += 15;
   
-  // Optional details weight: 40%
   if (profile.bio && profile.bio.trim()) score += 10;
   if (profile.highestDegree && profile.highestDegree !== 'NONE') score += 10;
   if (profile.linkedinUrl && profile.linkedinUrl.trim()) score += 10;
@@ -62,15 +58,46 @@ export const calculateCompletionPercentage = (profile: any): number => {
 };
 
 export class ProfileController {
-  // Ensure profile exists for user
-  static async getOrCreateUserProfile(userId: string, userName: string, userRole: string) {
-    let profile = await prisma.userProfile.findUnique({ where: { userId } });
-    if (!profile) {
-      const isTrainer = userRole === 'trainer';
-      profile = await prisma.userProfile.create({
-        data: {
-          userId,
-          fullName: userName || 'Vantage Learner',
+  // Helper: Map Prisma error P2003 (foreign key) and P2002 safely
+  private static handleControllerError(res: Response, err: any) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.error('[ProfileController Error]:', err);
+    }
+
+    if (err.code === 'P2003' || (err.message && err.message.includes('Foreign key constraint'))) {
+      return res.status(401).json({
+        message: 'Your session is no longer valid. Please log in again.',
+        code: 'USER_NOT_FOUND',
+      });
+    }
+
+    return res.status(500).json({
+      error: 'An error occurred while updating profile data.',
+    });
+  }
+
+  // Ensure profile exists for user using upsert & User verification
+  static async getOrCreateUserProfile(userId: string) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[ProfileController] Verifying user existence for userId: ${userId}`);
+    }
+
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn(`[ProfileController] User ID ${userId} not found in database.`);
+      }
+      return { user: null, profile: null, userNotFound: true };
+    }
+
+    const isTrainer = user.role === 'trainer';
+
+    try {
+      const profile = await prisma.userProfile.upsert({
+        where: { userId },
+        create: {
+          user: { connect: { id: userId } },
+          fullName: user.name || 'Vantage Learner',
           country: 'India',
           city: '',
           profession: isTrainer ? 'WORKING_PROFESSIONAL' : 'STUDENT',
@@ -78,18 +105,31 @@ export class ProfileController {
           linkedinVisible: isTrainer,
           profileCompleted: false,
         },
+        update: {},
       });
+      return { user, profile, userNotFound: false };
+    } catch (err: any) {
+      if (err.code === 'P2002') {
+        const existing = await prisma.userProfile.findUnique({ where: { userId } });
+        return { user, profile: existing, userNotFound: false };
+      }
+      throw err;
     }
-    return profile;
   }
 
   // GET /api/profile/me
   static async getMyProfile(req: AuthenticatedRequest, res: Response) {
     try {
-      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      if (!req.user) return res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' });
       const userId = req.user.userId;
 
-      let profile = await ProfileController.getOrCreateUserProfile(userId, req.user.name, req.user.role);
+      const { user, profile, userNotFound } = await ProfileController.getOrCreateUserProfile(userId);
+      if (userNotFound || !user || !profile) {
+        return res.status(401).json({
+          message: 'Your session is no longer valid. Please log in again.',
+          code: 'USER_NOT_FOUND',
+        });
+      }
 
       const [skills, achievements, experiences, certificates, enrollments] = await Promise.all([
         prisma.userSkill.findMany({ where: { userId } }),
@@ -119,22 +159,28 @@ export class ProfileController {
         completionPercent,
       });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      return ProfileController.handleControllerError(res, err);
     }
   }
 
   // PUT /api/profile/me
   static async updateMyProfile(req: AuthenticatedRequest, res: Response) {
     try {
-      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      if (!req.user) return res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' });
       const userId = req.user.userId;
 
-      await ProfileController.getOrCreateUserProfile(userId, req.user.name, req.user.role);
+      const { user, profile, userNotFound } = await ProfileController.getOrCreateUserProfile(userId);
+      if (userNotFound || !user || !profile) {
+        return res.status(401).json({
+          message: 'Your session is no longer valid. Please log in again.',
+          code: 'USER_NOT_FOUND',
+        });
+      }
 
       const body = req.body;
       const dataToUpdate: any = {};
 
-      if (body.fullName !== undefined) dataToUpdate.fullName = sanitizeText(body.fullName, 100) || req.user.name;
+      if (body.fullName !== undefined) dataToUpdate.fullName = sanitizeText(body.fullName, 100) || user.name;
       if (body.country !== undefined) dataToUpdate.country = sanitizeText(body.country, 100) || 'India';
       if (body.state !== undefined) dataToUpdate.state = sanitizeText(body.state, 100);
       if (body.city !== undefined) dataToUpdate.city = sanitizeText(body.city, 100) || '';
@@ -177,19 +223,24 @@ export class ProfileController {
         completionPercent,
       });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      return ProfileController.handleControllerError(res, err);
     }
   }
 
   // POST /api/profile/me/complete
   static async completeProfile(req: AuthenticatedRequest, res: Response) {
     try {
-      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      if (!req.user) return res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' });
       const userId = req.user.userId;
 
-      let profile = await ProfileController.getOrCreateUserProfile(userId, req.user.name, req.user.role);
+      const { profile, userNotFound } = await ProfileController.getOrCreateUserProfile(userId);
+      if (userNotFound || !profile) {
+        return res.status(401).json({
+          message: 'Your session is no longer valid. Please log in again.',
+          code: 'USER_NOT_FOUND',
+        });
+      }
 
-      // Validate required fields
       if (!profile.fullName || !profile.country || !profile.city || !profile.profession) {
         return res.status(400).json({
           error: 'Required fields missing: Full Name, Country, City, and Profession are required to complete profile.',
@@ -209,16 +260,23 @@ export class ProfileController {
         profile: updated,
       });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      return ProfileController.handleControllerError(res, err);
     }
   }
 
   // GET/PUT /api/profile/me/linkedin
   static async updateLinkedin(req: AuthenticatedRequest, res: Response) {
     try {
-      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
-      const { linkedinUrl } = req.body;
+      if (!req.user) return res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' });
+      const { userNotFound } = await ProfileController.getOrCreateUserProfile(req.user.userId);
+      if (userNotFound) {
+        return res.status(401).json({
+          message: 'Your session is no longer valid. Please log in again.',
+          code: 'USER_NOT_FOUND',
+        });
+      }
 
+      const { linkedinUrl } = req.body;
       const { valid, normalized } = normalizeLinkedinUrl(linkedinUrl);
       if (!valid) {
         return res.status(400).json({ error: 'Invalid LinkedIn URL format. Use https://linkedin.com/in/handle' });
@@ -231,36 +289,50 @@ export class ProfileController {
 
       return res.json({ message: 'LinkedIn URL updated', linkedinUrl: updated.linkedinUrl });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      return ProfileController.handleControllerError(res, err);
     }
   }
 
   // Skills handlers
   static async getSkills(req: AuthenticatedRequest, res: Response) {
     try {
-      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      if (!req.user) return res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' });
+      const { userNotFound } = await ProfileController.getOrCreateUserProfile(req.user.userId);
+      if (userNotFound) {
+        return res.status(401).json({
+          message: 'Your session is no longer valid. Please log in again.',
+          code: 'USER_NOT_FOUND',
+        });
+      }
+
       const skills = await prisma.userSkill.findMany({ where: { userId: req.user.userId } });
       return res.json(skills);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      return ProfileController.handleControllerError(res, err);
     }
   }
 
   static async updateSkills(req: AuthenticatedRequest, res: Response) {
     try {
-      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      if (!req.user) return res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' });
       const userId = req.user.userId;
-      const { skills } = req.body; // Array of { name, level, hidden? }
 
+      const { userNotFound } = await ProfileController.getOrCreateUserProfile(userId);
+      if (userNotFound) {
+        return res.status(401).json({
+          message: 'Your session is no longer valid. Please log in again.',
+          code: 'USER_NOT_FOUND',
+        });
+      }
+
+      const { skills } = req.body;
       if (!Array.isArray(skills)) {
         return res.status(400).json({ error: 'Skills must be an array' });
       }
-
       if (skills.length > 20) {
         return res.status(400).json({ error: 'Maximum 20 skills allowed per profile' });
       }
 
-      // Preserve VANTAGE source for existing skills
       const existingSkills = await prisma.userSkill.findMany({ where: { userId } });
       const existingVantageMap = new Map(existingSkills.filter((s) => s.source === 'VANTAGE').map((s) => [s.name.toLowerCase(), s]));
 
@@ -283,25 +355,41 @@ export class ProfileController {
       const updated = await prisma.userSkill.findMany({ where: { userId } });
       return res.json({ message: 'Skills updated', skills: updated });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      return ProfileController.handleControllerError(res, err);
     }
   }
 
   // Achievements handlers
   static async getAchievements(req: AuthenticatedRequest, res: Response) {
     try {
-      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      if (!req.user) return res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' });
+      const { userNotFound } = await ProfileController.getOrCreateUserProfile(req.user.userId);
+      if (userNotFound) {
+        return res.status(401).json({
+          message: 'Your session is no longer valid. Please log in again.',
+          code: 'USER_NOT_FOUND',
+        });
+      }
+
       const items = await prisma.achievement.findMany({ where: { userId: req.user.userId }, orderBy: { date: 'desc' } });
       return res.json(items);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      return ProfileController.handleControllerError(res, err);
     }
   }
 
   static async addAchievement(req: AuthenticatedRequest, res: Response) {
     try {
-      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      if (!req.user) return res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' });
       const userId = req.user.userId;
+
+      const { userNotFound } = await ProfileController.getOrCreateUserProfile(userId);
+      if (userNotFound) {
+        return res.status(401).json({
+          message: 'Your session is no longer valid. Please log in again.',
+          code: 'USER_NOT_FOUND',
+        });
+      }
 
       const count = await prisma.achievement.count({ where: { userId } });
       if (count >= 30) {
@@ -327,13 +415,13 @@ export class ProfileController {
 
       return res.status(201).json(created);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      return ProfileController.handleControllerError(res, err);
     }
   }
 
   static async updateAchievement(req: AuthenticatedRequest, res: Response) {
     try {
-      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      if (!req.user) return res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' });
       const id = String(req.params.id);
       const userId = req.user.userId;
 
@@ -356,13 +444,13 @@ export class ProfileController {
 
       return res.json(updated);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      return ProfileController.handleControllerError(res, err);
     }
   }
 
   static async deleteAchievement(req: AuthenticatedRequest, res: Response) {
     try {
-      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      if (!req.user) return res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' });
       const id = String(req.params.id);
 
       const existing = await prisma.achievement.findFirst({ where: { id, userId: req.user.userId } });
@@ -371,25 +459,41 @@ export class ProfileController {
       await prisma.achievement.delete({ where: { id } });
       return res.json({ message: 'Achievement deleted' });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      return ProfileController.handleControllerError(res, err);
     }
   }
 
   // Experience handlers
   static async getExperiences(req: AuthenticatedRequest, res: Response) {
     try {
-      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      if (!req.user) return res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' });
+      const { userNotFound } = await ProfileController.getOrCreateUserProfile(req.user.userId);
+      if (userNotFound) {
+        return res.status(401).json({
+          message: 'Your session is no longer valid. Please log in again.',
+          code: 'USER_NOT_FOUND',
+        });
+      }
+
       const items = await prisma.experience.findMany({ where: { userId: req.user.userId }, orderBy: { startDate: 'desc' } });
       return res.json(items);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      return ProfileController.handleControllerError(res, err);
     }
   }
 
   static async addExperience(req: AuthenticatedRequest, res: Response) {
     try {
-      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      if (!req.user) return res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' });
       const userId = req.user.userId;
+
+      const { userNotFound } = await ProfileController.getOrCreateUserProfile(userId);
+      if (userNotFound) {
+        return res.status(401).json({
+          message: 'Your session is no longer valid. Please log in again.',
+          code: 'USER_NOT_FOUND',
+        });
+      }
 
       const count = await prisma.experience.count({ where: { userId } });
       if (count >= 15) {
@@ -415,13 +519,13 @@ export class ProfileController {
 
       return res.status(201).json(created);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      return ProfileController.handleControllerError(res, err);
     }
   }
 
   static async updateExperience(req: AuthenticatedRequest, res: Response) {
     try {
-      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      if (!req.user) return res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' });
       const id = String(req.params.id);
       const userId = req.user.userId;
 
@@ -444,13 +548,13 @@ export class ProfileController {
 
       return res.json(updated);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      return ProfileController.handleControllerError(res, err);
     }
   }
 
   static async deleteExperience(req: AuthenticatedRequest, res: Response) {
     try {
-      if (!req.user) return res.status(401).json({ error: 'Unauthorized' });
+      if (!req.user) return res.status(401).json({ message: 'Unauthorized', code: 'UNAUTHORIZED' });
       const id = String(req.params.id);
 
       const existing = await prisma.experience.findFirst({ where: { id, userId: req.user.userId } });
@@ -459,7 +563,7 @@ export class ProfileController {
       await prisma.experience.delete({ where: { id } });
       return res.json({ message: 'Experience deleted' });
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      return ProfileController.handleControllerError(res, err);
     }
   }
 
@@ -481,12 +585,14 @@ export class ProfileController {
 
       if (!targetUser) return res.status(404).json({ error: 'User not found' });
 
-      let profile = await ProfileController.getOrCreateUserProfile(targetUser.id, targetUser.name, targetUser.role);
+      const { profile, userNotFound } = await ProfileController.getOrCreateUserProfile(targetUser.id);
+      if (userNotFound || !profile) {
+        return res.status(404).json({ error: 'Profile not found' });
+      }
 
       const isSelf = requester?.userId === targetUserId;
       const isAdmin = requester?.role === 'admin';
 
-      // Check if requester is a trainer of this user
       let isTrainerOfUser = false;
       if (requester?.role === 'trainer') {
         const trainerCourses = await prisma.course.findMany({
@@ -500,7 +606,6 @@ export class ProfileController {
         if (enrollment) isTrainerOfUser = true;
       }
 
-      // Privacy rules filtering
       const publicData: any = {
         id: targetUser.id,
         name: profile.fullName || targetUser.name,
@@ -513,14 +618,12 @@ export class ProfileController {
         bio: profile.bio,
       };
 
-      // Location filtering
       if (isSelf || isAdmin || profile.locationVisible || isTrainerOfUser) {
         publicData.country = profile.country;
         publicData.state = profile.state;
         publicData.city = profile.city;
       }
 
-      // Education filtering
       if (isSelf || isAdmin || profile.educationVisible || isTrainerOfUser) {
         publicData.highestDegree = profile.highestDegree;
         publicData.fieldOfStudy = profile.fieldOfStudy;
@@ -528,12 +631,10 @@ export class ProfileController {
         publicData.graduationYear = profile.graduationYear;
       }
 
-      // LinkedIn filtering (NEVER exposed if linkedinVisible is false unless self/admin)
       if (isSelf || isAdmin || profile.linkedinVisible) {
         publicData.linkedinUrl = profile.linkedinUrl;
       }
 
-      // Career Showcase filtering (skills, achievements, experience, certificates)
       if (isSelf || isAdmin || profile.showcaseVisible) {
         const [skills, achievements, experiences, certificates] = await Promise.all([
           prisma.userSkill.findMany({ where: { userId: targetUserId, hidden: false } }),
@@ -553,7 +654,7 @@ export class ProfileController {
 
       return res.json(publicData);
     } catch (err: any) {
-      return res.status(500).json({ error: err.message });
+      return ProfileController.handleControllerError(res, err);
     }
   }
 }
