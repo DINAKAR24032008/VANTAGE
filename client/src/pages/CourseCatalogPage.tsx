@@ -106,8 +106,21 @@ export const CourseCatalogPage: React.FC = () => {
             <p className="text-xs text-textSecondary">Loading courses...</p>
           </div>
         ) : filteredCourses.length === 0 ? (
-          <div className="py-20 text-center bg-surface rounded-2xl border border-border text-textSecondary text-xs">
-            No courses match the specified filters.
+          <div className="py-20 text-center bg-surface rounded-2xl border border-border">
+            <BookOpen className="w-12 h-12 text-textSecondary mx-auto mb-4 opacity-40" />
+            {courses.length === 0 ? (
+              <>
+                <p className="text-sm font-bold text-textPrimary mb-1">No courses available yet</p>
+                <p className="text-xs text-textSecondary max-w-sm mx-auto">
+                  The course catalog is currently empty. Trainers can create and publish new courses from the Trainer Dashboard.
+                </p>
+              </>
+            ) : (
+              <>
+                <p className="text-sm font-bold text-textPrimary mb-1">No courses match your filters</p>
+                <p className="text-xs text-textSecondary">Try adjusting the difficulty or category filters, or clear your search.</p>
+              </>
+            )}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

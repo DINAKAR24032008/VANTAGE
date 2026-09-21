@@ -12,7 +12,7 @@ Vantage is an enterprise-grade digital capacity building and learning management
 2. **Dynamic Competency Profiling**: Onboarding self-assessment calibrated against Ministry operational levels (Novice to Master).
 3. **Intelligent Gap Analysis Engine (`GET /api/learners/:id/recommendations`)**: Heuristic scoring between learner profiles and target job role matrices, returning ranked personalized recommendations.
 4. **Interactive Learning & Module Progress**: Video & document viewer with real-time progress calculation.
-5. **Auto-Graded MCQ Assessments & Digital Certificates**: Immediate scoring, automatic profile elevation upon passing, and unique SHA-256 verifiable certificates (`MOES-VT-YYYY-XXXXXX`).
+5. **Auto-Graded MCQ Assessments & Digital Certificates**: Immediate scoring, automatic profile elevation upon passing, and unique SHA-256 verifiable certificates (`VT-YYYY-XXXXXX`).
 6. **Executive Analytics Dashboard**: Org-wide completion velocity and an inter-departmental competency gap heatmap (IMD, INCOIS, NCS, NIOT, NCPOR).
 7. **Threaded Knowledge-Sharing Forum**: Multi-level discussions scoped either to specific courses or general MoES open-data research.
 8. **Automated Feedback Loop (SIH Stretch Goal)**: Modifying a job role's competency matrix instantly triggers automated gap and recommendation recalibrations across all affected staff.

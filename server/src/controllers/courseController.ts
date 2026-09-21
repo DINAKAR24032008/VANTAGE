@@ -1,27 +1,12 @@
 import { Request, Response } from 'express';
-import jwt from 'jsonwebtoken';
 import { prisma } from '../services/authService';
-import { AuthenticatedRequest, AuthUserPayload } from '../types';
-
-const JWT_SECRET = process.env.JWT_SECRET || 'vantage-secret-key-2026';
-
-function tryGetAuthUser(req: Request): AuthUserPayload | null {
-  const authHeader = req.headers.authorization;
-  if (!authHeader) return null;
-  const token = authHeader.split(' ')[1];
-  if (!token) return null;
-  try {
-    return jwt.verify(token, JWT_SECRET) as AuthUserPayload;
-  } catch (e) {
-    return null;
-  }
-}
+import { AuthenticatedRequest } from '../types';
 
 export class CourseController {
-  static async getAllCourses(req: Request, res: Response) {
+  static async getAllCourses(req: AuthenticatedRequest, res: Response) {
     try {
       const { category, difficulty, search, trainerId, myCourses } = req.query;
-      const authUser = tryGetAuthUser(req);
+      const authUser = req.user;
 
       // Determine visibility filter:
       // If a trainer requests their own courses or specifies trainerId that matches their own ID, show drafts + published.

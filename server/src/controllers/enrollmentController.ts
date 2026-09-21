@@ -29,7 +29,13 @@ export class EnrollmentController {
       });
 
       if (existing) {
-        return res.json({ message: 'Already enrolled in this course', enrollment: existing });
+        return res.json({
+          message: 'Already enrolled in this course',
+          enrollment: {
+            ...existing,
+            completedModules: JSON.parse(existing.completedModules || '[]'),
+          },
+        });
       }
 
       const enrollment = await prisma.enrollment.create({

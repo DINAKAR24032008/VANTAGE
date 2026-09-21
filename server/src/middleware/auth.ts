@@ -27,6 +27,26 @@ export const authenticateToken = (
   }
 };
 
+export const optionalAuthenticateToken = (
+  req: AuthenticatedRequest,
+  res: Response,
+  next: NextFunction
+): void => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+
+  if (token) {
+    try {
+      const decoded = jwt.verify(token, JWT_SECRET) as AuthUserPayload;
+      req.user = decoded;
+    } catch (err) {
+      // Token is invalid/expired; continue as unauthenticated
+    }
+  }
+
+  next();
+};
+
 export const requireRole = (allowedRoles: UserRole[]) => {
   return (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
     if (!req.user) {
@@ -44,3 +64,5 @@ export const requireRole = (allowedRoles: UserRole[]) => {
     next();
   };
 };
+
+

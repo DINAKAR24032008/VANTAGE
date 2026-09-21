@@ -143,8 +143,22 @@ export const LearnerDashboard: React.FC = () => {
           </div>
         </div>
 
-        {/* Featured Program: Introduction to Python */}
-        {pythonCourse && (
+        {/* Featured Course Section */}
+        {courses.length === 0 ? (
+          <div className="bg-surface rounded-3xl p-8 border border-border text-center space-y-3 shadow-paper-sm">
+            <BookOpen className="w-12 h-12 text-textSecondary mx-auto opacity-40" />
+            <p className="text-sm font-bold text-textPrimary">No courses available yet</p>
+            <p className="text-xs text-textSecondary max-w-md mx-auto">
+              The course catalog is currently empty. New courses will appear here once a trainer publishes them.
+            </p>
+            <Link
+              to="/catalog"
+              className="inline-flex items-center gap-1.5 mt-2 px-4 py-2 bg-primary hover:bg-primaryHover text-primaryContrast text-xs font-bold rounded-xl transition shadow-paper-sm"
+            >
+              <BookOpen className="w-3.5 h-3.5" /> Browse Course Catalog
+            </Link>
+          </div>
+        ) : pythonCourse && (
           <div className="bg-surface rounded-3xl p-6 sm:p-8 border border-border shadow-paper-sm relative overflow-hidden">
             <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
               <div className="space-y-3 max-w-2xl">
@@ -153,7 +167,7 @@ export const LearnerDashboard: React.FC = () => {
                     {pythonCourse.difficultyLevel} Level
                   </span>
                   <span className="text-xs text-textSecondary font-medium flex items-center gap-1">
-                    <Clock className="w-3.5 h-3.5 text-primary" /> 6 Modular Video Lessons & Assessments
+                    <Clock className="w-3.5 h-3.5 text-primary" /> {pythonCourse.modules?.length || 0} Modular Video Lessons & Assessments
                   </span>
                 </div>
 
@@ -169,7 +183,7 @@ export const LearnerDashboard: React.FC = () => {
                   <div className="space-y-2 pt-2">
                     <div className="flex justify-between text-xs font-semibold">
                       <span className="text-textSecondary">
-                        Course Progress ({completedModulesList.length} of {pythonCourse.modules?.length || 6} Modules Finished)
+                        Course Progress ({completedModulesList.length} of {pythonCourse.modules?.length || 0} Modules Finished)
                       </span>
                       <span className="text-primary font-bold">
                         {pythonEnrollment.progressPercent}%
@@ -184,8 +198,8 @@ export const LearnerDashboard: React.FC = () => {
                   </div>
                 ) : (
                   <div className="flex items-center gap-2 pt-2 text-xs text-textSecondary">
-                    <Sparkles className="w-4 h-4 text-accent" />
-                    <span>Includes 6 video tutorials, hands-on modules, and 6 end-of-module quizzes.</span>
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    <span>Includes {pythonCourse.modules?.length || 0} video tutorials, hands-on modules, and end-of-module evaluation quizzes.</span>
                   </div>
                 )}
               </div>

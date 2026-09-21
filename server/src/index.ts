@@ -44,6 +44,7 @@ app.use('/api', competencyRoutes);
 app.use('/api/courses', courseRoutes);
 app.use('/api/enrollments', enrollmentRoutes);
 app.use('/api/assessments', assessmentRoutes);
+app.use('/api', assessmentRoutes); // Allows /api/certificates/my and /api/certificates/verify
 app.use('/api/forum', forumRoutes);
 app.use('/api/users', userRoutes);
 

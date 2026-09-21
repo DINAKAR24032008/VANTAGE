@@ -1,12 +1,12 @@
 import { Router } from 'express';
 import { CourseController } from '../controllers/courseController';
-import { authenticateToken, requireRole } from '../middleware/auth';
+import { authenticateToken, optionalAuthenticateToken, requireRole } from '../middleware/auth';
 import { uploadMiddleware } from '../services/storageService';
 
 const router = Router();
 
-router.get('/', CourseController.getAllCourses);
-router.get('/:id', CourseController.getCourseById);
+router.get('/', optionalAuthenticateToken, CourseController.getAllCourses);
+router.get('/:id', optionalAuthenticateToken, CourseController.getCourseById);
 router.post(
   '/',
   authenticateToken,

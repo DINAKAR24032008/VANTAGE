@@ -462,7 +462,7 @@ export class AssessmentController {
           profileUpdated = true;
 
           // Issue Certificate
-          const certNumber = `MOES-VT-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
+          const certNumber = `VT-${new Date().getFullYear()}-${Math.floor(100000 + Math.random() * 900000)}`;
           const verificationHash = crypto
             .createHash('sha256')
             .update(`${req.user.userId}:${assessment.courseId}:${certNumber}:${Date.now()}`)
