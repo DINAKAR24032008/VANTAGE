@@ -108,7 +108,7 @@ async function main() {
     },
   });
 
-  await prisma.user.create({
+  const trainerMet = await prisma.user.create({
     data: {
       name: 'Dr. Ananya Sen',
       email: 'trainer.met@vantage.gov.in',
