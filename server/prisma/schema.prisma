@@ -8,28 +8,139 @@ generator client {
 }
 
 model User {
-  id           String             @id @default(uuid())
-  name         String
-  email        String             @unique
-  passwordHash String
-  role         String             @default("learner") // admin, trainer, learner
-  department   String             @default("General")
-  jobRole      String             @default("Learner")
-  gender       String             @default("other") // male, female, other
-  avatar       String             @default("{\"type\":\"initials\",\"bgColor\":\"#163016\"}") // JSON string
-  createdAt    DateTime           @default(now())
-  profile      CompetencyProfile?
-  enrollments  Enrollment[]
-  attempts     AssessmentAttempt[]
-  certificates Certificate[]
-  courses      Course[]           @relation("TrainerCourses")
-  forumPosts   ForumPost[]
+  id               String                 @id @default(uuid())
+  name             String
+  email            String                 @unique
+  passwordHash     String
+  role             String                 @default("learner") // admin, trainer, learner
+  department       String                 @default("General")
+  jobRole          String                 @default("Learner")
+  gender           String                 @default("other") // male, female, other
+  avatar           String                 @default("{\"type\":\"initials\",\"bgColor\":\"#163016\"}") // JSON string
+  phone            String?                @unique
+  phoneVerified    Boolean                @default(false)
+  timezone         String                 @default("Asia/Kolkata")
+  createdAt        DateTime               @default(now())
+  profile          CompetencyProfile?
+  userProfile      UserProfile?
+  skills           UserSkill[]
+  achievements     Achievement[]
+  experiences      Experience[]
+  notifications    Notification[]
+  notificationPref NotificationPreference?
+  enrollments      Enrollment[]
+  attempts         AssessmentAttempt[]
+  certificates     Certificate[]
+  courses          Course[]               @relation("TrainerCourses")
+  forumPosts       ForumPost[]
+}
+
+model UserProfile {
+  id                 String    @id @default(uuid())
+  userId             String    @unique
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  fullName           String
+  dateOfBirth        DateTime?
+  country            String    @default("India")
+  state              String?
+  city               String    @default("")
+  profession         String    @default("OTHER") // STUDENT, WORKING_PROFESSIONAL, FREELANCER, JOB_SEEKER, ENTREPRENEUR, OTHER
+  highestDegree      String    @default("NONE") // HIGH_SCHOOL, DIPLOMA, BACHELORS, MASTERS, DOCTORATE, OTHER, NONE
+  fieldOfStudy       String?
+  institution        String?
+  graduationYear     Int?
+  company            String?
+  jobTitle           String?
+  yearsOfExperience String?
+  bio                String?
+  linkedinUrl        String?
+  showcaseVisible    Boolean   @default(true)
+  linkedinVisible    Boolean   @default(true)
+  locationVisible    Boolean   @default(true)
+  educationVisible   Boolean   @default(true)
+  profileCompleted   Boolean   @default(false)
+  profileCompletedAt DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+}
+
+model UserSkill {
+  id        String   @id @default(uuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  level     String   @default("INTERMEDIATE") // BEGINNER, INTERMEDIATE, ADVANCED
+  source    String   @default("SELF") // SELF, VANTAGE
+  hidden    Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
+
+model Achievement {
+  id           String   @id @default(uuid())
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title        String
+  organization String
+  type         String   @default("OTHER") // AWARD, PROJECT, PUBLICATION, HACKATHON, CERTIFICATION, OTHER
+  description  String?
+  date         DateTime?
+  link         String?
+  order        Int      @default(0)
+  createdAt    DateTime @default(now())
+}
+
+model Experience {
+  id              String    @id @default(uuid())
+  userId          String
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  jobTitle        String
+  company         String
+  employmentType  String    @default("Full-time")
+  startDate       DateTime
+  endDate         DateTime? // null = current
+  description     String?
+  createdAt       DateTime  @default(now())
+}
+
+model OtpCode {
+  id         String    @id @default(uuid())
+  phone      String
+  codeHash   String
+  purpose    String // REGISTER, LOGIN
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+  ipAddress  String?
+}
+
+model Notification {
+  id        String    @id @default(uuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // ENROLLMENT, DAILY_REMINDER, SYSTEM
+  title     String
+  message   String
+  courseId  String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+model NotificationPreference {
+  id                     String  @id @default(uuid())
+  userId                 String  @unique
+  user                   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inAppEnabled           Boolean @default(true)
+  smsEnabled             Boolean @default(false)
+  dailyReminderEnabled   Boolean @default(true)
+  reminderTime           String  @default("09:00")
+  lastReminderSentOn     String?
 }
 
 model Competency {
   id          String                @id @default(uuid())
   name        String                @unique
-  category    String                // Programming, Software Development, etc.
+  category    String // Programming, Software Development, etc.
   description String
   courseTags  CourseCompetencyTag[]
 }
@@ -38,7 +149,7 @@ model CompetencyProfile {
   id        String   @id @default(uuid())
   userId    String   @unique
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  skills    String   // JSON string: [{ competencyId, competencyName, currentLevel }]
+  skills    String // JSON string: [{ competencyId, competencyName, currentLevel }]
   updatedAt DateTime @updatedAt
 }
 
@@ -48,9 +159,9 @@ model Course {
   description     String
   trainerId       String
   trainer         User                  @relation("TrainerCourses", fields: [trainerId], references: [id])
-  contentUrl      String?               // Primary video/file URL or mock S3 URL
+  contentUrl      String? // Primary video/file URL or mock S3 URL
   thumbnailUrl    String?
-  modules         String                // JSON string: [{ id, title, duration, videoUrl, notes, order }]
+  modules         String // JSON string: [{ id, title, duration, videoUrl, notes, order }]
   difficultyLevel String                @default("Beginner") // Beginner, Intermediate, Advanced
   status          String                @default("draft") // draft, published
   createdAt       DateTime              @default(now())
@@ -91,9 +202,9 @@ model Enrollment {
 model Assessment {
   id            String              @id @default(uuid())
   courseId      String
-  moduleId      String?             // null for course-level assessment, or moduleId for per-module quiz
+  moduleId      String? // null for course-level assessment, or moduleId for per-module quiz
   passThreshold Int                 @default(70) // Percentage (e.g. 70%)
-  questions     String              // JSON string: [{ id, question, options: string[], correctIndex: number, explanation?: string }]
+  questions     String // JSON string: [{ id, question, options: string[], correctIndex: number, explanation?: string }]
   course        Course              @relation(fields: [courseId], references: [id], onDelete: Cascade)
   attempts      AssessmentAttempt[]
 
@@ -104,9 +215,9 @@ model AssessmentAttempt {
   id           String     @id @default(uuid())
   userId       String
   assessmentId String
-  score        Int        // Percentage score achieved
+  score        Int // Percentage score achieved
   passed       Boolean
-  answers      String     // JSON string of user selected options
+  answers      String // JSON string of user selected options
   attemptedAt  DateTime   @default(now())
   user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   assessment   Assessment @relation(fields: [assessmentId], references: [id], onDelete: Cascade)
@@ -131,7 +242,7 @@ model ForumPost {
   courseId     String?
   authorId     String
   parentPostId String?
-  title        String?     // For root threads
+  title        String? // For root threads
   body         String
   isPinned     Boolean     @default(false)
   createdAt    DateTime    @default(now())

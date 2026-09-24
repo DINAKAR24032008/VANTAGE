@@ -13,12 +13,16 @@ import { CourseCatalogPage } from './pages/CourseCatalogPage';
 import { CourseDetailPage } from './pages/CourseDetailPage';
 import { TrainerManagePage } from './pages/TrainerManagePage';
 import { ForumPage } from './pages/ForumPage';
+import { ProfileWizardPage } from './pages/ProfileWizardPage';
+import { ProfilePage } from './pages/ProfilePage';
+import { PublicProfilePage } from './pages/PublicProfilePage';
 
 const RootRedirect: React.FC = () => {
   const { user, isLoading } = useAuth();
 
   if (isLoading) return null;
   if (!user) return <Navigate to="/login" replace />;
+  if (user.profileCompleted === false) return <Navigate to="/onboarding/profile" replace />;
   if (user.role === 'admin' || user.role === 'trainer') return <Navigate to="/catalog" replace />;
   return <Navigate to="/dashboard" replace />;
 };
@@ -35,6 +39,34 @@ export const App: React.FC = () => {
                 {/* Public Routes */}
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/register" element={<RegisterPage />} />
+
+                {/* Profile Onboarding Wizard */}
+                <Route
+                  path="/onboarding/profile"
+                  element={
+                    <ProtectedRoute allowIncompleteProfile>
+                      <ProfileWizardPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Main Profile & Public Learner Profile */}
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <ProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile/:userId"
+                  element={
+                    <ProtectedRoute>
+                      <PublicProfilePage />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Learner Flow */}
                 <Route

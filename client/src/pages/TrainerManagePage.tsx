@@ -113,6 +113,16 @@ export const TrainerManagePage: React.FC = () => {
     }
   };
 
+  // Roster Filter State
+  const [rosterSearch, setRosterSearch] = useState('');
+  const [rosterProfession, setRosterProfession] = useState('ALL');
+
+  const handleAdminCsvExport = (includePii: boolean = false) => {
+    const token = localStorage.getItem('token');
+    const url = `${api.defaults.baseURL || '/api'}/users/export-csv?includePii=${includePii}&token=${token}`;
+    window.open(url, '_blank');
+  };
+
   // Load Learners whenever selectedCourseId or activeTab === 'learners' changes
   useEffect(() => {
     if (activeTab === 'learners' && selectedCourseId) {
@@ -568,19 +578,45 @@ export const TrainerManagePage: React.FC = () => {
           <div className="space-y-6">
             {/* Course Selector Bar & Export Button */}
             <div className="bg-surface p-4 rounded-2xl border border-border shadow-paper-sm flex flex-col md:flex-row gap-3 items-center justify-between">
-              <div className="flex items-center gap-2 w-full md:w-auto">
-                <span className="text-xs font-bold text-textSecondary uppercase">Select Course:</span>
+              <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-bold text-textSecondary uppercase">Select Course:</span>
+                  <select
+                    value={selectedCourseId}
+                    onChange={(e) => setSelectedCourseId(e.target.value)}
+                    className="px-3 py-2 bg-surface2 border border-border rounded-xl text-xs font-medium text-textPrimary focus:outline-none focus:border-primary"
+                  >
+                    {courses.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.title} ({c.status})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Profession Filter */}
                 <select
-                  value={selectedCourseId}
-                  onChange={(e) => setSelectedCourseId(e.target.value)}
+                  value={rosterProfession}
+                  onChange={(e) => setRosterProfession(e.target.value)}
                   className="px-3 py-2 bg-surface2 border border-border rounded-xl text-xs font-medium text-textPrimary focus:outline-none focus:border-primary"
                 >
-                  {courses.map((c) => (
-                    <option key={c.id} value={c.id}>
-                      {c.title} ({c.status})
-                    </option>
-                  ))}
+                  <option value="ALL">All Professions</option>
+                  <option value="STUDENT">Student</option>
+                  <option value="WORKING_PROFESSIONAL">Working Professional</option>
+                  <option value="FREELANCER">Freelancer</option>
+                  <option value="JOB_SEEKER">Job Seeker</option>
+                  <option value="ENTREPRENEUR">Entrepreneur</option>
+                  <option value="OTHER">Other</option>
                 </select>
+
+                {/* Search Bar */}
+                <input
+                  type="text"
+                  value={rosterSearch}
+                  onChange={(e) => setRosterSearch(e.target.value)}
+                  placeholder="Search learner name or email..."
+                  className="px-3 py-2 bg-surface2 border border-border rounded-xl text-xs text-textPrimary focus:outline-none focus:border-primary"
+                />
               </div>
 
               <button
@@ -613,89 +649,109 @@ export const TrainerManagePage: React.FC = () => {
                         <th className="p-4">Overall Progress</th>
                         <th className="p-4">Latest Quiz Score</th>
                         <th className="p-4">Last Activity</th>
-                        <th className="p-4">Pacing Diagnostic</th>
+                        <th className="p-4">Profile &amp; Diagnostic</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {roster.map((learner) => (
-                        <tr key={learner.id} className="hover:bg-surface2 transition">
-                          <td className="p-4">
-                            <div className="flex items-center gap-2.5">
-                              <Avatar
-                                user={{
-                                  id: learner.userId,
-                                  name: learner.name,
-                                  email: learner.email,
-                                  role: 'learner',
-                                  department: '',
-                                  jobRole: '',
-                                }}
-                                size="sm"
-                              />
-                              <div>
-                                <div className="font-bold text-textPrimary">{learner.name}</div>
-                                <div className="text-[11px] text-textSecondary">{learner.email}</div>
-                              </div>
-                            </div>
-                          </td>
-                          <td className="p-4">
-                            <span
-                              className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
-                                learner.status === 'completed'
-                                  ? 'bg-primarySoft text-primary border-primary/30'
-                                  : learner.status === 'in_progress'
-                                  ? 'bg-accentSoft text-accent border-accent/30'
-                                  : 'bg-surface2 text-textSecondary border-border'
-                              }`}
-                            >
-                              {learner.status}
-                            </span>
-                          </td>
-                          <td className="p-4 font-semibold">
-                            {learner.completedModulesCount} / {learner.totalModulesCount} Modules
-                          </td>
-                          <td className="p-4">
-                            <div className="flex items-center gap-2">
-                              <div className="w-24 h-2 bg-border rounded-full overflow-hidden border border-borderStrong">
-                                <div
-                                  className="h-full bg-primary rounded-full"
-                                  style={{ width: `${learner.progressPercent}%` }}
+                      {roster
+                        .filter((learner) => {
+                          const matchesSearch =
+                            learner.name.toLowerCase().includes(rosterSearch.toLowerCase()) ||
+                            learner.email.toLowerCase().includes(rosterSearch.toLowerCase());
+                          return matchesSearch;
+                        })
+                        .map((learner) => (
+                          <tr key={learner.id} className="hover:bg-surface2 transition">
+                            <td className="p-4">
+                              <div className="flex items-center gap-2.5">
+                                <Avatar
+                                  user={{
+                                    id: learner.userId,
+                                    name: learner.name,
+                                    email: learner.email,
+                                    role: 'learner',
+                                    department: '',
+                                    jobRole: '',
+                                  }}
+                                  size="sm"
                                 />
+                                <div>
+                                  <a
+                                    href={`/profile/${learner.userId}`}
+                                    className="font-bold text-textPrimary hover:text-primary hover:underline"
+                                  >
+                                    {learner.name}
+                                  </a>
+                                  <div className="text-[11px] text-textSecondary">{learner.email}</div>
+                                </div>
                               </div>
-                              <span className="text-primary font-bold">
-                                {learner.progressPercent}%
-                              </span>
-                            </div>
-                          </td>
-                          <td className="p-4 font-bold">
-                            {learner.latestQuizScore !== null ? (
+                            </td>
+                            <td className="p-4">
                               <span
-                                className={learner.latestQuizScore >= 70 ? 'text-primary' : 'text-danger'}
+                                className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase border ${
+                                  learner.status === 'completed'
+                                    ? 'bg-primarySoft text-primary border-primary/30'
+                                    : learner.status === 'in_progress'
+                                    ? 'bg-accentSoft text-accent border-accent/30'
+                                    : 'bg-surface2 text-textSecondary border-border'
+                                }`}
                               >
-                                {learner.latestQuizScore}%
+                                {learner.status}
                               </span>
-                            ) : (
-                              <span className="text-textSecondary font-normal">None</span>
-                            )}
-                          </td>
-                          <td className="p-4 text-textSecondary text-[11px]">
-                            {new Date(learner.lastActiveAt).toLocaleDateString()}
-                          </td>
-                          <td className="p-4">
-                            {learner.isStuck ? (
-                              <span className="px-2 py-1 rounded bg-accentSoft text-accent border border-accent/30 text-[10px] font-bold flex items-center gap-1 w-fit">
-                                <AlertTriangle className="w-3 h-3 text-accent" /> Stuck (&gt;7d Inactive)
-                              </span>
-                            ) : learner.status === 'completed' ? (
-                              <span className="text-primary text-[10px] font-semibold flex items-center gap-1">
-                                <CheckCircle2 className="w-3 h-3 text-primary" /> Completed Track
-                              </span>
-                            ) : (
-                              <span className="text-textSecondary text-[10px]">On Track</span>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
+                            </td>
+                            <td className="p-4 font-semibold">
+                              {learner.completedModulesCount} / {learner.totalModulesCount} Modules
+                            </td>
+                            <td className="p-4">
+                              <div className="flex items-center gap-2">
+                                <div className="w-24 h-2 bg-border rounded-full overflow-hidden border border-borderStrong">
+                                  <div
+                                    className="h-full bg-primary rounded-full"
+                                    style={{ width: `${learner.progressPercent}%` }}
+                                  />
+                                </div>
+                                <span className="text-primary font-bold">
+                                  {learner.progressPercent}%
+                                </span>
+                              </div>
+                            </td>
+                            <td className="p-4 font-bold">
+                              {learner.latestQuizScore !== null ? (
+                                <span
+                                  className={learner.latestQuizScore >= 70 ? 'text-primary' : 'text-danger'}
+                                >
+                                  {learner.latestQuizScore}%
+                                </span>
+                              ) : (
+                                <span className="text-textSecondary font-normal">None</span>
+                              )}
+                            </td>
+                            <td className="p-4 text-textSecondary text-[11px]">
+                              {new Date(learner.lastActiveAt).toLocaleDateString()}
+                            </td>
+                            <td className="p-4">
+                              <div className="flex items-center gap-2">
+                                <a
+                                  href={`/profile/${learner.userId}`}
+                                  className="px-2 py-1 bg-primarySoft text-primary border border-primary/30 rounded text-[10px] font-bold hover:bg-primary/20 transition"
+                                >
+                                  View Profile
+                                </a>
+                                {learner.isStuck ? (
+                                  <span className="px-2 py-1 rounded bg-accentSoft text-accent border border-accent/30 text-[10px] font-bold flex items-center gap-1">
+                                    <AlertTriangle className="w-3 h-3 text-accent" /> Stuck
+                                  </span>
+                                ) : learner.status === 'completed' ? (
+                                  <span className="text-primary text-[10px] font-semibold flex items-center gap-1">
+                                    <CheckCircle2 className="w-3 h-3 text-primary" /> Done
+                                  </span>
+                                ) : (
+                                  <span className="text-textSecondary text-[10px]">On Track</span>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
                     </tbody>
                   </table>
                 </div>

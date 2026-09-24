@@ -9,6 +9,7 @@ import enrollmentRoutes from './routes/enrollmentRoutes';
 import assessmentRoutes from './routes/assessmentRoutes';
 import forumRoutes from './routes/forumRoutes';
 import userRoutes from './routes/userRoutes';
+import profileRoutes from './routes/profileRoutes';
 import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
@@ -47,6 +48,7 @@ app.use('/api/assessments', assessmentRoutes);
 app.use('/api', assessmentRoutes); // Allows /api/certificates/my and /api/certificates/verify
 app.use('/api/forum', forumRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/profile', profileRoutes);
 
 // Error Handling Middleware
 app.use(errorHandler);

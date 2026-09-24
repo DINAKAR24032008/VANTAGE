@@ -30,6 +30,9 @@ export const LearnerDashboard: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [enrollingCourseId, setEnrollingCourseId] = useState<string | null>(null);
 
+  const [profileCompletion, setProfileCompletion] = useState<number>(100);
+  const [bannerDismissed, setBannerDismissed] = useState(false);
+
   useEffect(() => {
     if (user?.id) {
       loadDashboardData();
@@ -39,14 +42,16 @@ export const LearnerDashboard: React.FC = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      const [coursesRes, enrollsRes, certsRes] = await Promise.all([
+      const [coursesRes, enrollsRes, certsRes, profileRes] = await Promise.all([
         api.get('/courses'),
         api.get('/enrollments/my'),
         api.get('/certificates/my'),
+        api.get('/profile/me'),
       ]);
       setCourses(coursesRes.data);
       setEnrollments(enrollsRes.data);
       setCertificates(certsRes.data);
+      setProfileCompletion(profileRes.data.completionPercent || 100);
     } catch (err) {
       console.error('Failed to load dashboard data:', err);
     } finally {
@@ -100,6 +105,38 @@ export const LearnerDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-background py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+        {/* Dismissible Profile Completion Banner */}
+        {profileCompletion < 100 && !bannerDismissed && (
+          <div className="bg-primarySoft border border-primary/30 rounded-2xl p-4 text-textPrimary flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-paper-sm">
+            <div className="flex items-center gap-3">
+              <span className="text-xl">🎯</span>
+              <div>
+                <h4 className="text-xs font-bold text-primary">
+                  Profile {profileCompletion}% Complete
+                </h4>
+                <p className="text-xs text-textSecondary">
+                  Add your bio, achievements, and LinkedIn link to showcase your career accomplishments.
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Link
+                to="/profile"
+                className="px-3.5 py-1.5 bg-primary hover:bg-primaryHover text-primaryContrast rounded-xl text-xs font-bold transition shadow-paper-sm text-center"
+              >
+                Complete Profile
+              </Link>
+              <button
+                type="button"
+                onClick={() => setBannerDismissed(true)}
+                className="px-2.5 py-1.5 text-textSecondary hover:text-textPrimary text-xs font-semibold"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Welcome Hero Banner */}
         <div className="bg-surface rounded-3xl p-6 sm:p-8 text-textPrimary shadow-paper-sm relative overflow-hidden border border-border">
           <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 relative z-10">

@@ -165,31 +165,48 @@ export const Navbar: React.FC = () => {
               </button>
 
               {user ? (
-                <div className="flex items-center gap-3">
-                  <div className="hidden lg:block text-right">
+                <div className="flex items-center gap-3 relative">
+                  <Link
+                    to="/profile"
+                    className={`hidden lg:block text-right hover:opacity-80 transition ${
+                      isActive('/profile') ? 'text-primary font-bold' : ''
+                    }`}
+                  >
                     <div className="text-xs font-semibold text-textPrimary leading-tight">{user.name}</div>
                     <div className="text-[10px] text-primary font-bold capitalize">
-                      {user.role}
+                      {user.role} • Profile
                     </div>
+                  </Link>
+                  {/* Avatar & Profile Menu */}
+                  <div className="flex items-center gap-1.5">
+                    <Link
+                      to="/profile"
+                      title="View My Profile"
+                      className={`ring-0 focus:outline-none rounded-full p-0.5 transition ${
+                        isActive('/profile') ? 'ring-2 ring-primary' : ''
+                      }`}
+                    >
+                      <Avatar user={user} size="md" showRoleRing />
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => setShowAvatarModal(true)}
+                      className="p-1.5 rounded-lg text-textSecondary hover:text-textPrimary hover:bg-surface2 transition text-xs font-bold"
+                      title="Edit Avatar"
+                    >
+                      Edit Avatar
+                    </button>
+                    <button
+                      onClick={() => {
+                        logout();
+                        navigate('/login');
+                      }}
+                      className="p-2 rounded-lg text-textSecondary hover:text-danger hover:bg-dangerSoft border border-transparent transition"
+                      title="Sign Out"
+                    >
+                      <LogOut className="w-4 h-4" />
+                    </button>
                   </div>
-                  {/* Avatar with click to open modal */}
-                  <button
-                    onClick={() => setShowAvatarModal(true)}
-                    title="Edit your avatar"
-                    className="ring-0 focus:outline-none rounded-full"
-                  >
-                    <Avatar user={user} size="md" showRoleRing />
-                  </button>
-                  <button
-                    onClick={() => {
-                      logout();
-                      navigate('/login');
-                    }}
-                    className="p-2 rounded-lg text-textSecondary hover:text-danger hover:bg-dangerSoft border border-transparent transition"
-                    title="Sign Out"
-                  >
-                    <LogOut className="w-4 h-4" />
-                  </button>
                 </div>
               ) : (
                 <div className="flex items-center gap-2">
