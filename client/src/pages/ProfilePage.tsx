@@ -9,10 +9,12 @@ import { AchievementTimeline } from '../components/AchievementTimeline';
 import { ExperienceList } from '../components/ExperienceList';
 import { CertificateModal } from '../components/CertificateModal';
 import { CountrySelect } from '../components/CountrySelect';
+import { NotificationSettings } from '../components/NotificationSettings';
+import { UserListModal } from '../components/UserListModal';
 import { HeadingEmoji } from '../components/HeadingEmoji';
 import {
   User, MapPin, Briefcase, GraduationCap, Edit2, ShieldCheck, CheckCircle2,
-  ExternalLink, Eye, EyeOff, X, Check, Award, BookOpen
+  ExternalLink, Eye, EyeOff, X, Check, Award, BookOpen, Users, Share2, Lock, Globe, Ban, AtSign
 } from 'lucide-react';
 import { UserProfileData, UserSkillData, AchievementData, ExperienceData, Certificate } from '../types';
 
@@ -29,6 +31,19 @@ export const ProfilePage: React.FC = () => {
 
   const [loading, setLoading] = useState(true);
   const [selectedCertificate, setSelectedCertificate] = useState<Certificate | null>(null);
+
+  // Follow / Followers state
+  const [followersCount, setFollowersCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [accountVisibility, setAccountVisibility] = useState<'PUBLIC' | 'PRIVATE'>('PUBLIC');
+  const [shareToast, setShareToast] = useState(false);
+  const [userListModalTab, setUserListModalTab] = useState<'followers' | 'following' | null>(null);
+
+  // Username editing state
+  const [isUsernameModalOpen, setIsUsernameModalOpen] = useState(false);
+  const [usernameInput, setUsernameInput] = useState('');
+  const [usernameError, setUsernameError] = useState<string | null>(null);
+  const [usernameSaving, setUsernameSaving] = useState(false);
 
   // Edit Modals
   const [isHeaderModalOpen, setIsHeaderModalOpen] = useState(false);
@@ -64,20 +79,25 @@ export const ProfilePage: React.FC = () => {
       setCompletionPercent(res.data.completionPercent || 0);
 
       if (res.data.profile) {
+        const p = res.data.profile;
         setHeaderFormData({
-          fullName: res.data.profile.fullName || '',
-          country: res.data.profile.country || 'India',
-          state: res.data.profile.state || '',
-          city: res.data.profile.city || '',
-          profession: res.data.profile.profession || 'STUDENT',
-          bio: res.data.profile.bio || '',
+          fullName: p.fullName || '',
+          country: p.country || 'India',
+          state: p.state || '',
+          city: p.city || '',
+          profession: p.profession || 'STUDENT',
+          bio: p.bio || '',
         });
         setEduFormData({
-          highestDegree: res.data.profile.highestDegree || 'BACHELORS',
-          fieldOfStudy: res.data.profile.fieldOfStudy || '',
-          institution: res.data.profile.institution || '',
-          graduationYear: res.data.profile.graduationYear || new Date().getFullYear(),
+          highestDegree: p.highestDegree || 'BACHELORS',
+          fieldOfStudy: p.fieldOfStudy || '',
+          institution: p.institution || '',
+          graduationYear: p.graduationYear || new Date().getFullYear(),
         });
+        setFollowersCount(p.followersCount ?? 0);
+        setFollowingCount(p.followingCount ?? 0);
+        setAccountVisibility(p.accountVisibility ?? 'PUBLIC');
+        setUsernameInput(p.username ?? '');
       }
     } catch (err) {
       console.error('Failed to load profile:', err);
@@ -126,6 +146,40 @@ export const ProfilePage: React.FC = () => {
     }
   };
 
+  const handleSaveUsername = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setUsernameError(null);
+    setUsernameSaving(true);
+    try {
+      await api.patch('/profile/me/username', { username: usernameInput.trim() });
+      setIsUsernameModalOpen(false);
+      fetchProfileData();
+    } catch (err: any) {
+      setUsernameError(err.response?.data?.error || 'Failed to update username');
+    } finally {
+      setUsernameSaving(false);
+    }
+  };
+
+  const handleVisibilityToggle = async () => {
+    const next = accountVisibility === 'PUBLIC' ? 'PRIVATE' : 'PUBLIC';
+    try {
+      await api.patch('/profile/me/visibility', { accountVisibility: next });
+      setAccountVisibility(next);
+    } catch (err: any) {
+      console.error('Failed to update visibility', err);
+    }
+  };
+
+  const handleShareProfile = () => {
+    if (!profile?.username) return;
+    const url = `${window.location.origin}/u/${profile.username}`;
+    navigator.clipboard.writeText(url).then(() => {
+      setShareToast(true);
+      setTimeout(() => setShareToast(false), 3000);
+    });
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -157,6 +211,30 @@ export const ProfilePage: React.FC = () => {
                 </span>
               </div>
 
+              {/* @username row */}
+              <div className="flex items-center gap-2 mt-1">
+                {profile?.username ? (
+                  <button
+                    type="button"
+                    onClick={() => { setUsernameInput(profile.username!); setIsUsernameModalOpen(true); }}
+                    className="flex items-center gap-1 text-xs text-primary font-semibold hover:underline"
+                    title="Edit your public username"
+                  >
+                    <AtSign className="w-3.5 h-3.5" />
+                    {profile.username}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setIsUsernameModalOpen(true)}
+                    className="flex items-center gap-1 text-xs text-textSecondary hover:text-primary font-semibold"
+                  >
+                    <AtSign className="w-3.5 h-3.5" />
+                    Set username
+                  </button>
+                )}
+              </div>
+
               <div className="flex items-center gap-4 mt-2 text-xs text-textSecondary flex-wrap">
                 {(profile?.city || profile?.country) && (
                   <span className="flex items-center gap-1 font-medium">
@@ -174,19 +252,39 @@ export const ProfilePage: React.FC = () => {
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsHeaderModalOpen(true)}
-            className="w-full sm:w-auto px-4 py-2 bg-primarySoft hover:bg-primary/20 text-primary border border-primary/30 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-paper-sm"
-          >
-            <Edit2 className="w-3.5 h-3.5" />
-            Edit Profile
-          </button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            {profile?.username && (
+              <button
+                type="button"
+                onClick={handleShareProfile}
+                className="px-4 py-2 bg-surface2 hover:bg-border/50 text-textSecondary border border-border rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5"
+                title="Copy public profile link"
+              >
+                <Share2 className="w-3.5 h-3.5" />
+                Share Profile
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => setIsHeaderModalOpen(true)}
+              className="w-full sm:w-auto px-4 py-2 bg-primarySoft hover:bg-primary/20 text-primary border border-primary/30 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 shadow-paper-sm"
+            >
+              <Edit2 className="w-3.5 h-3.5" />
+              Edit Profile
+            </button>
+          </div>
         </div>
+
+        {/* Share toast */}
+        {shareToast && (
+          <div className="absolute bottom-3 left-1/2 -translate-x-1/2 px-4 py-2 bg-primary text-primaryContrast text-xs font-bold rounded-xl shadow-paper-md animate-in fade-in duration-200">
+            ✅ Profile link copied!
+          </div>
+        )}
       </div>
 
       {/* Completion Meter & Stats Bar */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="md:col-span-2">
           <ProfileCompletionMeter
             profile={profile}
@@ -195,7 +293,7 @@ export const ProfilePage: React.FC = () => {
           />
         </div>
 
-        {/* Stats Card */}
+        {/* Learning Stats Card */}
         <div className="bg-surface p-5 rounded-2xl border border-border shadow-paper-sm flex flex-col justify-between">
           <h4 className="text-sm font-bold text-textPrimary flex items-center gap-1.5 mb-3">
             <Award className="w-4 h-4 text-primary" />
@@ -216,6 +314,34 @@ export const ProfilePage: React.FC = () => {
               <span className="block text-xl font-black text-accent">{stats.certificateCount}</span>
               <span className="text-[10px] text-textSecondary uppercase font-bold">Certs</span>
             </div>
+          </div>
+        </div>
+
+        {/* Followers / Following Card */}
+        <div className="bg-surface p-5 rounded-2xl border border-border shadow-paper-sm flex flex-col justify-between">
+          <h4 className="text-sm font-bold text-textPrimary flex items-center gap-1.5 mb-3">
+            <Users className="w-4 h-4 text-primary" />
+            Network
+          </h4>
+          <div className="grid grid-cols-2 gap-2 text-center">
+            <button
+              type="button"
+              onClick={() => setUserListModalTab('followers')}
+              className="p-3 bg-surface2 rounded-xl border border-border hover:bg-border/50 transition cursor-pointer"
+            >
+              <span className="block text-xl font-black text-primary">{followersCount}</span>
+              <span className="text-[10px] text-textSecondary uppercase font-bold">Followers</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setUserListModalTab('following')}
+              className="p-3 bg-surface2 rounded-xl border border-border hover:bg-border/50 transition cursor-pointer"
+            >
+              <span className="block text-xl font-black text-emerald-600 dark:text-emerald-400">
+                {followingCount}
+              </span>
+              <span className="text-[10px] text-textSecondary uppercase font-bold">Following</span>
+            </button>
           </div>
         </div>
       </div>
@@ -387,6 +513,30 @@ export const ProfilePage: React.FC = () => {
           Control what information is visible when other learners view your public profile page.
         </p>
 
+        {/* Account Visibility (PUBLIC / PRIVATE) */}
+        <div className="mb-3 flex items-center justify-between p-3 bg-surface2 rounded-xl border border-border">
+          <div>
+            <span className="text-xs font-bold text-textPrimary block">Account Visibility</span>
+            <span className="text-[11px] text-textSecondary">
+              {accountVisibility === 'PUBLIC'
+                ? 'Your profile is public — anyone with the link can view it.'
+                : 'Your profile is private — only approved followers can view it.'}
+            </span>
+          </div>
+          <button
+            type="button"
+            onClick={handleVisibilityToggle}
+            className={`px-3 py-1.5 rounded-xl text-xs font-bold transition flex items-center gap-1 ${
+              accountVisibility === 'PUBLIC'
+                ? 'bg-primarySoft text-primary border border-primary/30'
+                : 'bg-surface text-textSecondary border border-border'
+            }`}
+          >
+            {accountVisibility === 'PUBLIC' ? <Globe className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+            {accountVisibility === 'PUBLIC' ? 'Public' : 'Private'}
+          </button>
+        </div>
+
         <div className="space-y-3">
           {[
             {
@@ -441,6 +591,82 @@ export const ProfilePage: React.FC = () => {
           Note: Your official email, phone number, and date of birth are ALWAYS private and never shown to other learners.
         </p>
       </div>
+
+      {/* Notification Preferences & Reminders */}
+      <NotificationSettings />
+
+      {/* Username Edit Modal */}
+      {isUsernameModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-overlay backdrop-blur-xs">
+          <div className="bg-surface w-full max-w-sm p-6 rounded-2xl border border-border shadow-paper-lg">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-base font-bold text-textPrimary flex items-center gap-2">
+                <AtSign className="w-4 h-4 text-primary" />
+                Set Your Username
+              </h3>
+              <button onClick={() => { setIsUsernameModalOpen(false); setUsernameError(null); }} className="p-1 text-textSecondary hover:text-textPrimary rounded-lg">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <p className="text-[11px] text-textSecondary mb-4">
+              Your username is used in your public profile URL: <code className="bg-surface2 px-1 rounded">/u/your-username</code>
+              <br />3–30 chars, lowercase letters, numbers and dots only. Max 2 changes per 30 days.
+            </p>
+
+            {usernameError && (
+              <div className="mb-3 p-3 bg-dangerSoft border border-danger/30 text-danger text-xs rounded-xl">
+                {usernameError}
+              </div>
+            )}
+
+            <form onSubmit={handleSaveUsername} className="space-y-3">
+              <div>
+                <label className="block text-xs font-medium text-textSecondary mb-1">Username</label>
+                <div className="flex items-center gap-1">
+                  <span className="text-textSecondary text-sm font-bold">@</span>
+                  <input
+                    type="text"
+                    required
+                    minLength={3}
+                    maxLength={30}
+                    pattern="[a-z0-9.]+"
+                    value={usernameInput}
+                    onChange={(e) => setUsernameInput(e.target.value.toLowerCase())}
+                    className="flex-1 px-3 py-2 bg-surface2 border border-border rounded-xl text-xs text-textPrimary focus:outline-none focus:border-primary"
+                    placeholder="your.username"
+                  />
+                </div>
+              </div>
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => { setIsUsernameModalOpen(false); setUsernameError(null); }}
+                  className="px-4 py-2 bg-surface2 text-textSecondary hover:text-textPrimary rounded-xl text-xs font-semibold"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={usernameSaving}
+                  className="px-4 py-2 bg-primary hover:bg-primaryHover text-primaryContrast rounded-xl text-xs font-bold shadow-paper-sm transition disabled:opacity-60"
+                >
+                  {usernameSaving ? 'Saving…' : 'Save Username'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Followers / Following List Modal */}
+      {userListModalTab && profile?.username && (
+        <UserListModal
+          username={profile.username}
+          initialTab={userListModalTab}
+          isOwner={true}
+          onClose={() => { setUserListModalTab(null); fetchProfileData(); }}
+        />
+      )}
 
       {/* Header Info Edit Modal */}
       {isHeaderModalOpen && (

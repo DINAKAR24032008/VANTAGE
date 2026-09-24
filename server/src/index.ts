@@ -10,6 +10,13 @@ import assessmentRoutes from './routes/assessmentRoutes';
 import forumRoutes from './routes/forumRoutes';
 import userRoutes from './routes/userRoutes';
 import profileRoutes from './routes/profileRoutes';
+import notificationRoutes from './routes/notificationRoutes';
+import demoRoutes from './routes/demoRoutes';
+import followRoutes from './routes/followRoutes';
+import peopleRoutes from './routes/peopleRoutes';
+import smsRoutes from './routes/smsRoutes';
+import otpRoutes from './routes/otpRoutes';
+import { ReminderService } from './services/reminderService';
 import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
@@ -48,6 +55,15 @@ app.use('/api/assessments', assessmentRoutes);
 app.use('/api/forum', forumRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/notifications', notificationRoutes);
+app.use('/api/demo', demoRoutes);
+app.use('/api', followRoutes);
+app.use('/api/people', peopleRoutes);
+app.use('/api/sms', smsRoutes);
+app.use('/api/otp', otpRoutes);
+
+// Initialize Reminder Scheduler
+ReminderService.initScheduler();
 
 // Error Handling Middleware
 app.use(errorHandler);

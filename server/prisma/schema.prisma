@@ -19,6 +19,7 @@ model User {
   avatar           String                 @default("{\"type\":\"initials\",\"bgColor\":\"#163016\"}") // JSON string
   phone            String?                @unique
   phoneVerified    Boolean                @default(false)
+  phoneVerifiedAt  DateTime?
   timezone         String                 @default("Asia/Kolkata")
   createdAt        DateTime               @default(now())
   profile          CompetencyProfile?
@@ -28,6 +29,7 @@ model User {
   experiences      Experience[]
   notifications    Notification[]
   notificationPref NotificationPreference?
+  notificationLogs NotificationLog[]
   enrollments      Enrollment[]
   attempts         AssessmentAttempt[]
   certificates     Certificate[]
@@ -36,32 +38,83 @@ model User {
 }
 
 model UserProfile {
-  id                 String    @id @default(uuid())
-  userId             String    @unique
-  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  fullName           String
-  dateOfBirth        DateTime?
-  country            String    @default("India")
-  state              String?
-  city               String    @default("")
-  profession         String    @default("OTHER") // STUDENT, WORKING_PROFESSIONAL, FREELANCER, JOB_SEEKER, ENTREPRENEUR, OTHER
-  highestDegree      String    @default("NONE") // HIGH_SCHOOL, DIPLOMA, BACHELORS, MASTERS, DOCTORATE, OTHER, NONE
-  fieldOfStudy       String?
-  institution        String?
-  graduationYear     Int?
-  company            String?
-  jobTitle           String?
-  yearsOfExperience String?
-  bio                String?
-  linkedinUrl        String?
-  showcaseVisible    Boolean   @default(true)
-  linkedinVisible    Boolean   @default(true)
-  locationVisible    Boolean   @default(true)
-  educationVisible   Boolean   @default(true)
-  profileCompleted   Boolean   @default(false)
-  profileCompletedAt DateTime?
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  id                  String    @id @default(uuid())
+  userId              String    @unique
+  user                User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  username            String?   @unique
+  accountVisibility   String    @default("PUBLIC") // PUBLIC, PRIVATE
+  followersCount      Int       @default(0)
+  followingCount      Int       @default(0)
+  lastUsernameChange  DateTime?
+  usernameChangeCount Int       @default(0)
+  fullName            String
+  dateOfBirth         DateTime?
+  country             String    @default("India")
+  state               String?
+  city                String    @default("")
+  profession          String    @default("OTHER") // STUDENT, WORKING_PROFESSIONAL, FREELANCER, JOB_SEEKER, ENTREPRENEUR, OTHER
+  highestDegree       String    @default("NONE") // HIGH_SCHOOL, DIPLOMA, BACHELORS, MASTERS, DOCTORATE, OTHER, NONE
+  fieldOfStudy        String?
+  institution         String?
+  graduationYear      Int?
+  company             String?
+  jobTitle            String?
+  yearsOfExperience  String?
+  bio                 String?
+  linkedinUrl         String?
+  showcaseVisible     Boolean   @default(true)
+  linkedinVisible     Boolean   @default(true)
+  locationVisible     Boolean   @default(true)
+  educationVisible    Boolean   @default(true)
+  profileCompleted    Boolean   @default(false)
+  profileCompletedAt  DateTime?
+  streakCount         Int       @default(0)
+  lastActiveDate      String?
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([fullName])
+  @@index([username])
+  @@index([profession])
+  @@index([country])
+}
+
+model Follow {
+  id          String   @id @default(uuid())
+  followerId  String
+  followingId String
+  status      String   @default("ACCEPTED") // ACCEPTED, PENDING
+  createdAt   DateTime @default(now())
+
+  @@unique([followerId, followingId])
+  @@index([followerId])
+  @@index([followingId])
+  @@index([status])
+}
+
+model Block {
+  id        String   @id @default(uuid())
+  blockerId String
+  blockedId String
+  createdAt DateTime @default(now())
+
+  @@unique([blockerId, blockedId])
+  @@index([blockerId])
+  @@index([blockedId])
+}
+
+model FollowRateLimit {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  windowStart DateTime @default(now())
+  count       Int      @default(0)
+}
+
+model SearchRateLimit {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  windowStart DateTime @default(now())
+  count       Int      @default(0)
 }
 
 model UserSkill {
@@ -104,9 +157,10 @@ model Experience {
 
 model OtpCode {
   id         String    @id @default(uuid())
+  userId     String?
   phone      String
   codeHash   String
-  purpose    String // REGISTER, LOGIN
+  purpose    String // REGISTER, LOGIN, VERIFY_PHONE
   expiresAt  DateTime
   attempts   Int       @default(0)
   consumedAt DateTime?
@@ -118,23 +172,47 @@ model Notification {
   id        String    @id @default(uuid())
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  type      String // ENROLLMENT, DAILY_REMINDER, SYSTEM
+  type      String // ENROLLMENT, DAILY_REMINDER, SYSTEM, NEW_FOLLOWER, FOLLOW_REQUEST, FOLLOW_ACCEPTED
   title     String
   message   String
   courseId  String?
+  actionUrl String?
   readAt    DateTime?
   createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model NotificationLog {
+  id                String   @id @default(uuid())
+  userId            String
+  channel           String // IN_APP, SMS
+  recipient         String // phone or userId
+  message           String
+  provider          String // CONSOLE, TWILIO, MSG91, FAST2SMS
+  providerMessageId String?
+  status            String // SENT, FAILED, SKIPPED, QUEUED
+  sentAt            DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, sentAt])
 }
 
 model NotificationPreference {
-  id                     String  @id @default(uuid())
-  userId                 String  @unique
-  user                   User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-  inAppEnabled           Boolean @default(true)
-  smsEnabled             Boolean @default(false)
-  dailyReminderEnabled   Boolean @default(true)
-  reminderTime           String  @default("09:00")
-  lastReminderSentOn     String?
+  id                   String  @id @default(uuid())
+  userId               String  @unique
+  user                 User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inAppEnabled         Boolean @default(true)
+  smsEnabled           Boolean @default(false)
+  dailyReminderEnabled Boolean @default(true)
+  reminderTime         String  @default("09:00")
+  timezone             String  @default("Asia/Kolkata")
+  quietHoursStart      String  @default("22:00")
+  quietHoursEnd        String  @default("07:00")
+  lastReminderSentOn   String?
+
+  @@index([userId])
 }
 
 model Competency {

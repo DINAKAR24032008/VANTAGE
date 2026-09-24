@@ -61,6 +61,8 @@ npm run dev
 
 Visit **`http://localhost:5173`** in your browser.
 
+> **Note:** The daily course reminder scheduler requires an always-on server instance (a host that sleeps or goes idle will miss background cron ticks). Production SMS delivery requires integration with an enterprise SMS provider gateway (e.g., Twilio or GupShup) and, in India, TRAI DLT registration. In dev/demo mode, SMS delivery is simulated via server console logging.
+
 ---
 
 ## 🐳 Containerized Deployment (Docker)

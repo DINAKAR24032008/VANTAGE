@@ -16,6 +16,9 @@ import { ForumPage } from './pages/ForumPage';
 import { ProfileWizardPage } from './pages/ProfileWizardPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { PublicProfilePage } from './pages/PublicProfilePage';
+import { PublicUsernameProfilePage } from './pages/PublicUsernameProfilePage';
+import { ReminderDemoPage } from './pages/ReminderDemoPage';
+import { NetworkPage } from './pages/NetworkPage';
 
 const RootRedirect: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -60,6 +63,14 @@ export const App: React.FC = () => {
                   }
                 />
                 <Route
+                  path="/network"
+                  element={
+                    <ProtectedRoute>
+                      <NetworkPage />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
                   path="/profile/:userId"
                   element={
                     <ProtectedRoute>
@@ -67,6 +78,17 @@ export const App: React.FC = () => {
                     </ProtectedRoute>
                   }
                 />
+                <Route
+                  path="/demo/reminders"
+                  element={
+                    <ProtectedRoute>
+                      <ReminderDemoPage />
+                    </ProtectedRoute>
+                  }
+                />
+
+                {/* Public @username profiles — no auth required */}
+                <Route path="/u/:username" element={<PublicUsernameProfilePage />} />
 
                 {/* Learner Flow */}
                 <Route
