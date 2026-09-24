@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import { sqlCourseModules, sqlAssessments } from './sqlCourseData';
 
 const prisma = new PrismaClient();
 
@@ -27,13 +28,22 @@ async function main() {
 
   const passwordHash = await bcrypt.hash('Password@123', 10);
 
-  // 1. Create Competency: Python Programming
+  // 1. Create Competencies
   console.log('Creating Competency: Python Programming...');
   const compPython = await prisma.competency.create({
     data: {
       name: 'Python Programming',
       category: 'Software Development',
       description: 'Foundational programming in Python: development environment setup, variables, data types, operators, conditionals, loops, functions, and hands-on application projects.',
+    },
+  });
+
+  console.log('Creating Competency: SQL / Database Fundamentals...');
+  const compSql = await prisma.competency.create({
+    data: {
+      name: 'SQL / Database Fundamentals',
+      category: 'Data Engineering & Databases',
+      description: 'Foundational relational database concepts using MySQL: server and Workbench installation, schema design, SELECT queries, row filtering with WHERE and pattern matching, aggregate filtering with HAVING, and result set pagination with LIMIT and Aliasing.',
     },
   });
 
@@ -250,6 +260,7 @@ async function main() {
       userId: learner1.id,
       skills: JSON.stringify([
         { competencyId: compPython.id, competencyName: compPython.name, currentLevel: 1 },
+        { competencyId: compSql.id, competencyName: compSql.name, currentLevel: 1 },
       ]),
     },
   });
@@ -280,6 +291,7 @@ async function main() {
           title: 'Installing Jupyter Notebooks/Anaconda | Python for Beginners',
           durationMinutes: 10,
           order: 1,
+          attribution: 'Video: Alex The Analyst — Python for Beginners, used under CC BY (reuse allowed).',
           videoUrl: 'https://www.youtube.com/watch?v=WUeBzT43JyY',
           contentMarkdown: `# Module 1: Installing Jupyter Notebooks/Anaconda
 
@@ -299,6 +311,7 @@ Welcome to **Python for Beginners**! In this module, you will learn how to set u
           title: 'Variables in Python | Python for Beginners',
           durationMinutes: 13,
           order: 2,
+          attribution: 'Video: Alex The Analyst — Python for Beginners, used under CC BY (reuse allowed).',
           videoUrl: 'https://www.youtube.com/watch?v=pHOH7UfOhbE',
           contentMarkdown: `# Module 2: Variables in Python
 
@@ -319,6 +332,7 @@ Variables serve as named storage locations in memory for holding data. Learn how
           title: 'Data Types in Python | Python for Beginners',
           durationMinutes: 22,
           order: 3,
+          attribution: 'Video: Alex The Analyst — Python for Beginners, used under CC BY (reuse allowed).',
           videoUrl: 'https://www.youtube.com/watch?v=ppsCxnNm-JI',
           contentMarkdown: `# Module 3: Data Types in Python
 
@@ -340,6 +354,7 @@ Python features versatile built-in data types categorized into numeric, text, bo
           title: 'Comparison, Logical, and Membership Operators in Python | Python for Beginners',
           durationMinutes: 7,
           order: 4,
+          attribution: 'Video: Alex The Analyst — Python for Beginners, used under CC BY (reuse allowed).',
           videoUrl: 'https://www.youtube.com/watch?v=lPVke-p4S7s',
           contentMarkdown: `# Module 4: Comparison, Logical, and Membership Operators
 
@@ -359,6 +374,7 @@ Operators empower programs to evaluate expressions, compare quantities, and test
           title: 'If Else Statements in Python | Python for Beginners',
           durationMinutes: 7,
           order: 5,
+          attribution: 'Video: Alex The Analyst — Python for Beginners, used under CC BY (reuse allowed).',
           videoUrl: 'https://www.youtube.com/watch?v=-BOBedcjySI',
           contentMarkdown: `# Module 5: If Else Statements in Python
 
@@ -379,6 +395,7 @@ Control flow allows programs to execute distinct code paths based on dynamic run
           title: 'For Loops in Python | Python for Beginners',
           durationMinutes: 9,
           order: 6,
+          attribution: 'Video: Alex The Analyst — Python for Beginners, used under CC BY (reuse allowed).',
           videoUrl: 'https://www.youtube.com/watch?v=zmIdC0_0BgY',
           contentMarkdown: `# Module 6: For Loops in Python
 
@@ -398,6 +415,7 @@ For loops provide definite iteration over sequential collections such as lists, 
           title: 'While Loops in Python | Python for Beginners',
           durationMinutes: 6,
           order: 7,
+          attribution: 'Video: Alex The Analyst — Python for Beginners, used under CC BY (reuse allowed).',
           videoUrl: 'https://www.youtube.com/watch?v=ECduJk00mUU',
           contentMarkdown: `# Module 7: While Loops in Python
 
@@ -417,6 +435,7 @@ While loops execute statements repeatedly as long as a boolean test condition re
           title: 'Functions in Python | Python for Beginners',
           durationMinutes: 13,
           order: 8,
+          attribution: 'Video: Alex The Analyst — Python for Beginners, used under CC BY (reuse allowed).',
           videoUrl: 'https://www.youtube.com/watch?v=zvzjaqMBEso',
           contentMarkdown: `# Module 8: Functions in Python
 
@@ -438,6 +457,7 @@ Functions encapsulate modular, reusable blocks of code that can be invoked acros
           title: 'Converting Data Types in Python | Python for Beginners',
           durationMinutes: 7,
           order: 9,
+          attribution: 'Video: Alex The Analyst — Python for Beginners, used under CC BY (reuse allowed).',
           videoUrl: 'https://www.youtube.com/watch?v=B63bN2cLVLM',
           contentMarkdown: `# Module 9: Converting Data Types in Python
 
@@ -458,6 +478,7 @@ Type casting and conversion allow seamless data transformation between strings, 
           title: 'Building a BMI Calculator with Python | Python Projects for Beginners',
           durationMinutes: 14,
           order: 10,
+          attribution: 'Video: Alex The Analyst — Python for Beginners, used under CC BY (reuse allowed).',
           videoUrl: 'https://www.youtube.com/watch?v=ey1VNjU0YbM',
           contentMarkdown: `# Module 10: Hands-on Project: Building a BMI Calculator
 
@@ -1510,8 +1531,40 @@ Apply everything learned throughout the course to create a complete, interactive
     },
   });
 
-  // 5. Seed Welcome Forum Post
-  console.log('Seeding Discussion Forum Post...');
+  // 5. Create Course: SQL for Beginners (5 Modules)
+  console.log('Creating Course: SQL for Beginners (5 Modules)...');
+  const sqlCourse = await prisma.course.create({
+    data: {
+      title: 'SQL for Beginners',
+      description: 'A hands-on, beginner-friendly video course covering fundamental relational database concepts with MySQL — environment setup with MySQL Workbench, crafting basic SELECT statements, row filtering with WHERE and pattern matching, aggregate filtering with HAVING, and result pagination with LIMIT and Aliasing. Built from Alex The Analyst’s curated MySQL Beginner Series.',
+      difficultyLevel: 'Beginner',
+      status: 'published',
+      trainerId: trainer.id,
+      contentUrl: 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&w=1200&q=80',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1544383835-bda2bc66a55d?auto=format&fit=crop&w=600&q=80',
+      modules: JSON.stringify(sqlCourseModules),
+      competencyTags: {
+        create: [
+          { competencyId: compSql.id, targetLevel: 2 },
+        ],
+      },
+    },
+  });
+
+  console.log('Creating 5 SQL Module Quizzes (10 questions each, 50 questions total)...');
+  for (const a of sqlAssessments) {
+    await prisma.assessment.create({
+      data: {
+        courseId: sqlCourse.id,
+        moduleId: a.moduleId,
+        passThreshold: a.passThreshold,
+        questions: JSON.stringify(a.questions),
+      },
+    });
+  }
+
+  // 6. Seed Discussion Forum Posts
+  console.log('Seeding Discussion Forum Posts...');
   const post1 = await prisma.forumPost.create({
     data: {
       title: 'Welcome to Python for Beginners with Alex The Analyst!',
@@ -1530,8 +1583,28 @@ Apply everything learned throughout the course to create a complete, interactive
     },
   });
 
+  const postSql = await prisma.forumPost.create({
+    data: {
+      title: 'Welcome to SQL for Beginners (MySQL Fundamentals)!',
+      body: 'Welcome to the SQL for Beginners series! This 5-module curriculum covers installing MySQL Server and Workbench, mastering SELECT queries, row filtering with WHERE, aggregate filtering with HAVING, and pagination with LIMIT and Aliasing. Each module includes a dedicated 10-question evaluation quiz to test your mastery.',
+      authorId: trainer.id,
+      courseId: sqlCourse.id,
+    },
+  });
+
+  await prisma.forumPost.create({
+    data: {
+      body: 'Looking forward to learning MySQL database design and querying alongside the Python course!',
+      authorId: learner1.id,
+      courseId: sqlCourse.id,
+      parentPostId: postSql.id,
+    },
+  });
+
   console.log('✅ Seeding completed successfully!');
-  console.log('Course "Python for Beginners" created with 10 modules & 10 quizzes (100 questions total, 10 per module).');
+  console.log('Courses created:');
+  console.log('  1. "Python for Beginners": 10 modules & 10 quizzes (100 questions total)');
+  console.log('  2. "SQL for Beginners": 5 modules & 5 quizzes (50 questions total)');
   console.log('Default credentials for testing:');
   console.log('  Admin:   admin@vantage.gov.in   / Password@123');
   console.log('  Trainer: trainer@vantage.gov.in / Password@123');

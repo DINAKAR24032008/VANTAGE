@@ -542,10 +542,12 @@ export const CourseDetailPage: React.FC = () => {
                       </span>
                       <span>Duration: ~{activeModule.durationMinutes} mins</span>
                     </div>
-                    {/* Creative Commons License Attribution */}
-                    <div className="text-[11px] text-textSecondary bg-background/80 px-3 py-2 rounded-xl border border-surfaceBorder font-mono">
-                      <span>Video: <strong className="text-textPrimary">Alex The Analyst — Python for Beginners</strong>, used under <strong className="text-accent">CC BY</strong> (Creative Commons Attribution reuse allowed).</span>
-                    </div>
+                    {/* Creative Commons License Attribution (shown only when module has attribution) */}
+                    {activeModule.attribution && (
+                      <div className="text-[11px] text-textSecondary bg-background/80 px-3 py-2 rounded-xl border border-border font-mono">
+                        <span>{activeModule.attribution}</span>
+                      </div>
+                    )}
                   </div>
                 )}
 

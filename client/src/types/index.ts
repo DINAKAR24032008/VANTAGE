@@ -135,6 +135,7 @@ export interface CourseModule {
   videoUrl?: string;
   contentMarkdown?: string;
   order: number;
+  attribution?: string;
 }
 
 export interface CourseCompetencyTag {
