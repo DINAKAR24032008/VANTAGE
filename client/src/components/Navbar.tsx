@@ -12,9 +12,13 @@ import {
   Sun,
   Moon,
   ShieldCheck,
+  Users,
+  Search,
 } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { AvatarModal } from './AvatarModal';
+import { NotificationBell } from './NotificationBell';
+import { NavbarSearchModal } from './NavbarSearchModal';
 
 export const Navbar: React.FC = () => {
   const { user, logout, switchDemoUser } = useAuth();
@@ -23,6 +27,7 @@ export const Navbar: React.FC = () => {
   const location = useLocation();
   const [isSwitching, setIsSwitching] = useState(false);
   const [showAvatarModal, setShowAvatarModal] = useState(false);
+  const [showSearchModal, setShowSearchModal] = useState(false);
 
   const handleRoleSwitch = async (role: 'admin' | 'trainer' | 'learner') => {
     setIsSwitching(true);
@@ -80,6 +85,17 @@ export const Navbar: React.FC = () => {
                     <BookOpen className="w-3.5 h-3.5" /> All Courses
                   </Link>
 
+                  <Link
+                    to="/network"
+                    className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                      isActive('/network')
+                        ? 'bg-primarySoft text-primary border border-primary/30 font-bold'
+                        : 'text-textSecondary hover:text-textPrimary hover:bg-surface2'
+                    }`}
+                  >
+                    <Users className="w-3.5 h-3.5" /> Network
+                  </Link>
+
                   {(user.role === 'trainer' || user.role === 'admin') && (
                     <Link
                       to="/trainer"
@@ -122,6 +138,19 @@ export const Navbar: React.FC = () => {
 
             {/* Right Action Bar */}
             <div className="flex items-center gap-3">
+              {/* Quick Search Icon Button */}
+              {user && (
+                <button
+                  type="button"
+                  onClick={() => setShowSearchModal(true)}
+                  className="p-2 text-textSecondary hover:text-textPrimary hover:bg-surface2 rounded-xl border border-border transition flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-primary/40"
+                  aria-label="Search people"
+                  title="Search people (Name, Username, Profession)"
+                >
+                  <Search className="w-4 h-4" />
+                </button>
+              )}
+
               {/* Quick Role Switcher */}
               <div className="flex items-center bg-surface2 border border-border rounded-xl p-1 gap-1">
                 <span className="text-[10px] text-textSecondary font-bold uppercase tracking-wider px-2 flex items-center gap-1">
@@ -178,6 +207,9 @@ export const Navbar: React.FC = () => {
                   <Moon className="w-4 h-4 text-textSecondary" />
                 )}
               </button>
+
+              {/* Notification Bell */}
+              {user && <NotificationBell />}
 
               {user ? (
                 <div className="flex items-center gap-3 relative">
@@ -241,6 +273,14 @@ export const Navbar: React.FC = () => {
       {/* Avatar Setup Modal */}
       {user && showAvatarModal && (
         <AvatarModal onClose={() => setShowAvatarModal(false)} />
+      )}
+
+      {/* Quick Search Modal */}
+      {user && (
+        <NavbarSearchModal
+          isOpen={showSearchModal}
+          onClose={() => setShowSearchModal(false)}
+        />
       )}
     </>
   );

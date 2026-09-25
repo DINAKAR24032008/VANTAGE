@@ -57,6 +57,31 @@ export const calculateCompletionPercentage = (profile: any): number => {
   return Math.min(100, score);
 };
 
+export async function generateUniqueUsername(name: string, userId: string): Promise<string> {
+  let base = name
+    .toLowerCase()
+    .replace(/[^a-z0-9._]/g, '.')
+    .replace(/\.+/g, '.')
+    .replace(/^\.|\.$/g, '');
+  if (base.length < 3) base = `user.${base || 'learner'}`;
+  if (base.length > 25) base = base.substring(0, 25);
+
+  let candidate = base;
+  let suffix = 1;
+
+  while (true) {
+    const existing = await prisma.userProfile.findFirst({
+      where: {
+        username: candidate,
+        NOT: { userId },
+      },
+    });
+    if (!existing) return candidate;
+    candidate = `${base}${suffix}`;
+    suffix++;
+  }
+}
+
 export class ProfileController {
   // Helper: Map Prisma error P2003 (foreign key) and P2002 safely
   private static handleControllerError(res: Response, err: any) {
@@ -90,23 +115,33 @@ export class ProfileController {
       return { user: null, profile: null, userNotFound: true };
     }
 
-    const isTrainer = user.role === 'trainer';
+    const isTrainerOrAdmin = user.role === 'trainer' || user.role === 'admin';
 
     try {
-      const profile = await prisma.userProfile.upsert({
-        where: { userId },
-        create: {
-          user: { connect: { id: userId } },
-          fullName: user.name || 'Vantage Learner',
-          country: 'India',
-          city: '',
-          profession: isTrainer ? 'WORKING_PROFESSIONAL' : 'STUDENT',
-          showcaseVisible: isTrainer,
-          linkedinVisible: isTrainer,
-          profileCompleted: false,
-        },
-        update: {},
-      });
+      let profile = await prisma.userProfile.findUnique({ where: { userId } });
+      if (!profile) {
+        const generatedUsername = await generateUniqueUsername(user.name, userId);
+        profile = await prisma.userProfile.create({
+          data: {
+            user: { connect: { id: userId } },
+            fullName: user.name || 'Vantage Learner',
+            username: generatedUsername,
+            accountVisibility: isTrainerOrAdmin ? 'PUBLIC' : 'PRIVATE',
+            country: 'India',
+            city: '',
+            profession: isTrainerOrAdmin ? 'WORKING_PROFESSIONAL' : 'STUDENT',
+            showcaseVisible: isTrainerOrAdmin,
+            linkedinVisible: isTrainerOrAdmin,
+            profileCompleted: false,
+          },
+        });
+      } else if (!profile.username) {
+        const generatedUsername = await generateUniqueUsername(user.name, userId);
+        profile = await prisma.userProfile.update({
+          where: { id: profile.id },
+          data: { username: generatedUsername },
+        });
+      }
       return { user, profile, userNotFound: false };
     } catch (err: any) {
       if (err.code === 'P2002') {
@@ -652,7 +687,311 @@ export class ProfileController {
         publicData.certificates = certificates;
       }
 
+        return res.json(publicData);
+    } catch (err: any) {
+      return ProfileController.handleControllerError(res, err);
+    }
+  }
+
+  /**
+   * GET /api/u/:username
+   * Public profile resolution by @username with server-side privacy enforcement
+   */
+  static async getProfileByUsername(req: AuthenticatedRequest, res: Response) {
+    try {
+      const usernameParam = Array.isArray(req.params.username) ? req.params.username[0] : String(req.params.username);
+      const cleanUsername = usernameParam.toLowerCase().trim();
+
+      const profile = await prisma.userProfile.findUnique({
+        where: { username: cleanUsername },
+        include: { user: true },
+      });
+
+      if (!profile || !profile.user) {
+        return res.status(404).json({ message: 'Profile not found', code: 'NOT_FOUND' });
+      }
+
+      const targetUserId = profile.userId;
+      const targetUser = profile.user;
+      const viewerId = req.user?.userId;
+
+      // 1. Block Check in EITHER direction
+      if (viewerId) {
+        const blockExists = await prisma.block.findFirst({
+          where: {
+            OR: [
+              { blockerId: viewerId, blockedId: targetUserId },
+              { blockerId: targetUserId, blockedId: viewerId },
+            ],
+          },
+        });
+
+        if (blockExists) {
+          return res.status(404).json({ message: 'Profile not found', code: 'NOT_FOUND' });
+        }
+      }
+
+      // 2. Roles & Relationship resolution
+      const isOwner = viewerId === targetUserId;
+      const isAdmin = req.user?.role === 'admin';
+
+      let isFollowedByMe = false;
+      let isPending = false;
+      let followsMe = false;
+
+      if (viewerId) {
+        const follow1 = await prisma.follow.findUnique({
+          where: { followerId_followingId: { followerId: viewerId, followingId: targetUserId } },
+        });
+        if (follow1) {
+          isFollowedByMe = follow1.status === 'ACCEPTED';
+          isPending = follow1.status === 'PENDING';
+        }
+
+        const follow2 = await prisma.follow.findUnique({
+          where: { followerId_followingId: { followerId: targetUserId, followingId: viewerId } },
+        });
+        if (follow2) {
+          followsMe = follow2.status === 'ACCEPTED';
+        }
+      }
+
+      // 3. Privacy Enforcement (PUBLIC vs PRIVATE)
+      const visibility = profile.accountVisibility || (targetUser.role === 'learner' ? 'PRIVATE' : 'PUBLIC');
+      const canAccessPrivateDetails = isOwner || isAdmin || isFollowedByMe;
+
+      if (visibility === 'PRIVATE' && !canAccessPrivateDetails) {
+        return res.json({
+          id: targetUser.id,
+          name: profile.fullName || targetUser.name,
+          username: profile.username,
+          role: targetUser.role,
+          avatar: targetUser.avatar,
+          profession: profile.profession,
+          followersCount: profile.followersCount || 0,
+          followingCount: profile.followingCount || 0,
+          accountVisibility: 'PRIVATE',
+          isPrivateAccount: true,
+          isFollowedByMe: false,
+          isPending,
+          followsMe,
+          isOwner,
+        });
+      }
+
+      // 4. Public Profile or Authorized Viewer response (respecting per-section toggles)
+      const publicData: any = {
+        id: targetUser.id,
+        name: profile.fullName || targetUser.name,
+        username: profile.username,
+        role: targetUser.role,
+        avatar: targetUser.avatar,
+        profession: profile.profession,
+        company: profile.company,
+        jobTitle: profile.jobTitle,
+        bio: profile.bio,
+        followersCount: profile.followersCount || 0,
+        followingCount: profile.followingCount || 0,
+        accountVisibility: visibility,
+        isPrivateAccount: false,
+        isFollowedByMe,
+        isPending,
+        followsMe,
+        isOwner,
+      };
+
+      if (isOwner || isAdmin || profile.locationVisible) {
+        publicData.country = profile.country;
+        publicData.state = profile.state;
+        publicData.city = profile.city;
+      }
+
+      if (isOwner || isAdmin || profile.educationVisible) {
+        publicData.highestDegree = profile.highestDegree;
+        publicData.fieldOfStudy = profile.fieldOfStudy;
+        publicData.institution = profile.institution;
+        publicData.graduationYear = profile.graduationYear;
+      }
+
+      if (isOwner || isAdmin || profile.linkedinVisible) {
+        publicData.linkedinUrl = profile.linkedinUrl;
+      }
+
+      if (isOwner || isAdmin || profile.showcaseVisible) {
+        const [skills, achievements, experiences, certificates] = await Promise.all([
+          prisma.userSkill.findMany({ where: { userId: targetUserId, hidden: false } }),
+          prisma.achievement.findMany({ where: { userId: targetUserId }, orderBy: { date: 'desc' } }),
+          prisma.experience.findMany({ where: { userId: targetUserId }, orderBy: { startDate: 'desc' } }),
+          prisma.certificate.findMany({
+            where: { userId: targetUserId },
+            include: { course: { select: { title: true } } },
+            orderBy: { issuedAt: 'desc' },
+          }),
+        ]);
+        publicData.skills = skills;
+        publicData.achievements = achievements;
+        publicData.experiences = experiences;
+        publicData.certificates = certificates;
+      }
+
+      // PII (phone, email, dateOfBirth) returned ONLY for owner or admin
+      if (isOwner || isAdmin) {
+        publicData.email = targetUser.email;
+        publicData.phone = targetUser.phone;
+        publicData.dateOfBirth = profile.dateOfBirth;
+      }
+
       return res.json(publicData);
+    } catch (err: any) {
+      return ProfileController.handleControllerError(res, err);
+    }
+  }
+
+  /**
+   * PUT /api/profile/me/username
+   * Update username with validation, reserved words check, and rate limit (2 changes / 30 days)
+   */
+  static async updateUsername(req: AuthenticatedRequest, res: Response) {
+    try {
+      if (!req.user) return res.status(401).json({ message: 'Unauthorized', code: 'USER_NOT_FOUND' });
+
+      const userId = req.user.userId;
+      const { username } = req.body;
+
+      if (!username || typeof username !== 'string') {
+        return res.status(400).json({ message: 'Username is required', code: 'VALIDATION_ERROR' });
+      }
+
+      const cleanUsername = username.toLowerCase().trim();
+
+      // Format validation: 3-30 chars, letters, numbers, underscore, dot only
+      const formatRegex = /^[a-z0-9._]{3,30}$/;
+      if (!formatRegex.test(cleanUsername)) {
+        return res.status(400).json({
+          message: 'Username must be 3-30 characters long and contain only lowercase letters, numbers, dots, and underscores.',
+          code: 'INVALID_USERNAME_FORMAT',
+        });
+      }
+
+      // Reserved words check (case-insensitive)
+      const reserved = [
+        'admin', 'vantage', 'support', 'api', 'official', 'help', 'root',
+        'null', 'undefined', 'system', 'login', 'register', 'dashboard',
+        'catalog', 'courses', 'trainer', 'forum', 'profile', 'onboarding',
+        'u', 'demo', 'settings', 'network',
+      ];
+      if (reserved.includes(cleanUsername)) {
+        return res.status(400).json({
+          message: `The username "${cleanUsername}" is reserved and cannot be used.`,
+          code: 'RESERVED_USERNAME',
+        });
+      }
+
+      // Resolve profile
+      const { profile } = await ProfileController.getOrCreateUserProfile(userId);
+      if (!profile) return res.status(404).json({ message: 'Profile not found', code: 'NOT_FOUND' });
+
+      if (profile.username === cleanUsername) {
+        return res.json({ message: 'Username unchanged', username: cleanUsername });
+      }
+
+      // Check username uniqueness
+      const existing = await prisma.userProfile.findFirst({
+        where: {
+          username: cleanUsername,
+          NOT: { userId },
+        },
+      });
+
+      if (existing) {
+        return res.status(400).json({ message: `Username "@${cleanUsername}" is already taken.`, code: 'USERNAME_TAKEN' });
+      }
+
+      // Rate limit check: Max 2 changes per 30 days
+      const now = new Date();
+      if (profile.lastUsernameChange) {
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+        if (profile.lastUsernameChange > thirtyDaysAgo && profile.usernameChangeCount >= 2) {
+          return res.status(400).json({
+            message: 'You can only change your username 2 times per 30 days.',
+            code: 'RATE_LIMIT_EXCEEDED',
+          });
+        }
+      }
+
+      const updated = await prisma.userProfile.update({
+        where: { userId },
+        data: {
+          username: cleanUsername,
+          lastUsernameChange: now,
+          usernameChangeCount: (profile.usernameChangeCount || 0) + 1,
+        },
+      });
+
+      return res.json({
+        message: 'Username updated successfully',
+        username: updated.username,
+      });
+    } catch (err: any) {
+      return ProfileController.handleControllerError(res, err);
+    }
+  }
+
+  /**
+   * PUT /api/profile/me/visibility
+   * Update account visibility (PUBLIC / PRIVATE). Switching to PUBLIC auto-accepts pending requests.
+   */
+  static async updateVisibility(req: AuthenticatedRequest, res: Response) {
+    try {
+      if (!req.user) return res.status(401).json({ message: 'Unauthorized', code: 'USER_NOT_FOUND' });
+
+      const userId = req.user.userId;
+      const { accountVisibility } = req.body;
+
+      if (!accountVisibility || !['PUBLIC', 'PRIVATE'].includes(accountVisibility)) {
+        return res.status(400).json({ message: 'accountVisibility must be PUBLIC or PRIVATE', code: 'VALIDATION_ERROR' });
+      }
+
+      const { profile } = await ProfileController.getOrCreateUserProfile(userId);
+      if (!profile) return res.status(404).json({ message: 'Profile not found', code: 'NOT_FOUND' });
+
+      const wasPrivate = profile.accountVisibility === 'PRIVATE';
+
+      await prisma.$transaction(async (tx) => {
+        await tx.userProfile.update({
+          where: { userId },
+          data: { accountVisibility },
+        });
+
+        // If switching from PRIVATE to PUBLIC, auto-accept all pending follow requests
+        if (wasPrivate && accountVisibility === 'PUBLIC') {
+          const pendingRequests = await tx.follow.findMany({
+            where: { followingId: userId, status: 'PENDING' },
+          });
+
+          for (const reqRecord of pendingRequests) {
+            await tx.follow.update({
+              where: { id: reqRecord.id },
+              data: { status: 'ACCEPTED' },
+            });
+
+            await tx.userProfile.update({
+              where: { userId },
+              data: { followersCount: { increment: 1 } },
+            });
+
+            await tx.userProfile.update({
+              where: { userId: reqRecord.followerId },
+              data: { followingCount: { increment: 1 } },
+            });
+          }
+        }
+      });
+
+      return res.json({
+        message: `Account visibility updated to ${accountVisibility}`,
+        accountVisibility,
+      });
     } catch (err: any) {
       return ProfileController.handleControllerError(res, err);
     }

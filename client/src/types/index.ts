@@ -11,6 +11,7 @@ export interface UserProfileData {
   id?: string;
   userId?: string;
   fullName: string;
+  username?: string | null;
   dateOfBirth?: string | null;
   country: string;
   state?: string | null;
@@ -31,6 +32,10 @@ export interface UserProfileData {
   educationVisible: boolean;
   profileCompleted: boolean;
   profileCompletedAt?: string | null;
+  // Followers system
+  accountVisibility?: 'PUBLIC' | 'PRIVATE';
+  followersCount?: number;
+  followingCount?: number;
 }
 
 export interface UserSkillData {
@@ -323,5 +328,87 @@ export interface CourseInsightsResponse {
   courseTitle: string;
   totalAssessments: number;
   moduleInsights: ModuleQuizInsight[];
+}
+
+export interface AppNotification {
+  id: string;
+  userId: string;
+  type: 'ENROLLMENT' | 'DAILY_REMINDER' | 'SYSTEM' | 'NEW_FOLLOWER' | 'FOLLOW_REQUEST' | 'FOLLOW_ACCEPTED';
+  title: string;
+  message: string;
+  courseId?: string | null;
+  actionUrl?: string | null;
+  readAt?: string | null;
+  createdAt: string;
+}
+
+export interface NotificationPreferenceData {
+  id?: string;
+  userId?: string;
+  inAppEnabled: boolean;
+  smsEnabled: boolean;
+  dailyReminderEnabled: boolean;
+  reminderTime: string;
+  timezone: string;
+  quietHoursStart: string;
+  quietHoursEnd: string;
+  lastReminderSentOn?: string | null;
+}
+
+export interface SchedulerLogEntryData {
+  id: string;
+  timestamp: string;
+  userId: string;
+  userName: string;
+  action: 'PROCESSED' | 'SKIPPED' | 'CREATED' | 'ERROR';
+  reason: string;
+  details?: string;
+}
+
+// ── Followers / Following ─────────────────────────────────────────────────────
+
+export type FollowStatus = 'NONE' | 'PENDING' | 'ACCEPTED';
+export type AccountVisibility = 'PUBLIC' | 'PRIVATE';
+
+export interface PublicUserProfile {
+  userId: string;
+  username: string | null;
+  fullName: string;
+  profession: string;
+  bio: string | null;
+  country: string | null;
+  city: string | null;
+  followersCount: number;
+  followingCount: number;
+  accountVisibility: AccountVisibility;
+  showcaseVisible: boolean;
+  linkedinVisible: boolean;
+  educationVisible: boolean;
+  locationVisible: boolean;
+  // relations (optional)
+  skills?: UserSkillData[];
+  achievements?: AchievementData[];
+  experiences?: ExperienceData[];
+  // viewer state
+  followStatus?: FollowStatus;
+  isBlocked?: boolean;
+}
+
+export interface FollowListUser {
+  userId: string;
+  username: string | null;
+  fullName: string;
+  profession: string;
+  role: string;
+  followStatus: FollowStatus;
+}
+
+export interface FollowRequestItem {
+  followId: string;
+  followerId: string;
+  username: string | null;
+  fullName: string;
+  profession: string;
+  createdAt: string;
 }
 

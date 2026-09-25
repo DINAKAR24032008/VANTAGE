@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import { sqlCourseModules, sqlAssessments } from './sqlCourseData';
 
 const prisma = new PrismaClient();
@@ -69,6 +70,7 @@ async function main() {
     data: {
       userId: admin.id,
       fullName: admin.name,
+      username: 'admin.user',
       country: 'India',
       city: 'New Delhi',
       profession: 'WORKING_PROFESSIONAL',
@@ -100,6 +102,7 @@ async function main() {
     data: {
       userId: trainer.id,
       fullName: trainer.name,
+      username: 'sarah.jenkins',
       country: 'India',
       state: 'Karnataka',
       city: 'Bengaluru',
@@ -136,6 +139,7 @@ async function main() {
     data: {
       userId: trainerMet.id,
       fullName: trainerMet.name,
+      username: 'ananya.sen',
       country: 'India',
       city: 'Kolkata',
       profession: 'WORKING_PROFESSIONAL',
@@ -167,6 +171,7 @@ async function main() {
     data: {
       userId: learner1.id,
       fullName: learner1.name,
+      username: 'alex.morgan',
       country: 'India',
       state: 'Tamil Nadu',
       city: 'Erode',
@@ -248,6 +253,7 @@ async function main() {
     data: {
       userId: learner2.id,
       fullName: learner2.name,
+      username: 'priya.sharma',
       country: 'India',
       city: '',
       profession: 'OTHER',
@@ -1610,8 +1616,167 @@ Apply everything learned throughout the course to create a complete, interactive
     });
   }
 
-  // 6. Seed Discussion Forum Posts
-  console.log('Seeding Discussion Forum Posts...');
+  // 6. Create Course: Web Architecture & REST API Design (for demo & reminder testing)
+  console.log('Creating Course: Web Architecture & REST API Design...');
+  const webCourse = await prisma.course.create({
+    data: {
+      title: 'Web Architecture & REST API Design',
+      description: 'Master full-stack HTTP fundamentals, REST API design, middleware patterns, microservices, and database integration.',
+      difficultyLevel: 'Intermediate',
+      status: 'published',
+      trainerId: trainer.id,
+      contentUrl: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=1200&q=80',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1555066931-4365d14bab8c?auto=format&fit=crop&w=600&q=80',
+      modules: JSON.stringify([
+        { id: 'mod-web-1', title: 'HTTP Protocol & REST Principles', durationMinutes: 25, order: 1 },
+        { id: 'mod-web-2', title: 'Express.js Routing & Middleware', durationMinutes: 35, order: 2 },
+      ]),
+    },
+  });
+
+  // Learner 3: Reminders Turned OFF
+  const learner3 = await prisma.user.create({
+    data: {
+      name: 'Rahul Verma',
+      email: 'learner3@vantage.gov.in',
+      passwordHash,
+      role: 'learner',
+      department: 'General',
+      jobRole: 'Student',
+      gender: 'male',
+      avatar: JSON.stringify({ type: 'preset', presetId: 'm2', bgColor: '#1E293B' }),
+      phone: '+919999900004',
+      phoneVerified: true,
+    },
+  });
+
+  await prisma.userProfile.create({
+    data: {
+      userId: learner3.id,
+      fullName: learner3.name,
+      username: 'rahul.verma',
+      country: 'India',
+      city: 'Delhi',
+      profession: 'STUDENT',
+      profileCompleted: true,
+    },
+  });
+
+  // 7. Notification Preferences for Demo Users
+  console.log('Seeding Notification Preferences...');
+
+  // Alex Morgan (learner1): Reminders ON (09:00), 1 in-progress (40%), 1 not-started
+  await prisma.notificationPreference.create({
+    data: {
+      userId: learner1.id,
+      inAppEnabled: true,
+      smsEnabled: true,
+      dailyReminderEnabled: true,
+      reminderTime: '09:00',
+      timezone: 'Asia/Kolkata',
+      quietHoursStart: '22:00',
+      quietHoursEnd: '07:00',
+    },
+  });
+
+  // Priya Sharma (learner2): Reminders ON, but all courses COMPLETED
+  await prisma.notificationPreference.create({
+    data: {
+      userId: learner2.id,
+      inAppEnabled: true,
+      smsEnabled: false,
+      dailyReminderEnabled: true,
+      reminderTime: '09:00',
+      timezone: 'Asia/Kolkata',
+      quietHoursStart: '22:00',
+      quietHoursEnd: '07:00',
+    },
+  });
+
+  // Rahul Verma (learner3): Reminders OFF
+  await prisma.notificationPreference.create({
+    data: {
+      userId: learner3.id,
+      inAppEnabled: true,
+      smsEnabled: false,
+      dailyReminderEnabled: false,
+      reminderTime: '09:00',
+      timezone: 'Asia/Kolkata',
+    },
+  });
+
+  // Admin & Trainer default prefs
+  await prisma.notificationPreference.create({
+    data: { userId: admin.id, dailyReminderEnabled: false },
+  });
+  await prisma.notificationPreference.create({
+    data: { userId: trainer.id, dailyReminderEnabled: false },
+  });
+
+  // 8. Demo Enrollments and Certificate
+  console.log('Seeding Demo Enrollments and Certificate...');
+  
+  // Alex Morgan (learner1):
+  // Course 1: In-Progress (40%)
+  await prisma.enrollment.create({
+    data: {
+      userId: learner1.id,
+      courseId: pythonCourse.id,
+      status: 'in_progress',
+      progressPercent: 40,
+      completedModules: JSON.stringify(['mod-py-1', 'mod-py-2']),
+      updatedAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000), // 1 day ago
+    },
+  });
+
+  // Course 2: Not Started (0%)
+  await prisma.enrollment.create({
+    data: {
+      userId: learner1.id,
+      courseId: webCourse.id,
+      status: 'not_started',
+      progressPercent: 0,
+      completedModules: JSON.stringify([]),
+    },
+  });
+
+  // Priya Sharma (learner2): All courses COMPLETED (must get NO reminder)
+  await prisma.enrollment.create({
+    data: {
+      userId: learner2.id,
+      courseId: pythonCourse.id,
+      status: 'completed',
+      progressPercent: 100,
+      completedModules: JSON.stringify(['mod-py-1', 'mod-py-2', 'mod-py-3', 'mod-py-4', 'mod-py-5', 'mod-py-6']),
+      completedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+    },
+  });
+
+  // Rahul Verma (learner3): In progress course, but reminders disabled
+  await prisma.enrollment.create({
+    data: {
+      userId: learner3.id,
+      courseId: pythonCourse.id,
+      status: 'in_progress',
+      progressPercent: 50,
+      completedModules: JSON.stringify(['mod-py-1', 'mod-py-2', 'mod-py-3']),
+    },
+  });
+
+  const certNumber = 'VT-2026-PY-100842';
+  await prisma.certificate.create({
+    data: {
+      userId: learner2.id,
+      courseId: pythonCourse.id,
+      certificateNumber: certNumber,
+      issuedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
+      verificationHash: crypto.createHash('sha256').update(`${learner2.id}:${pythonCourse.id}:${certNumber}`).digest('hex'),
+      certificateUrl: `/certificates/${certNumber}.pdf`,
+    },
+  });
+
+  // 9. Seed Discussion Forum Posts
+  console.log('Seeding Discussion Forum Threads...');
   const post1 = await prisma.forumPost.create({
     data: {
       title: 'Welcome to Python for Beginners with Alex The Analyst!',
@@ -1652,11 +1817,13 @@ Apply everything learned throughout the course to create a complete, interactive
   console.log('Courses created:');
   console.log('  1. "Python for Beginners": 10 modules & 10 quizzes (100 questions total)');
   console.log('  2. "SQL for Beginners": 5 modules & 5 quizzes (50 questions total)');
+  console.log('  3. "Web Architecture & REST API Design": 2 modules');
   console.log('Default credentials for testing:');
-  console.log('  Admin:   admin@vantage.gov.in   / Password@123');
-  console.log('  Trainer: trainer@vantage.gov.in / Password@123');
-  console.log('  Learner: learner1@vantage.gov.in / Password@123');
-  console.log('  Learner: learner@vantage.gov.in  / Password@123');
+  console.log('  Admin:     admin@vantage.gov.in    / Password@123');
+  console.log('  Trainer:   trainer@vantage.gov.in  / Password@123');
+  console.log('  Learner 1: learner1@vantage.gov.in / Password@123 (Reminders ON, 40% active course)');
+  console.log('  Learner 2: learner@vantage.gov.in  / Password@123 (All courses COMPLETED)');
+  console.log('  Learner 3: learner3@vantage.gov.in / Password@123 (Reminders OFF)');
 }
 
 main()

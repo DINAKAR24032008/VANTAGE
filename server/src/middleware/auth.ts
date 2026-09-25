@@ -29,7 +29,7 @@ export const authenticateToken = (
 
 export const optionalAuthenticateToken = (
   req: AuthenticatedRequest,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): void => {
   const authHeader = req.headers['authorization'];
@@ -39,11 +39,10 @@ export const optionalAuthenticateToken = (
     try {
       const decoded = jwt.verify(token, JWT_SECRET) as AuthUserPayload;
       req.user = decoded;
-    } catch (err) {
-      // Token is invalid/expired; continue as unauthenticated
+    } catch {
+      // Ignore invalid token for optional auth
     }
   }
-
   next();
 };
 

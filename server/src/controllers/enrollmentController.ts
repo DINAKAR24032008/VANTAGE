@@ -51,6 +51,35 @@ export class EnrollmentController {
         },
       });
 
+      // Create instant ENROLLMENT notifications for learner and trainer (never fail enrollment on notification error)
+      try {
+        await prisma.notification.create({
+          data: {
+            userId: req.user.userId,
+            type: 'ENROLLMENT',
+            title: '🎓 Course Enrollment Confirmed',
+            message: `You're enrolled in ${course.title}. Start with Module 1.`,
+            courseId: course.id,
+            actionUrl: `/courses/${course.id}`,
+          },
+        });
+
+        if (course.trainerId && course.trainerId !== req.user.userId) {
+          await prisma.notification.create({
+            data: {
+              userId: course.trainerId,
+              type: 'ENROLLMENT',
+              title: '👥 New Student Enrolled',
+              message: `${req.user.name} enrolled in your course "${course.title}".`,
+              courseId: course.id,
+              actionUrl: `/trainer`,
+            },
+          });
+        }
+      } catch (notifErr) {
+        console.error('[Enrollment Notification Error]:', notifErr);
+      }
+
       return res.status(201).json({
         message: 'Successfully enrolled in course',
         enrollment: {
@@ -143,9 +172,40 @@ export class EnrollmentController {
         data: {
           completedModules: JSON.stringify(completedArray),
           progressPercent,
-          status: progressPercent === 100 && enrollment.status === 'completed' ? 'completed' : 'in_progress',
+          status: progressPercent === 100 ? 'completed' : 'in_progress',
         },
       });
+
+      // Update Streak Count on UserProfile if markCompleted is true
+      if (markCompleted) {
+        try {
+          const pref = await prisma.notificationPreference.findUnique({ where: { userId: req.user.userId } });
+          const tz = pref?.timezone || 'Asia/Kolkata';
+
+          const now = new Date();
+          const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(now);
+          const yesterday = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+          const yesterdayStr = new Intl.DateTimeFormat('en-CA', { timeZone: tz, year: 'numeric', month: '2-digit', day: '2-digit' }).format(yesterday);
+
+          const userProfile = await prisma.userProfile.findUnique({ where: { userId: req.user.userId } });
+
+          if (userProfile && userProfile.lastActiveDate !== todayStr) {
+            let newStreak = 1;
+            if (userProfile.lastActiveDate === yesterdayStr) {
+              newStreak = (userProfile.streakCount || 0) + 1;
+            }
+            await prisma.userProfile.update({
+              where: { userId: req.user.userId },
+              data: {
+                streakCount: newStreak,
+                lastActiveDate: todayStr,
+              },
+            });
+          }
+        } catch (streakErr) {
+          console.error('[Streak Update Error]:', streakErr);
+        }
+      }
 
       return res.json({
         message: 'Progress updated',
