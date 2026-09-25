@@ -127,6 +127,10 @@ export class AssessmentController {
       const course = await prisma.course.findUnique({ where: { id: courseId } });
       if (!course) return res.status(404).json({ error: 'Course not found' });
 
+      if (req.user?.role !== 'admin' && course.trainerId !== req.user?.userId) {
+        return res.status(403).json({ error: 'You are not authorized to view module assessment configuration for this course' });
+      }
+
       const assessment = await prisma.assessment.findFirst({
         where: { courseId, moduleId },
       });

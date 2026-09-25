@@ -12,21 +12,26 @@ export class CourseController {
       // If a trainer requests their own courses or specifies trainerId that matches their own ID, show drafts + published.
       // Otherwise, only show 'published' courses (unless logged in as admin).
       let statusFilter: any = 'published';
+      let effectiveTrainerId = trainerId ? String(trainerId) : undefined;
 
       if (authUser) {
         if (authUser.role === 'admin') {
           // Admin can see everything
           statusFilter = undefined;
-        } else if (authUser.role === 'trainer' && (myCourses === 'true' || trainerId === authUser.userId)) {
-          // Trainer looking at their own courses
-          statusFilter = undefined;
+        } else if (authUser.role === 'trainer') {
+          if (myCourses === 'true') {
+            statusFilter = undefined;
+            effectiveTrainerId = authUser.userId;
+          } else if (effectiveTrainerId === authUser.userId) {
+            statusFilter = undefined;
+          }
         }
       }
 
       const courses = await prisma.course.findMany({
         where: {
           ...(statusFilter ? { status: statusFilter } : {}),
-          ...(trainerId ? { trainerId: String(trainerId) } : {}),
+          ...(effectiveTrainerId ? { trainerId: effectiveTrainerId } : {}),
           ...(difficulty ? { difficultyLevel: String(difficulty) } : {}),
           ...(search
             ? {
@@ -95,6 +100,18 @@ export class CourseController {
               moduleId: true,
               passThreshold: true,
             },
+          },
+          materials: {
+            select: {
+              id: true,
+              courseId: true,
+              title: true,
+              fileName: true,
+              fileSize: true,
+              mimeType: true,
+              uploadedAt: true,
+            },
+            orderBy: { uploadedAt: 'asc' },
           },
           _count: {
             select: { enrollments: true },

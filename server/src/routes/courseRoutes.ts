@@ -1,7 +1,8 @@
 import { Router } from 'express';
 import { CourseController } from '../controllers/courseController';
+import { MaterialController } from '../controllers/materialController';
 import { authenticateToken, optionalAuthenticateToken, requireRole } from '../middleware/auth';
-import { uploadMiddleware } from '../services/storageService';
+import { uploadMiddleware, materialUploadMiddleware } from '../services/storageService';
 
 const router = Router();
 
@@ -50,5 +51,23 @@ router.post(
   uploadMiddleware.single('file'),
   CourseController.uploadMedia
 );
+
+// Course Study Materials (PDF)
+router.get('/:courseId/materials', optionalAuthenticateToken, MaterialController.getCourseMaterials);
+router.post(
+  '/:courseId/materials',
+  authenticateToken,
+  requireRole(['admin', 'trainer']),
+  materialUploadMiddleware.single('file'),
+  MaterialController.uploadMaterial
+);
+router.delete(
+  '/:courseId/materials/:materialId',
+  authenticateToken,
+  requireRole(['admin', 'trainer']),
+  MaterialController.deleteMaterial
+);
+router.get('/:courseId/materials/:materialId/download', authenticateToken, MaterialController.accessMaterial);
+router.get('/:courseId/materials/:materialId/view', authenticateToken, MaterialController.accessMaterial);
 
 export default router;

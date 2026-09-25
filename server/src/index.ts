@@ -10,6 +10,7 @@ import assessmentRoutes from './routes/assessmentRoutes';
 import forumRoutes from './routes/forumRoutes';
 import userRoutes from './routes/userRoutes';
 import profileRoutes from './routes/profileRoutes';
+import adminRoutes from './routes/adminRoutes';
 import { errorHandler } from './middleware/errorHandler';
 
 dotenv.config();
@@ -49,6 +50,7 @@ app.use('/api', assessmentRoutes); // Allows /api/certificates/my and /api/certi
 app.use('/api/forum', forumRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/profile', profileRoutes);
+app.use('/api/admin', adminRoutes);
 
 // Error Handling Middleware
 app.use(errorHandler);

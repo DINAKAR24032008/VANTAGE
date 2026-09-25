@@ -3,7 +3,7 @@ import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
 import { UserController } from '../controllers/userController';
-import { authenticateToken } from '../middleware/auth';
+import { authenticateToken, requireRole } from '../middleware/auth';
 
 const router = Router();
 
@@ -22,11 +22,11 @@ const upload = multer({
   },
 });
 
-// GET /api/users (list all users for roster/admin)
-router.get('/', authenticateToken, UserController.getAllUsers);
+// GET /api/users (list all users - strictly Admin only)
+router.get('/', authenticateToken, requireRole(['admin']), UserController.getAllUsers);
 
-// GET /api/users/export-csv (admin CSV download)
-router.get('/export-csv', authenticateToken, UserController.exportUsersCsv);
+// GET /api/users/export-csv (admin CSV download - strictly Admin only)
+router.get('/export-csv', authenticateToken, requireRole(['admin']), UserController.exportUsersCsv);
 
 // PUT /api/users/:id/avatar
 router.put('/:id/avatar', authenticateToken, UserController.updateAvatar);

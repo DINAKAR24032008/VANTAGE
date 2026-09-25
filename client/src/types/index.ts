@@ -180,6 +180,17 @@ export interface Course {
     moduleId?: string | null;
     passThreshold: number;
   }[];
+  materials?: CourseMaterial[];
+}
+
+export interface CourseMaterial {
+  id: string;
+  courseId: string;
+  title: string;
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedAt: string;
 }
 
 export interface Enrollment {

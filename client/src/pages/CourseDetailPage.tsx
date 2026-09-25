@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import { Course, CourseModule, Certificate } from '../types';
+import { Course, CourseModule, Certificate, CourseMaterial } from '../types';
 import { AssessmentModal } from '../components/AssessmentModal';
 import { CertificateModal } from '../components/CertificateModal';
 import { HeadingEmoji } from '../components/HeadingEmoji';
@@ -18,6 +18,15 @@ import {
   Sparkles,
   ArrowLeft,
   FileText,
+  Download,
+  Eye,
+  Trash2,
+  UploadCloud,
+  Lock,
+  Plus,
+  AlertCircle,
+  Check,
+  FileCode,
 } from 'lucide-react';
 
 function getYouTubeEmbedUrl(url?: string): string | null {
@@ -48,6 +57,13 @@ function getYouTubeEmbedUrl(url?: string): string | null {
   return `https://www.youtube-nocookie.com/embed/${videoId}${params}`;
 }
 
+function formatBytes(bytes: number): string {
+  if (!bytes) return '0 B';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
 export const CourseDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const { user } = useAuth();
@@ -64,6 +80,16 @@ export const CourseDetailPage: React.FC = () => {
   const [certificate, setCertificate] = useState<Certificate | null>(null);
   const [showCertificate, setShowCertificate] = useState<boolean>(false);
 
+  // Course Study Materials (PDF) State
+  const [materials, setMaterials] = useState<CourseMaterial[]>([]);
+  const [uploadModalOpen, setUploadModalOpen] = useState<boolean>(false);
+  const [uploadTitle, setUploadTitle] = useState<string>('');
+  const [uploadFile, setUploadFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState<boolean>(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [materialMessage, setMaterialMessage] = useState<string | null>(null);
+
   useEffect(() => {
     if (id) {
       fetchCourseDetails();
@@ -75,6 +101,7 @@ export const CourseDetailPage: React.FC = () => {
       if (showSpinner) setLoading(true);
       const res = await api.get(`/courses/${id}`);
       setCourse(res.data);
+      setMaterials(res.data.materials || []);
 
       if (res.data.userEnrollment) {
         setIsEnrolled(true);
@@ -190,6 +217,101 @@ export const CourseDetailPage: React.FC = () => {
       setShowAssessment(false);
     }
     fetchCourseDetails();
+  };
+
+  const canManageMaterials =
+    user?.role === 'admin' || (user?.role === 'trainer' && course?.trainerId === user?.id);
+  const canAccessMaterials = isEnrolled || canManageMaterials;
+
+  const handleAccessMaterial = async (mat: CourseMaterial, inline = false) => {
+    if (!canAccessMaterials) {
+      setMaterialMessage('Enrollment required: Please enroll in this course to view or download study materials.');
+      setTimeout(() => setMaterialMessage(null), 5000);
+      return;
+    }
+
+    try {
+      setDownloadingId(mat.id);
+      const res = await api.get(`/courses/${id}/materials/${mat.id}/download${inline ? '?view=true' : ''}`, {
+        responseType: 'blob',
+      });
+      const blob = new Blob([res.data], { type: 'application/pdf' });
+      const fileUrl = window.URL.createObjectURL(blob);
+
+      if (inline) {
+        window.open(fileUrl, '_blank');
+      } else {
+        const link = document.createElement('a');
+        link.href = fileUrl;
+        link.setAttribute('download', mat.fileName);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      }
+      setTimeout(() => window.URL.revokeObjectURL(fileUrl), 10000);
+    } catch (err: any) {
+      console.error('Failed to access material:', err);
+      setMaterialMessage('Failed to download study material. Please try again.');
+      setTimeout(() => setMaterialMessage(null), 5000);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const handleUploadMaterial = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!uploadFile || !id) return;
+
+    if (!uploadFile.name.toLowerCase().endsWith('.pdf')) {
+      setUploadError('Only PDF files (.pdf) are allowed.');
+      return;
+    }
+
+    if (uploadFile.size > 15 * 1024 * 1024) {
+      setUploadError('File size exceeds the 15 MB limit.');
+      return;
+    }
+
+    try {
+      setUploading(true);
+      setUploadError(null);
+      const formData = new FormData();
+      formData.append('file', uploadFile);
+      if (uploadTitle.trim()) {
+        formData.append('title', uploadTitle.trim());
+      }
+
+      const res = await api.post(`/courses/${id}/materials`, formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      setMaterials((prev) => [...prev, res.data.material]);
+      setUploadFile(null);
+      setUploadTitle('');
+      setUploadModalOpen(false);
+      setMaterialMessage('Study material uploaded successfully!');
+      setTimeout(() => setMaterialMessage(null), 4000);
+    } catch (err: any) {
+      console.error('Failed to upload material:', err);
+      setUploadError(err.response?.data?.error || 'Failed to upload PDF study material.');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeleteMaterial = async (matId: string) => {
+    if (!id || !window.confirm('Are you sure you want to permanently delete this study material?')) return;
+
+    try {
+      await api.delete(`/courses/${id}/materials/${matId}`);
+      setMaterials((prev) => prev.filter((m) => m.id !== matId));
+      setMaterialMessage('Study material deleted successfully.');
+      setTimeout(() => setMaterialMessage(null), 4000);
+    } catch (err: any) {
+      console.error('Failed to delete material:', err);
+      setMaterialMessage('Failed to delete material.');
+      setTimeout(() => setMaterialMessage(null), 4000);
+    }
   };
 
   if (loading) {
@@ -565,6 +687,127 @@ export const CourseDetailPage: React.FC = () => {
                   )}
                 </div>
 
+                {/* Course Study Materials (PDF) Section */}
+                <div className="bg-surface border border-border rounded-2xl p-5 shadow-paper-sm">
+                  <div className="flex items-center justify-between pb-3 border-b border-border/80">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                        <FileText className="w-4 h-4" />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-textPrimary flex items-center gap-2">
+                          Course Study Materials (PDF)
+                          <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-surface2 text-textSecondary border border-border">
+                            {materials.length} {materials.length === 1 ? 'file' : 'files'}
+                          </span>
+                        </h4>
+                        <p className="text-xs text-textSecondary mt-0.5">
+                          Official references, technical cheat-sheets, and offline study guides.
+                        </p>
+                      </div>
+                    </div>
+
+                    {canManageMaterials && (
+                      <button
+                        onClick={() => {
+                          setUploadError(null);
+                          setUploadFile(null);
+                          setUploadTitle('');
+                          setUploadModalOpen(true);
+                        }}
+                        className="px-3 py-1.5 bg-primary hover:bg-primaryHover text-primaryContrast rounded-lg text-xs font-semibold flex items-center gap-1.5 transition shadow-sm"
+                      >
+                        <Plus className="w-3.5 h-3.5" /> Upload PDF
+                      </button>
+                    )}
+                  </div>
+
+                  {materialMessage && (
+                    <div className="mt-3 p-3 rounded-lg text-xs flex items-center gap-2 bg-primary/10 text-primary border border-primary/20">
+                      <AlertCircle className="w-4 h-4 shrink-0" />
+                      <span>{materialMessage}</span>
+                    </div>
+                  )}
+
+                  <div className="mt-3 space-y-2">
+                    {materials.length === 0 ? (
+                      <div className="py-6 text-center text-xs text-textSecondary">
+                        No study materials uploaded for this course yet.
+                      </div>
+                    ) : (
+                      materials.map((mat) => (
+                        <div
+                          key={mat.id}
+                          className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl bg-surface2/60 hover:bg-surface2 border border-border/70 transition gap-3"
+                        >
+                          <div className="flex items-start gap-3 min-w-0">
+                            <div className="w-9 h-9 rounded-lg bg-red-500/10 text-red-500 border border-red-500/20 flex items-center justify-center shrink-0 mt-0.5">
+                              <FileText className="w-4 h-4" />
+                            </div>
+                            <div className="min-w-0">
+                              <p className="text-xs font-semibold text-textPrimary truncate">{mat.title}</p>
+                              <div className="flex items-center gap-2 mt-0.5 text-[11px] text-textSecondary">
+                                <span className="truncate max-w-[200px]">{mat.fileName}</span>
+                                <span>•</span>
+                                <span>{formatBytes(mat.fileSize)}</span>
+                                <span>•</span>
+                                <span>{new Date(mat.uploadedAt).toLocaleDateString()}</span>
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                            {canAccessMaterials ? (
+                              <>
+                                <button
+                                  onClick={() => handleAccessMaterial(mat, true)}
+                                  disabled={downloadingId === mat.id}
+                                  className="px-2.5 py-1.5 rounded-lg border border-border hover:bg-surface text-textSecondary hover:text-textPrimary text-xs font-medium flex items-center gap-1 transition"
+                                  title="View in new tab"
+                                >
+                                  <Eye className="w-3.5 h-3.5" />
+                                  <span>View</span>
+                                </button>
+                                <button
+                                  onClick={() => handleAccessMaterial(mat, false)}
+                                  disabled={downloadingId === mat.id}
+                                  className="px-2.5 py-1.5 rounded-lg bg-surface hover:bg-surface2 border border-border text-primary font-semibold text-xs flex items-center gap-1 transition shadow-paper-sm"
+                                  title="Download PDF"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                  <span>{downloadingId === mat.id ? 'Downloading...' : 'Download'}</span>
+                                </button>
+                              </>
+                            ) : (
+                              <button
+                                onClick={() => {
+                                  setMaterialMessage('Enrollment required: Please enroll in this course to view or download study materials.');
+                                  setTimeout(() => setMaterialMessage(null), 5000);
+                                }}
+                                className="px-2.5 py-1.5 rounded-lg bg-surface2 text-textSecondary text-xs font-medium flex items-center gap-1.5 border border-border opacity-85 hover:opacity-100"
+                                title="Enroll to unlock"
+                              >
+                                <Lock className="w-3.5 h-3.5 text-warning" />
+                                <span>Enroll to Access</span>
+                              </button>
+                            )}
+
+                            {canManageMaterials && (
+                              <button
+                                onClick={() => handleDeleteMaterial(mat.id)}
+                                className="p-1.5 rounded-lg text-textSecondary hover:text-red-500 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition"
+                                title="Delete study material"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+
                 {/* Quick Next Module CTA */}
                 <div className="flex items-center justify-between pt-4 border-t border-border">
                   <button
@@ -657,6 +900,101 @@ export const CourseDetailPage: React.FC = () => {
           certificate={certificate}
           onClose={() => setShowCertificate(false)}
         />
+      )}
+
+      {/* Upload Material Modal (Trainer / Admin) */}
+      {uploadModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-fade-in">
+          <div className="bg-surface border border-border rounded-2xl p-6 max-w-md w-full shadow-paper-lg space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-border">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center">
+                  <UploadCloud className="w-4 h-4" />
+                </div>
+                <h3 className="text-sm font-bold text-textPrimary">Upload Course Study Material</h3>
+              </div>
+              <button
+                onClick={() => setUploadModalOpen(false)}
+                className="text-textSecondary hover:text-textPrimary text-xs px-2 py-1 rounded"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleUploadMaterial} className="space-y-4">
+              <div>
+                <label className="block text-xs font-semibold text-textSecondary uppercase tracking-wider mb-1.5">
+                  Document Title (Optional)
+                </label>
+                <input
+                  type="text"
+                  value={uploadTitle}
+                  onChange={(e) => setUploadTitle(e.target.value)}
+                  placeholder="e.g., Python Quick Reference & Cheat Sheet"
+                  className="w-full px-3 py-2 text-xs rounded-xl bg-surface2 border border-border text-textPrimary focus:outline-none focus:border-primary"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-textSecondary uppercase tracking-wider mb-1.5">
+                  Select PDF File (Max 15 MB) *
+                </label>
+                <input
+                  type="file"
+                  accept=".pdf,application/pdf"
+                  required
+                  onChange={(e) => {
+                    const file = e.target.files?.[0] || null;
+                    setUploadFile(file);
+                    if (file && !uploadTitle.trim()) {
+                      setUploadTitle(file.name.replace(/\.pdf$/i, ''));
+                    }
+                  }}
+                  className="w-full text-xs text-textSecondary file:mr-3 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-primary file:text-primaryContrast hover:file:bg-primaryHover cursor-pointer"
+                />
+                {uploadFile && (
+                  <p className="mt-1 text-[11px] text-textSecondary">
+                    Selected: {uploadFile.name} ({formatBytes(uploadFile.size)})
+                  </p>
+                )}
+              </div>
+
+              {uploadError && (
+                <div className="p-3 rounded-lg text-xs bg-red-500/10 text-red-500 border border-red-500/20 flex items-center gap-2">
+                  <AlertCircle className="w-4 h-4 shrink-0" />
+                  <span>{uploadError}</span>
+                </div>
+              )}
+
+              <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
+                <button
+                  type="button"
+                  onClick={() => setUploadModalOpen(false)}
+                  className="px-3 py-1.5 rounded-lg border border-border text-xs font-medium text-textSecondary hover:bg-surface2"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={uploading || !uploadFile}
+                  className="px-4 py-1.5 bg-primary hover:bg-primaryHover text-primaryContrast rounded-lg text-xs font-bold transition shadow-paper-sm disabled:opacity-50 flex items-center gap-1.5"
+                >
+                  {uploading ? (
+                    <>
+                      <span className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="w-3.5 h-3.5" />
+                      Upload PDF
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

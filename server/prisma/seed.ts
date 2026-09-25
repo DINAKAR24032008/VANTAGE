@@ -12,6 +12,7 @@ async function main() {
   await prisma.certificate.deleteMany();
   await prisma.assessmentAttempt.deleteMany();
   await prisma.assessment.deleteMany();
+  await prisma.courseMaterial.deleteMany();
   await prisma.enrollment.deleteMany();
   await prisma.courseCompetencyTag.deleteMany();
   await prisma.course.deleteMany();
@@ -501,6 +502,29 @@ Apply everything learned throughout the course to create a complete, interactive
         ],
       },
     },
+  });
+
+  // Seed Study Materials for Python Course
+  console.log('Seeding Study Materials for Python Course...');
+  await prisma.courseMaterial.createMany({
+    data: [
+      {
+        courseId: pythonCourse.id,
+        title: 'Python Syntax & Built-ins Cheat Sheet',
+        fileName: 'Python_Cheat_Sheet_Vantage.pdf',
+        filePath: 'uploads/materials/Python_Cheat_Sheet_Vantage.pdf',
+        fileSize: 12450,
+        mimeType: 'application/pdf',
+      },
+      {
+        courseId: pythonCourse.id,
+        title: 'Python 3 Comprehensive Reference Guide',
+        fileName: 'Python_Beginners_Handbook.pdf',
+        filePath: 'uploads/materials/Python_Beginners_Handbook.pdf',
+        fileSize: 24500,
+        mimeType: 'application/pdf',
+      },
+    ],
   });
 
   // 4. Create 10 Module Assessments (10 questions each = 100 questions total, passThreshold: 70)
@@ -1549,6 +1573,29 @@ Apply everything learned throughout the course to create a complete, interactive
         ],
       },
     },
+  });
+
+  // Seed Study Materials for SQL Course
+  console.log('Seeding Study Materials for SQL Course...');
+  await prisma.courseMaterial.createMany({
+    data: [
+      {
+        courseId: sqlCourse.id,
+        title: 'MySQL Queries & Clauses Quick Reference',
+        fileName: 'MySQL_Commands_Quick_Reference.pdf',
+        filePath: 'uploads/materials/MySQL_Commands_Quick_Reference.pdf',
+        fileSize: 15200,
+        mimeType: 'application/pdf',
+      },
+      {
+        courseId: sqlCourse.id,
+        title: 'Relational Database Fundamentals Study Notes',
+        fileName: 'SQL_Beginner_Study_Guide.pdf',
+        filePath: 'uploads/materials/SQL_Beginner_Study_Guide.pdf',
+        fileSize: 28400,
+        mimeType: 'application/pdf',
+      },
+    ],
   });
 
   console.log('Creating 5 SQL Module Quizzes (10 questions each, 50 questions total)...');

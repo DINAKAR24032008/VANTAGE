@@ -16,6 +16,7 @@ import { ForumPage } from './pages/ForumPage';
 import { ProfileWizardPage } from './pages/ProfileWizardPage';
 import { ProfilePage } from './pages/ProfilePage';
 import { PublicProfilePage } from './pages/PublicProfilePage';
+import { AdminProgressPage } from './pages/AdminProgressPage';
 
 const RootRedirect: React.FC = () => {
   const { user, isLoading } = useAuth();
@@ -23,7 +24,8 @@ const RootRedirect: React.FC = () => {
   if (isLoading) return null;
   if (!user) return <Navigate to="/login" replace />;
   if (user.profileCompleted === false) return <Navigate to="/onboarding/profile" replace />;
-  if (user.role === 'admin' || user.role === 'trainer') return <Navigate to="/catalog" replace />;
+  if (user.role === 'admin') return <Navigate to="/admin" replace />;
+  if (user.role === 'trainer') return <Navigate to="/trainer" replace />;
   return <Navigate to="/dashboard" replace />;
 };
 
@@ -124,8 +126,15 @@ export const App: React.FC = () => {
                   }
                 />
 
-                {/* Legacy / Admin Redirect */}
-                <Route path="/admin" element={<Navigate to="/catalog" replace />} />
+                {/* Admin Portal: Platform Analytics & Aggregated Learner Progress */}
+                <Route
+                  path="/admin"
+                  element={
+                    <ProtectedRoute allowedRoles={['admin']}>
+                      <AdminProgressPage />
+                    </ProtectedRoute>
+                  }
+                />
 
                 {/* Root */}
                 <Route path="/" element={<RootRedirect />} />

@@ -170,6 +170,19 @@ model Course {
   assessments     Assessment[]
   certificates    Certificate[]
   forumPosts      ForumPost[]
+  materials       CourseMaterial[]
+}
+
+model CourseMaterial {
+  id         String   @id @default(uuid())
+  courseId   String
+  title      String
+  fileName   String
+  filePath   String
+  fileSize   Int
+  mimeType   String   @default("application/pdf")
+  uploadedAt DateTime @default(now())
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
 }
 
 model CourseCompetencyTag {

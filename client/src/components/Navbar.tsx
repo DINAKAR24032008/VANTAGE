@@ -11,6 +11,7 @@ import {
   Layers,
   Sun,
   Moon,
+  ShieldCheck,
 } from 'lucide-react';
 import { Avatar } from './Avatar';
 import { AvatarModal } from './AvatarModal';
@@ -28,7 +29,8 @@ export const Navbar: React.FC = () => {
     await switchDemoUser(role);
     setIsSwitching(false);
     if (role === 'learner') navigate('/dashboard');
-    else navigate('/catalog');
+    else if (role === 'admin') navigate('/admin');
+    else navigate('/trainer');
   };
 
   const isActive = (path: string) => location.pathname === path;
@@ -88,6 +90,19 @@ export const Navbar: React.FC = () => {
                       }`}
                     >
                       <Layers className="w-3.5 h-3.5" /> Course Management
+                    </Link>
+                  )}
+
+                  {user.role === 'admin' && (
+                    <Link
+                      to="/admin"
+                      className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                        isActive('/admin')
+                          ? 'bg-primarySoft text-primary border border-primary/30 font-bold'
+                          : 'text-textSecondary hover:text-textPrimary hover:bg-surface2'
+                      }`}
+                    >
+                      <ShieldCheck className="w-3.5 h-3.5" /> Admin Overview
                     </Link>
                   )}
 
