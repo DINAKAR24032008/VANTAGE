@@ -80,32 +80,32 @@ async function runTests() {
 
   console.log('\n--- TEST SUITE 1: LEARNER ROLE RESTRICTIONS & MATERIAL ACCESS ---');
 
-  // 1.1 Learner accessing Python course material BEFORE enrollment -> Expect 403 Forbidden
-  const learnerPreEnrollMatRes = await request(`/courses/${pythonCourse.id}/materials/${samplePyMat.id}/download`, {
+  // 1.1 Learner accessing enrolled Python course material (learner1 is seeded with active enrollment)
+  const learnerPyMatRes = await request(`/courses/${pythonCourse.id}/materials/${samplePyMat.id}/download`, {
     headers: authHeader(learner.token)
   });
-  assert(learnerPreEnrollMatRes.status === 403, 'Learner CANNOT download material before enrolling in Python course (HTTP 403)', learnerPreEnrollMatRes.status);
+  assert(learnerPyMatRes.status === 200, 'Learner CAN download material from enrolled Python course', learnerPyMatRes.status);
+  assert(Boolean(learnerPyMatRes.headers.get('content-type')?.includes('application/pdf')), 'Learner material download has application/pdf content type');
 
-  // 1.2 Learner enrolls in Python course
+  // 1.2 Learner accessing unenrolled SQL course material BEFORE enrollment -> Expect 403 Forbidden
+  const learnerPreSqlMatRes = await request(`/courses/${sqlCourse.id}/materials/${sampleSqlMat.id}/download`, {
+    headers: authHeader(learner.token)
+  });
+  assert(learnerPreSqlMatRes.status === 403, 'Learner CANNOT access materials for unenrolled SQL course (HTTP 403 Forbidden)', learnerPreSqlMatRes.status);
+
+  // 1.3 Learner enrolls in SQL course
   const enrollRes = await request('/enrollments', {
     method: 'POST',
     headers: { ...authHeader(learner.token), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ courseId: pythonCourse.id })
+    body: JSON.stringify({ courseId: sqlCourse.id })
   });
-  assert(enrollRes.status === 201 || enrollRes.status === 200, 'Learner enrolls in Python course successfully', enrollRes.status);
+  assert(enrollRes.status === 201 || enrollRes.status === 200, 'Learner enrolls in SQL course successfully', enrollRes.status);
 
-  // 1.3 Learner accessing Python course material AFTER enrollment -> Expect 200 OK & PDF
-  const learnerPostEnrollMatRes = await request(`/courses/${pythonCourse.id}/materials/${samplePyMat.id}/download`, {
+  // 1.4 Learner accessing SQL course material AFTER enrollment -> Expect 200 OK & PDF
+  const learnerPostSqlMatRes = await request(`/courses/${sqlCourse.id}/materials/${sampleSqlMat.id}/download`, {
     headers: authHeader(learner.token)
   });
-  assert(learnerPostEnrollMatRes.status === 200, 'Learner CAN download material from enrolled Python course', learnerPostEnrollMatRes.status);
-  assert(Boolean(learnerPostEnrollMatRes.headers.get('content-type')?.includes('application/pdf')), 'Learner material download has application/pdf content type');
-
-  // 1.4 Learner accessing unenrolled course material (SQL course) -> Expect 403 Forbidden
-  const learnerSqlMatRes = await request(`/courses/${sqlCourse.id}/materials/${sampleSqlMat.id}/download`, {
-    headers: authHeader(learner.token)
-  });
-  assert(learnerSqlMatRes.status === 403, 'Learner CANNOT access materials for unenrolled SQL course (HTTP 403 Forbidden)', learnerSqlMatRes.status);
+  assert(learnerPostSqlMatRes.status === 200, 'Learner CAN download material from SQL course after enrolling', learnerPostSqlMatRes.status);
 
   // 1.5 Learner forbidden from uploading material
   const learnerUploadRes = await request(`/courses/${pythonCourse.id}/materials`, {
